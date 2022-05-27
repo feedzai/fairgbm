@@ -391,6 +391,7 @@ file(
       src/objective/*.cpp
       src/network/*.cpp
       src/treelearner/*.cpp
+      src/utils/gdb.cpp
 if(USE_CUDA OR USE_CUDA_EXP)
       src/treelearner/*.cu
 endif()

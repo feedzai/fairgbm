@@ -139,7 +139,7 @@ public:
        *  - This value should be zero in order to optimize solely for TPR (Recall),
        *  as TPR considers only label positives and ignores label negatives.
        *  - However, initial splits will have -inf information gain if the gradients
-       *  of all label negatives are 0;
+       *  of all label negatives (LNs) are 0;
        *  - Hence, we're adding a small constant to the gradient of all LNs;
        */
       const double label_negative_weight = 1e-2;
@@ -175,7 +175,7 @@ public:
           }
 
         } else {
-          // NOTE! trying to use a soft BCE signal for negative labels
+          // NOTE! trying to use a soft BCE signal for LNs
           const double z = Constrained::sigmoid(score[i] + xent_horizontal_shift);
           gradients[i] = (score_t) (label_negative_weight * z);
           hessians[i] = (score_t) (label_negative_weight * z * (1. - z));

@@ -576,13 +576,12 @@ bool GBDT::TrainOneIter(const score_t* gradients, const score_t* hessians) {
 // TODO
 //  - implement early stopping criteria (convergence fulfilled);
 //  - implement normalization / bound on multipliers;
-/**
- * @brief Gradient ascent step w.r.t. Lagrange multipliers (used only for constrained optimization).
- *
- * @param gradients
- * @param hessians
- * @return whether training has ended (early stopping)
- */
+/*!
+* \brief Gradient ascent step w.r.t. Lagrange multipliers (used only for constrained optimization)
+* \param gradients nullptr for using default objective, otherwise use self-defined boosting
+* \param hessians nullptr for using default objective, otherwise use self-defined boosting
+* \return True if cannot train anymore (or training has ended due to early stopping)
+*/
 bool GBDT::TrainLagrangianOneIter(const score_t *gradients, const score_t *hessians) {
   auto constrained_objective_function = dynamic_cast<const ConstrainedObjectiveFunction *>(objective_function_);
 

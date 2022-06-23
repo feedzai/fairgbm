@@ -7,6 +7,11 @@
  * - nested sections can be placed only at the bottom of parent's section;
  * - [doc-only] tag indicates that only documentation for this param should be generated and all other actions are performed manually;
  * - [no-save] tag indicates that this param should not be saved into a model text representation.
+ *
+ * **NOTES!**
+ * - configs for use with the LightGBM::Application, to be passed via command line arguments or argv.
+ * - can also be filled by means of a config file, passed as config=<path> in this config.
+ * - see the parameters in this Class to see what configs are available!
  */
 #ifndef LIGHTGBM_CONFIG_H_
 #define LIGHTGBM_CONFIG_H_
@@ -185,6 +190,21 @@ struct Config {
   // desc = shrinkage rate
   // desc = in ``dart``, it also affects on normalization weights of dropped trees
   double learning_rate = 0.1;
+
+  // check = >0.0
+  // desc = learning rate for the constrained boosting
+  // desc = it only takes effect when using a constrained objective function
+  double lagrangian_learning_rate = 0.1;
+
+  // type = multi-double
+  // default = None
+  // desc = used only with ``constrained_*`` objective function
+  // desc = list representing the penalties magnitude for each constraint.
+  // desc = list should have the same number of elements as the number of constraints
+  // desc = if not specified, will use 0 weight penalty for all constraints,
+  // desc = which is equivalent to using unconstrained version in the
+  // desc = first iteration.
+  std::vector<double> init_lagrangians;
 
   // default = 31
   // alias = num_leaf, max_leaves, max_leaf
@@ -803,6 +823,19 @@ struct Config {
 
   #pragma endregion
 
+  // desc = used only in ``training`` task
+  // desc = output dir of gradients and hessians per iteration
+  // desc = **Note**: can be used only in CLI version
+  std::string debugging_output_dir = ".";
+
+  // type = int or string
+  // desc = used to specify the Protected Attribute id column
+  // desc = use number for index, e.g. ``constraint_group=0`` means column\_0 is the query id
+  // desc = add a prefix ``name:`` for column name, e.g. ``constraint_group=name:id``
+  // desc = **Note**: works only in case of loading data directly from file
+  // desc = **Note**: index starts from ``0`` and it doesn't count the label column when passing type is ``int``, e.g. when label is column\_0 and query\_id is column\_1, the correct parameter is ``query=0``
+  std::string constraint_group_column = "";
+
   #pragma endregion
 
   #pragma region Objective Parameters
@@ -884,6 +917,76 @@ struct Config {
   // desc = relevant gain for labels. For example, the gain of label ``2`` is ``3`` in case of default label gains
   // desc = separate by ``,``
   std::vector<double> label_gain;
+
+  // type = string
+  // desc = used only in ``constrained_cross_entropy`` application
+  std::string constraint_type;
+
+  // type = string
+  // desc = type of proxy function to use in constraints (hinge, quadratic, cross_entropy)
+  std::string constraint_stepwise_proxy = "quadratic";
+
+  // type = string
+  // desc = type of proxy function to use as the proxy objective
+  std::string objective_stepwise_proxy = "";
+
+  // type = double
+  // desc = used only for constrained optimization!
+  double stepwise_proxy_margin = 1.0;
+
+  // check = >=0
+  // check = <1.0
+  // type = double
+  // default = 0
+  // desc = used only in ``constrained_cross_entropy`` application
+  // desc = constraint fpr threshold. For example, the value ``0.5`` implies
+  // desc = a difference of 0.5 between max FPR and each group's FPR.
+  double constraint_fpr_threshold = 0.0;
+
+  // check = >=0
+  // check = <1.0
+  // type = double
+  // default = 0
+  // desc = used only in ``constrained_cross_entropy`` application
+  // desc = constraint fpr threshold. For example, the value ``0.5`` implies
+  // desc = a difference of 0.5 between max FNR and each group's FNR.
+  double constraint_fnr_threshold = 0.0;
+
+  // check = >=0
+  // check = <1.0
+  // type = double
+  // default = 0.5
+  // desc = used only in ``constrained_cross_entropy`` application
+  // desc = score threshold for computing the confusion matrix.
+  // desc = Used to compute constraints violation during training.
+  double score_threshold = 0.5;
+
+  // type = string
+  // desc = used only in ``constrained_cross_entropy`` application
+  std::string global_constraint_type;
+
+  // check = >=0
+  // check = <1.0
+  // type = double
+  // desc = used only in ``constrained_cross_entropy`` application
+  // desc = target rate for the global FPR constraint
+  double global_target_fpr = 1.;
+
+  // check = >=0
+  // check = <1.0
+  // type = double
+  // desc = used only in ``constrained_cross_entropy`` application
+  // desc = target rate for the global FNR constraint
+  double global_target_fnr = 1.;
+
+  // check = >=0
+  // check = <1.0
+  // type = double
+  // default = 0.5
+  // desc = used only in ``constrained_cross_entropy`` application
+  // desc = score threshold for computing the confusion matrix.
+  // desc = Used to compute constraints violation during training.
+  double global_score_threshold = 0.5;
 
   #pragma endregion
 

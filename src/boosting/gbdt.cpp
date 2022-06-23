@@ -329,7 +329,7 @@ void GBDT::Train(int snapshot_freq, const std::string& model_output_path) {
   auto start_time = std::chrono::steady_clock::now();
 
   // -- START FairGBM block --
-  for (int iter = 0; iter < config_->num_iterations && !is_finished; ++iter) {
+  for (int iter = 0; iter < config_->num_iterations and (!is_finished or !is_finished_lagrangian); ++iter) {
 
     // Descent step!
     is_finished = TrainOneIter(nullptr, nullptr);
@@ -339,7 +339,7 @@ void GBDT::Train(int snapshot_freq, const std::string& model_output_path) {
       is_finished_lagrangian = TrainLagrangianOneIter(nullptr, nullptr);
     }
 
-    if (!is_finished and !is_finished_lagrangian) {
+    if (!is_finished) {
       is_finished = EvalAndCheckEarlyStopping();
     }
     // -- END FairGBM block --

@@ -84,6 +84,11 @@ class DatasetLoader {
   std::unordered_set<int> categorical_features_;
   /*! \brief Whether to store raw feature values */
   bool store_raw_;
+
+  // -- START FairGBM block --
+  /*! \brief index of group constraint column */
+  int group_constraint_idx_;
+  // -- END FairGBM block --
 };
 
 }  // namespace LightGBM

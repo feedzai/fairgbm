@@ -7,6 +7,11 @@
  * - nested sections can be placed only at the bottom of parent's section;
  * - [doc-only] tag indicates that only documentation for this param should be generated and all other actions are performed manually;
  * - [no-save] tag indicates that this param should not be saved into a model text representation.
+ *
+ * **NOTES!**
+ * - configs for use with the LightGBM::Application, to be passed via command line arguments or argv.
+ * - can also be filled by means of a config file, passed as config=<path> in this config.
+ * - see the parameters in this Class to see what configs are available!
  */
 #ifndef LIGHTGBM_CONFIG_H_
 #define LIGHTGBM_CONFIG_H_
@@ -185,6 +190,20 @@ struct Config {
   // desc = shrinkage rate
   // desc = in ``dart``, it also affects on normalization weights of dropped trees
   double learning_rate = 0.1;
+
+  // alias = multiplier_shrinkage_rate, lagrangian_learning_rate, lagrangian_multiplier_learning_rate
+  // check = >0.0
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = learning rate for the Lagrangian multipliers (which enforce the constraints)
+  double multiplier_learning_rate = 0.1;
+
+  // alias = lagrangian_multipliers, init_multipliers
+  // type = multi-double
+  // default = 0,0,...,0
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = list representing the magnitude of *initial* (first iteration only) penalties for each constraint
+  // desc = list should have the same number of elements as the number of constraints
+  std::vector<double> init_lagrangian_multipliers;
 
   // default = 31
   // alias = num_leaf, max_leaves, max_leaf
@@ -803,6 +822,24 @@ struct Config {
 
   #pragma endregion
 
+  // alias = output_dir
+  // type = string
+  // default = "."
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = output dir of gradients and hessians per iteration
+  // desc = **Note**: can be used only in CLI version
+  std::string debugging_output_dir = ".";
+
+  // type = int or string
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = used to specify the Protected Attribute id column
+  // desc = use number for index, e.g. ``constraint_group=0`` means column\_0 is the query id
+  // desc = add a prefix ``name:`` for column name, e.g. ``constraint_group=name:id``
+  // desc = **Note**: works only in case of loading data directly from file
+  // desc = **Note**: index starts from ``0`` and it doesn't count the label column when passing type is ``int``, e.g. when label is column\_0 and query\_id is column\_1, the correct parameter is ``query=0``
+  // desc = **Note**: group membership values will take type `ushort`, hence keep all values below the maximum according to your compilation settings
+  std::string constraint_group_column = "";
+
   #pragma endregion
 
   #pragma region Objective Parameters
@@ -884,6 +921,107 @@ struct Config {
   // desc = relevant gain for labels. For example, the gain of label ``2`` is ``3`` in case of default label gains
   // desc = separate by ``,``
   std::vector<double> label_gain;
+
+  // type = string
+  // default = None
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = type of group-wise constraint to enforce during training
+  // desc = can take values "fpr", "fnr", or "fpr,fnr"
+  std::string constraint_type;
+
+  // alias = constraint_proxy_function, constraint_stepwise_proxy_function
+  // type = string
+  // default = "cross_entropy"
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = type of proxy function to use in group-wise constraints
+  // desc = this will be used as a differentiable proxy for the stepwise function in the gradient descent step
+  // desc = can take values "hinge", "quadratic", or "cross_entropy"
+  std::string constraint_stepwise_proxy = "cross_entropy";
+
+  // alias = objective_proxy_function, objective_stepwise_proxy_function
+  // type = string
+  // default = None
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = type of proxy function to use as the proxy objective
+  // desc = only used when optimizing for functions with a stepwise (e.g., FNR, FPR)
+  std::string objective_stepwise_proxy = "";
+
+  // alias = proxy_margin
+  // check = >0
+  // type = double
+  // default = 1.0
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = for `ConstrainedCrossEntropy`: the value of the function at x=0; f(0)=stepwise_proxy_margin; (vertical margin)
+  // desc = for other constrained objectives: the horizontal margin of the function; i.e., for stepwise_proxy_margin=1, the proxy function will be 0 until x=-1 for FPR and non-zero onwards, or non-zero until x=1 for FNR, and non-zero onwards;
+  // desc = **TODO**: set all functions to use this value as the vertical margin
+  double stepwise_proxy_margin = 1.0;
+
+  // alias = constraint_fpr_slack, constraint_fpr_delta
+  // check = >=0
+  // check = <1.0
+  // type = double
+  // default = 0
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = the slack when fulfilling group-wise FPR constraints
+  // desc = when using the value 0.0 this will enforce group-wise FPR to be *exactly* equal
+  double constraint_fpr_threshold = 0.0;
+
+  // alias = constraint_fnr_slack, constraint_fnr_delta
+  // check = >=0
+  // check = <1.0
+  // type = double
+  // default = 0
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = the slack when fulfilling group-wise FNR constraints
+  // desc = when using the value 0.0 this will enforce group-wise FNR to be *exactly* equal
+  double constraint_fnr_threshold = 0.0;
+
+  // check = >=0
+  // check = <1.0
+  // type = double
+  // default = 0.5
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = score threshold used for computing the GROUP-WISE confusion matrices
+  // desc = used to compute violation of group-wise constraints during training
+  double score_threshold = 0.5;
+
+  // type = string
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = type of GLOBAL constraint to enforce during training
+  // desc = can take values "fpr", "fnr", or "fpr,fnr"
+  // desc = must be paired with the arguments "global_target_<fpr|fnr>" accordingly
+  std::string global_constraint_type;
+
+  // alias = global_fpr, target_global_fpr
+  // check = >=0
+  // check = <=1.0
+  // type = double
+  // default = 1.0
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = target rate for the global FPR (inequality) constraint
+  // desc = constraint is fulfilled with global_fpr <= global_target_fpr
+  // desc = the default value of 1 means that this constraint is always fulfilled (never active)
+  double global_target_fpr = 1.;
+
+  // alias = global_fnr, target_global_fnr
+  // check = >=0
+  // check = <=1.0
+  // type = double
+  // default = 1.0
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = target rate for the global FNR (inequality) constraint
+  // desc = constraint is fulfilled with global_fnr <= global_target_fnr
+  // desc = the default value of 1 means that this constraint is always fulfilled (never active)
+  double global_target_fnr = 1.;
+
+  // check = >=0
+  // check = <1.0
+  // type = double
+  // default = 0.5
+  // desc = used only for constrained optimization (ignored for standard LightGBM)
+  // desc = score threshold for computing the GLOBAL confusion matrix
+  // desc = used to compute violation of GLOBAL constraints during training
+  double global_score_threshold = 0.5;
 
   #pragma endregion
 

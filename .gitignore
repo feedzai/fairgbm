@@ -455,3 +455,6 @@ dask-worker-space/
 *.pub
 *.rdp
 *_rsa
+
+# Others
+src/main.*.cpp

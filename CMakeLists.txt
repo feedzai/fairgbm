@@ -344,6 +344,7 @@ endif(USE_CUDA)
 )
 
 add_executable(lightgbm src/main.cpp src/application/application.cpp ${SOURCES})
+#add_executable(fairgbm_multiple_runs src/main.multiple_runs.cpp src/application/application.cpp ${SOURCES})
 list(APPEND SOURCES "src/c_api.cpp")
 
 # Only build the R part of the library if building for

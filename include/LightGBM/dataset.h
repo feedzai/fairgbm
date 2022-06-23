@@ -37,6 +37,7 @@ class DatasetLoader;
 *        4. Query Weights, auto calculate by weights and query_boundaries(if both of them are existed)
 *           the weight for i-th query is sum(query_boundaries[i] , .., query_boundaries[i+1]) / (query_boundaries[i + 1] -  query_boundaries[i+1])
 *        5. Initial score. optional. if existing, the model will boost from this score, otherwise will start from 0.
+*        6. [FairGBM-only] Group, used for training during constrained optimization.
 */
 class Metadata {
  public:
@@ -69,8 +70,9 @@ class Metadata {
   * \param num_data Number of training data
   * \param weight_idx Index of weight column, < 0 means doesn't exists
   * \param query_idx Index of query id column, < 0 means doesn't exists
+  * \param group_constraint_idx_ Index of group constraint id column, < 0 means it doesn't exist
   */
-  void Init(data_size_t num_data, int weight_idx, int query_idx);
+  void Init(data_size_t num_data, int weight_idx, int query_idx, int group_constraint_idx_);
 
   /*!
   * \brief Partition label by used indices
@@ -158,7 +160,7 @@ class Metadata {
   /*!
   * \brief Get data boundaries on queries, if not exists, will return nullptr
   *        we assume data will order by query,
-  *        the interval of [query_boundaris[i], query_boundaris[i+1])
+  *        the interval of [query_boundaries[i], query_boundaries[i+1])
   *        is the data indices for query i.
   * \return Pointer of data boundaries on queries
   */
@@ -199,6 +201,33 @@ class Metadata {
       return nullptr;
     }
   }
+
+  // -- START FairGBM block --
+  /*!
+  * \brief Set Group Constraint Id for one record
+  * \param idx Index of this record
+  * \param value Group constraint value of this record
+  */
+  inline void SetGroupConstraintAt(data_size_t idx, group_t value) {
+    group_[idx] = value;
+  }
+
+  /*!
+  * \brief Get pointer of group
+  * \return Pointer of group
+  */
+  inline const group_t* group() const { return group_.data(); }
+
+  /*! \brief Get unique groups in data */
+  inline std::vector<group_t> group_values() const {
+    std::vector<group_t> values(group_);
+    std::sort(values.begin(), values.end());
+
+    auto last = std::unique(values.begin(), values.end());
+    values.erase(last, values.end());
+    return values;
+  }
+  // -- END FairGBM block --
 
   /*!
   * \brief Get size of initial scores
@@ -246,6 +275,11 @@ class Metadata {
   bool weight_load_from_file_;
   bool query_load_from_file_;
   bool init_score_load_from_file_;
+
+  // -- START FairGBM block --
+  /*! \brief Group data */
+  std::vector<group_t> group_;
+  // -- END FairGBM block --
 };
 
 
@@ -678,6 +712,9 @@ class Dataset {
     return raw_data_[numeric_feature_map_[feat_ind]].data();
   }
 
+public:
+  Metadata metadata_;
+
  private:
   std::string data_filename_;
   /*! \brief Store used features */
@@ -691,7 +728,7 @@ class Dataset {
   /*! \brief Number of total data*/
   data_size_t num_data_;
   /*! \brief Store some label level data*/
-  Metadata metadata_;
+//  Metadata metadata_;
   /*! \brief index of label column */
   int label_idx_ = 0;
   /*! \brief store feature names */
@@ -719,6 +756,11 @@ class Dataset {
   /*! map feature (inner index) to its index in the list of numeric (non-categorical) features */
   std::vector<int> numeric_feature_map_;
   int num_numeric_features_;
+
+  // -- START FairGBM block --
+  /*! \brief index of group constraint column */
+  int group_constraint_idx_;
+  // -- END FairGBM block --
 };
 
 }  // namespace LightGBM

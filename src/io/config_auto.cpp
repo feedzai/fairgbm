@@ -166,6 +166,23 @@ const std::unordered_map<std::string, std::string>& Config::alias_table() {
   {"mlist", "machine_list_filename"},
   {"workers", "machines"},
   {"nodes", "machines"},
+
+  // -- START FairGBM block --
+  {"lagrangian_learning_rate", "multiplier_learning_rate"},
+  {"lagrangian_multiplier_learning_rate", "multiplier_learning_rate"},
+  {"lagrangian_multipliers", "init_lagrangian_multipliers"},
+  {"init_multipliers", "init_lagrangian_multipliers"},
+  {"output_dir", "debugging_output_dir"},
+  {"constraint_proxy_function", "constraint_stepwise_proxy"},
+  {"constraint_stepwise_proxy_function", "constraint_stepwise_proxy"},
+  {"objective_proxy_function", "objective_stepwise_proxy"},
+  {"objective_stepwise_proxy_function", "objective_stepwise_proxy"},
+  {"proxy_margin", "stepwise_proxy_margin"},
+  {"global_fpr", "global_target_fpr"},
+  {"target_global_fpr", "global_target_fpr"},
+  {"global_fnr", "global_target_fnr"},
+  {"target_global_fnr", "global_target_fnr"},
+  // -- END FairGBM block --
   });
   return aliases;
 }
@@ -302,6 +319,24 @@ const std::unordered_set<std::string>& Config::parameter_set() {
   "gpu_device_id",
   "gpu_use_dp",
   "num_gpu",
+
+  // -- START FairGBM block --
+  "debugging_output_dir",
+  "constraint_type",
+  "constraint_stepwise_proxy",
+  "objective_stepwise_proxy",
+  "stepwise_proxy_margin",
+  "constraint_group_column",
+  "constraint_fpr_threshold",
+  "constraint_fnr_threshold",
+  "score_threshold",
+  "init_lagrangian_multipliers",
+  "multiplier_learning_rate",
+  "global_constraint_type",
+  "global_target_fpr",
+  "global_target_fnr",
+  "global_score_threshold"
+  // -- END FairGBM block --
   });
   return params;
 }
@@ -627,6 +662,52 @@ void Config::GetMembersFromString(const std::unordered_map<std::string, std::str
 
   GetInt(params, "num_gpu", &num_gpu);
   CHECK_GT(num_gpu, 0);
+
+  // -- START FairGBM block --
+  // Update: Add configs for FairGBM
+  Config::GetString(params, "debugging_output_dir", &debugging_output_dir);
+
+  Config::GetString(params, "constraint_type", &constraint_type);
+
+  Config::GetString(params, "constraint_stepwise_proxy", &constraint_stepwise_proxy);
+
+  Config::GetString(params, "objective_stepwise_proxy", &objective_stepwise_proxy);
+
+  Config::GetDouble(params, "stepwise_proxy_margin", &stepwise_proxy_margin);
+
+  Config::GetString(params, "constraint_group_column", &constraint_group_column);
+
+  Config::GetDouble(params, "constraint_fpr_threshold", &constraint_fpr_threshold);
+  CHECK_GE(constraint_fpr_threshold, 0); CHECK_LT(constraint_fpr_threshold, 1);
+
+  Config::GetDouble(params, "constraint_fnr_threshold", &constraint_fnr_threshold);
+  CHECK_GE(constraint_fnr_threshold, 0); CHECK_LE(constraint_fnr_threshold, 1);
+
+  Config::GetDouble(params, "score_threshold", &score_threshold);
+  CHECK_GE(score_threshold, 0); CHECK_LE(score_threshold, 1);
+
+  Config::GetDouble(params, "multiplier_learning_rate", &multiplier_learning_rate);
+  CHECK_GE(multiplier_learning_rate, 0);
+
+  if (GetString(params, "init_lagrangian_multipliers", &tmp_str)) {
+    init_lagrangian_multipliers = Common::StringToArray<double>(tmp_str, ',');
+    for (auto lag : init_lagrangian_multipliers)
+      CHECK_GE(lag, 0);
+  }
+
+  // Parameters for global constraints
+  Config::GetString(params, "global_constraint_type", &global_constraint_type);
+
+  Config::GetDouble(params, "global_target_fpr", &global_target_fpr);
+  CHECK_GE(global_target_fpr, 0); CHECK_LE(global_target_fpr, 1);
+
+  Config::GetDouble(params, "global_target_fnr", &global_target_fnr);
+  CHECK_GE(global_target_fnr, 0); CHECK_LE(global_target_fnr, 1);
+
+  Config::GetDouble(params, "global_score_threshold", &global_score_threshold);
+  CHECK_GE(global_score_threshold, 0); CHECK_LE(global_score_threshold, 1);
+
+  // -- END FairGBM block --
 }
 
 std::string Config::SaveMembersToString() const {
@@ -735,6 +816,29 @@ std::string Config::SaveMembersToString() const {
   str_buf << "[gpu_device_id: " << gpu_device_id << "]\n";
   str_buf << "[gpu_use_dp: " << gpu_use_dp << "]\n";
   str_buf << "[num_gpu: " << num_gpu << "]\n";
+
+  // -- START FairGBM block --
+  str_buf << "[------- FAIRGBM ------]\n";
+  str_buf << "[debugging_output_dir: " << debugging_output_dir << "]\n";
+  str_buf << "[constraint_type: " << constraint_type << "]\n";
+  str_buf << "[stepwise_proxy_margin: " << stepwise_proxy_margin << "]\n";
+  str_buf << "[constraint_group_column: " << constraint_group_column << "]\n";
+  str_buf << "[score_threshold: " << score_threshold << "]\n";
+  str_buf << "[constraint_fpr_threshold: " << constraint_fpr_threshold << "]\n";
+  str_buf << "[constraint_fnr_threshold: " << constraint_fnr_threshold << "]\n";
+  str_buf << "[multiplier_learning_rate: " << multiplier_learning_rate << "]\n";
+  str_buf << "[init_lagrangian_multipliers: " << Common::Join(init_lagrangian_multipliers, ",") << "]\n";
+
+  // Global constraint parameters
+  str_buf << "[global_constraint_type: " << global_constraint_type << "]\n";
+  str_buf << "[global_target_fpr: " << global_target_fpr << "]\n";
+  str_buf << "[global_target_fnr: " << global_target_fnr << "]\n";
+  str_buf << "[global_score_threshold: " << global_score_threshold << "]\n";
+
+  // TODO -- Add option to normalize multipliers
+  // str_buf << "[normalize_lagrangian_multipliers: ";
+  // -- END FairGBM block --
+
   return str_buf.str();
 }
 

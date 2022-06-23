@@ -32,7 +32,7 @@ void Metadata::Init(const char* data_filename) {
 Metadata::~Metadata() {
 }
 
-void Metadata::Init(data_size_t num_data, int weight_idx, int query_idx) {
+void Metadata::Init(data_size_t num_data, int weight_idx, int query_idx, int group_constraint_idx_) {
   num_data_ = num_data;
   label_ = std::vector<label_t>(num_data_);
   if (weight_idx >= 0) {
@@ -53,6 +53,10 @@ void Metadata::Init(data_size_t num_data, int weight_idx, int query_idx) {
     queries_ = std::vector<data_size_t>(num_data_, 0);
     query_load_from_file_ = false;
   }
+  // -- START FairGBM block --
+  if (group_constraint_idx_ >= 0)
+    group_ = std::vector<group_t>(num_data_, 0);
+  // -- END FairGBM block --
 }
 
 void Metadata::Init(const Metadata& fullset, const data_size_t* used_indices, data_size_t num_used_indices) {
@@ -537,6 +541,5 @@ size_t Metadata::SizesInByte() const {
   }
   return size;
 }
-
 
 }  // namespace LightGBM

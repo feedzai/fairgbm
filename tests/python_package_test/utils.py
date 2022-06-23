@@ -1,9 +1,52 @@
 # coding: utf-8
 from functools import lru_cache
+from pathlib import Path
+from typing import Tuple
 
+import pytest
 import numpy as np
 import sklearn.datasets
 from sklearn.utils import check_random_state
+
+
+@lru_cache(maxsize=None)
+def load_compas():
+    pd = pytest.importorskip(
+        "pandas",
+        reason="The `pandas` package must be installed to import COMPAS and run fairness tests.")
+
+    local_root_path = Path(__file__).parent.parent.parent / "examples" / "FairGBM"
+    target_col_name = "two_year_recid"
+    sensitive_col_name = "race_Caucasian"
+
+    def read_data(path) -> Tuple[pd.DataFrame, pd.Series, pd.Series]:
+        data = pd.read_csv(path, header=0, sep="\t", index_col=None)
+        Y = data[target_col_name]
+        S = data[sensitive_col_name]
+        X = data[[col for col in data.columns if col not in {target_col_name, sensitive_col_name}]]
+        return X, Y, S
+
+    data_paths = {
+        "train": local_root_path / "COMPAS.train",
+        "test": local_root_path / "COMPAS.test",
+    }
+
+    return {key: read_data(path) for key, path in data_paths.items()}
+
+
+@lru_cache(maxsize=None)
+def load_california_housing_classification(price_threshold=100_000, seed=42):
+    X, Y = sklearn.datasets.fetch_california_housing(return_X_y=True)
+
+    # Binarize target column for classification
+    Y = (Y >= price_threshold).astype(np.float32)
+
+    # Let's generate a sensitive attribute column for testing
+    # NOTE: training is "unaware" as the sensitive column is not part of the training features
+    rng = np.random.RandomState(seed)
+    S = (rng.random(size=y.shape) > 0.80).astype(np.int32)
+
+    return X, Y, S
 
 
 @lru_cache(maxsize=None)

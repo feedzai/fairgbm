@@ -132,6 +132,9 @@ public:
 
     // Function used as a PROXY for the step-wise in the OBJECTIVE
     objective_stepwise_proxy = ValidateProxyFunctionName(config.objective_stepwise_proxy, true);
+
+    // Debug configs
+    debugging_output_dir_ = config.debugging_output_dir;
   }
 
   /*!
@@ -146,7 +149,7 @@ public:
     weights_ = metadata.weights();
 
     // Store Information about the group
-    group_ = metadata.group();
+    group_ = metadata.constraint_group();
     group_values_ = metadata.group_values();
 
     // Store Information about the labels
@@ -197,7 +200,7 @@ public:
     if (weights_ != nullptr)
       throw std::logic_error("not implemented yet");  // TODO: https://github.com/feedzai/fairgbm/issues/5
 
-    std::vector<double> functions;
+    std::vector<double> constraint_values;
     std::unordered_map<group_t, double> group_fpr, group_fnr;
 
     // NOTE! ** MULTIPLIERS ARE ORDERED! **
@@ -216,7 +219,7 @@ public:
       for (const auto &group : group_values_)
       {
         double fpr_constraint_value = max_fpr - group_fpr[group] - fpr_threshold_;
-        functions.push_back(fpr_constraint_value);
+        constraint_values.push_back(fpr_constraint_value);
 
 #ifdef DEBUG
         Log::Debug(
@@ -236,7 +239,7 @@ public:
       for (const auto &group : group_values_)
       {
         double fnr_constraint_value = max_fnr - group_fnr[group] - fnr_threshold_;
-        functions.push_back(fnr_constraint_value);
+        constraint_values.push_back(fnr_constraint_value);
 
 #ifdef DEBUG
         Log::Debug(
@@ -252,7 +255,7 @@ public:
       double global_fpr = ComputeGlobalFPR(score, global_score_threshold_);
       double global_fpr_constraint_value = global_fpr - global_target_fpr_;
 
-      functions.push_back(global_fpr_constraint_value);
+      constraint_values.push_back(global_fpr_constraint_value);
 
 #ifdef DEBUG
       Log::Debug(
@@ -267,7 +270,7 @@ public:
       double global_fnr = ComputeGlobalFNR(score, global_score_threshold_);
       double global_fnr_constraint_value = global_fnr - global_target_fnr_;
 
-      functions.push_back(global_fnr_constraint_value);
+      constraint_values.push_back(global_fnr_constraint_value);
 
 #ifdef DEBUG
       Log::Debug(
@@ -276,7 +279,11 @@ public:
 #endif
     }
 
-    return functions;
+#ifdef DEBUG
+    Constrained::write_values<double>(debugging_output_dir_, "constraint_values.dat", constraint_values);
+#endif
+
+    return constraint_values;
   }
 
   /*!
@@ -990,7 +997,6 @@ public:
     {
       if (label_[i] == 1)
       {
-        std::cout << "HEYO i=" << i << "; group_[i]=" << group_[i] << std::endl;
         this->group_label_positives_[group_[i]] += 1;
         this->total_label_positives_ += 1;
       }
@@ -1080,6 +1086,9 @@ protected:
 
   /*! \brief Score threshold used for the global constraints */
   score_t global_score_threshold_ = 0.5;
+
+  /*! \brief Where to save debug files to */
+  std::string debugging_output_dir_;
 };
 } // namespace LightGBM
 

@@ -32,7 +32,7 @@ void Metadata::Init(const char* data_filename) {
 Metadata::~Metadata() {
 }
 
-void Metadata::Init(data_size_t num_data, int weight_idx, int query_idx, int group_constraint_idx_) {
+void Metadata::Init(data_size_t num_data, int weight_idx, int query_idx, int constraint_group_idx_) {
   num_data_ = num_data;
   label_ = std::vector<label_t>(num_data_);
   if (weight_idx >= 0) {
@@ -53,10 +53,8 @@ void Metadata::Init(data_size_t num_data, int weight_idx, int query_idx, int gro
     queries_ = std::vector<data_size_t>(num_data_, 0);
     query_load_from_file_ = false;
   }
-  // -- START FairGBM block --
-  if (group_constraint_idx_ >= 0)
-    group_ = std::vector<group_t>(num_data_, 0);
-  // -- END FairGBM block --
+  if (constraint_group_idx_ >= 0)
+    constraint_group_ = std::vector<group_t>(num_data_, 0);
 }
 
 void Metadata::Init(const Metadata& fullset, const data_size_t* used_indices, data_size_t num_used_indices) {
@@ -324,6 +322,24 @@ void Metadata::SetLabel(const label_t* label, data_size_t len) {
   }
 }
 
+void Metadata::SetConstraintGroup(const group_t* constraint_group, data_size_t len) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (constraint_group == nullptr) {
+    Log::Fatal("constraint_group cannot be nullptr");
+  }
+  if (num_data_ != len) {
+    Log::Fatal("Length of constraint_group is not same as #data");
+  }
+  if (constraint_group_.empty()) {
+    constraint_group_.resize(num_data_);
+  }
+
+  #pragma omp parallel for schedule(static, 512) if (num_data_ >= 1024)
+  for (data_size_t i = 0; i < num_data_; ++i) {
+    constraint_group_[i] = static_cast<group_t>(constraint_group[i]);
+  }
+}
+
 void Metadata::SetWeights(const label_t* weights, data_size_t len) {
   std::lock_guard<std::mutex> lock(mutex_);
   // save to nullptr
@@ -508,7 +524,7 @@ void Metadata::LoadFromMemory(const void* memory) {
   }
   LoadQueryWeights();
 
-  // TODO! load group_ information from memory ??
+  // TODO! load constraint_group_ information from memory ??
 }
 
 void Metadata::SaveBinaryToFile(const VirtualFileWriter* writer) const {

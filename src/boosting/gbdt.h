@@ -543,7 +543,6 @@ class GBDT : public GBDTBase {
   Json forced_splits_json_;
   bool linear_tree_;
 
-  // -- START FairGBM block --
   /*! \brief Whether we're running constrained optimization */
   bool is_constrained_;
 
@@ -555,7 +554,6 @@ class GBDT : public GBDTBase {
 
   /*! \brief Output directory to store debug files (e.g., gradients/hessians) */
   std::string debugging_output_dir_;
-  // -- END FairGBM block --
 };
 
 }  // namespace LightGBM

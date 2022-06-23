@@ -1087,7 +1087,6 @@ int LGBM_DatasetCreateFromMats(int32_t nmat,
         }
       }
     }
-    Log::Warning("FairGBM DEBUG: config.constraint_group_column=%s\n", config.constraint_group_column.c_str());
     DatasetLoader loader(config, nullptr, 1, nullptr);
     ret.reset(loader.ConstructFromSampleData(Vector2Ptr<double>(&sample_values).data(),
                                              Vector2Ptr<int>(&sample_idx).data(),
@@ -1119,7 +1118,6 @@ int LGBM_DatasetCreateFromMats(int32_t nmat,
   }
   ret->FinishLoad();
   *out = ret.release();
-  Log::Warning("FairGBM DEBUG: dataset.metadata_.label()[0]=%s\n", reinterpret_cast<Dataset*>(out)->metadata_.label()[0]);
   API_END();
 }
 

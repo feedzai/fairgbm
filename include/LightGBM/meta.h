@@ -51,7 +51,7 @@ typedef float label_t;
 #ifdef GROUP_T_USE_INT
   typedef u_int group_t;
 #else
-  typedef u_short group_t;
+  typedef int group_t;
 #endif
 
 const score_t kMinScore = -std::numeric_limits<score_t>::infinity();

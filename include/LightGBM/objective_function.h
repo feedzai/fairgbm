@@ -167,7 +167,7 @@ public:
       {
         Log::Fatal("[%s]: at least one weight is negative", GetName());
       }
-      if (sumw == 0.0f)
+      if (sumw < DBL_MIN)
       {
         Log::Fatal("[%s]: sum of weights is zero", GetName());
       }

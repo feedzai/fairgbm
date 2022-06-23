@@ -20,8 +20,8 @@
 #include <fstream>
 #include <sys/stat.h>
 
-
-namespace LightGBM::Constrained {
+namespace LightGBM {
+namespace Constrained {
 
 /**
  * Standard sigmoid mathematical function.
@@ -72,7 +72,7 @@ void write_values(const std::string& dir, const std::string& filename,
 
   outfile.close();
 }
-
+}
 }
 
 #endif //LIGHTGBM_CONSTRAINED_HPP

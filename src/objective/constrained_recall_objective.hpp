@@ -28,8 +28,9 @@
 /**
  * Implements the proxy FNR loss (Recall as an objective).
  *
- * Could use BCE, Quadratic, or Exponential as proxy functions
- * for FNR's step-wise function.
+ * Minimizing FNR is equivalent to maximizing TPR (or Recall), as TPR = 1-FNR.
+ * Could use cross-entropy, quadratic, or hinge as proxy functions for FNR's step-wise function.
+ * > We need to use a differentiable proxy, as the step-wise function provides no gradient for optimization.
  */
 
 namespace LightGBM {

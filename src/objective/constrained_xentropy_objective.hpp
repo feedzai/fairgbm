@@ -59,6 +59,10 @@ public:
 
   explicit ConstrainedCrossEntropy(const std::vector<std::string> &)
           : deterministic_(false) {
+    Log::Warning(
+            "The objective function 'constrained_cross_entropy' was not properly loaded. "
+            "Resuming training is not available; everything else can be used as usual."
+            );  // TODO: https://github.com/feedzai/fairgbm/issues/10
   }
 
   ~ConstrainedCrossEntropy() override = default;

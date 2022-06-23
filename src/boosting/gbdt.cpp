@@ -470,7 +470,7 @@ bool GBDT::TrainOneIter(const score_t* gradients, const score_t* hessians) {
 
   // Step 3. Run bagging
   // bagging logic
-  Bagging(iter_);   // Will run GOSS if LightGBM (or Bagging only if RF)
+  Bagging(iter_);   // e.g., run GOSS if LightGBM (or Bagging only if RF)
 
   // Step 4. Fit a weak learner (if RF, will run one split for multiple trees)
   bool should_continue = false;

@@ -201,24 +201,12 @@ public:
     std::unordered_map<group_t, double> group_fpr, group_fnr;
 
     // NOTE! ** MULTIPLIERS ARE ORDERED! **
-    //  - 1st: predictive loss function
-    //  - 2nd (optional): group-wise FPR constraints
-    //  - 3rd (optional): group-wise FNR constraints
-    //  - 4th (optional): global FPR constraint
-    //  - 5th (optional): global FNR constraint
+    //  - 1st: group-wise FPR constraints (one multiplier per group)
+    //  - 2nd: group-wise FNR constraints (one multiplier per group)
+    //  - 3rd: global FPR constraint      (a single multiplier)
+    //  - 4th: global FNR constraint      (a single multiplier)
 
-    // 1st Lagrange multiplier corresponds to predictive loss function
-    double sum_loss = 0.0;
-
-//    #pragma omp parallel for schedule(static) reduction(+:sum_loss)
-    for (data_size_t i = 0; i < num_data_; ++i)
-    {
-      sum_loss += this->ComputePredictiveLoss(label_[i], score[i]);
-    }
-    double loss = sum_loss / num_data_;
-    functions.push_back(loss);
-
-    // Next multiplier will correspond to group-wise FPR constraints
+    // Multiplier corresponding to group-wise FPR constraints
     if (IsFPRConstrained())
     {
       ComputeFPR(score, score_threshold_, group_fpr);
@@ -238,7 +226,7 @@ public:
       }
     }
 
-    // Next multiplier will correspond to group-wise FNR constraints
+    // Multiplier corresponding to group-wise FNR constraints
     if (IsFNRConstrained())
     {
       ComputeFNR(score, score_threshold_, group_fnr);
@@ -366,17 +354,9 @@ public:
     {
       const auto group = group_[i];
 
-      // First update the gradients with the lag0 (lag. multiplier of the loss)
-      //        gradients[i] *= static_cast<score_t>(lagrangian_multipliers[0]);
-      // ^NOTE: at this point the gradients will contain only grads of the predictive loss w.r.t. the model output
-      //    - This gradients update should really be done outside of this function, as it related to the gradient of
-      //    the predictive loss and not the constraints;
-      //    - It seems we're only doing it here for convenience (and not doing it actually);
-
       // Constraint index
       u_short number_of_groups = group_values_.size();
-      u_short multipliers_base_index = 1;
-      // ^base index for lagrange multipliers (starts at 1 because index=0 is for the predictive loss multiplier)
+      u_short multipliers_base_index = 0;
 
       // -------------------------------------------------------------------
       // Skip FPR propagation if label positive, since LPs do not count for FPR constraints
@@ -393,18 +373,7 @@ public:
           const int group_ln = group_label_negatives_.at(group);
 
           double fpr_constraints_gradient_wrt_pred;
-          // TODO:
-          //  - We should normalize derivatives by the size of the dataset,
-          //  such that the multipliers' scale doesn't depend on the number of LPs or LNs;
-          //    - samples from smaller groups must receive a higher derivative (as they have a higher impact on the
-          //    group's metrics)
-          //  - e.g., simply scale all derivatives by "data_length"
-          //    - FPR group-wise constraints will be multiplied by "data_length / group_ln"
-          //    - FNR group-wise constraints by "data_length / group_lp"
-          //    - FPR global constraints by "data_length / total_ln"
-          //    - FNR global constraints by "data_length / total_lp"
-          //    - and the loss/objective derivatives per instance will simply be w.r.t. that instance, and not be
-          //    divided by data_length
+          // TODO: https://github.com/feedzai/fairgbm/issues/7
 
           // Derivative for hinge-based proxy FPR
           if (constraint_stepwise_proxy == "hinge")
@@ -650,7 +619,7 @@ public:
     std::unordered_map<int, int> false_positives;
     std::unordered_map<int, int> label_negatives;
 
-    // #pragma omp parallel for schedule(static)
+    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       group_t group = group_[i];
@@ -687,6 +656,7 @@ public:
   {
     int false_positives = 0, label_negatives = 0;
 
+    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       if (label_[i] == 0)
@@ -837,7 +807,7 @@ public:
     std::unordered_map<group_t, int> false_negatives;
     std::unordered_map<group_t, int> label_positives;
 
-    // #pragma omp parallel for schedule(static) // FIXME
+    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       group_t group = group_[i];
@@ -873,6 +843,7 @@ public:
   {
     int false_negatives = 0, label_positives = 0;
 
+    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       if (label_[i] == 1)
@@ -899,7 +870,7 @@ public:
     std::unordered_map<group_t, double> false_negatives; // map of group index to the respective hinge-proxy FNs
     std::unordered_map<group_t, int> label_positives;
 
-    // #pragma omp parallel for schedule(static)
+    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       group_t group = group_[i];
@@ -937,7 +908,7 @@ public:
     std::unordered_map<group_t, double> false_negatives; // map of group index to the respective proxy FPs
     std::unordered_map<group_t, int> label_positives;    // map of group index to the respective number of LNs
 
-    // #pragma omp parallel for schedule(static)
+    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       group_t group = group_[i];
@@ -980,7 +951,7 @@ public:
     std::unordered_map<group_t, int> label_positives;    // map of group index to the respective number of LNs
     double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
 
-    // #pragma omp parallel for schedule(static)
+    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       group_t group = group_[i];
@@ -1014,7 +985,7 @@ public:
     */
   void ComputeLabelCounts()
   {
-    //#pragma omp parallel for schedule(static)
+    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       if (label_[i] == 1)

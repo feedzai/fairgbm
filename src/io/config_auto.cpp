@@ -168,20 +168,20 @@ const std::unordered_map<std::string, std::string>& Config::alias_table() {
   {"nodes", "machines"},
 
   // -- START FairGBM block --
-  {"lagrangian_learning_rate_", "multiplier_learning_rate"},
+  {"lagrangian_learning_rate", "multiplier_learning_rate"},
   {"lagrangian_multiplier_learning_rate", "multiplier_learning_rate"},
   {"lagrange_multipliers", "init_lagrange_multipliers"},
   {"init_multipliers", "init_lagrange_multipliers"},
   {"output_dir", "debugging_output_dir"},
+  {"constraint_proxy_function", "constraint_stepwise_proxy"},
+  {"constraint_stepwise_proxy_function", "constraint_stepwise_proxy"},
+  {"objective_proxy_function", "objective_stepwise_proxy"},
+  {"objective_stepwise_proxy_function", "objective_stepwise_proxy"},
+  {"proxy_margin", "stepwise_proxy_margin"},
   {"global_fpr", "global_target_fpr"},
   {"target_global_fpr", "global_target_fpr"},
   {"global_fnr", "global_target_fnr"},
   {"target_global_fnr", "global_target_fnr"},
-  {"constraint_proxy_function", "constraint_stepwise_proxy"},
-  {"constraint_stepwise_proxy_function", "constraint_stepwise_proxy"},
-  {"proxy_margin", "stepwise_proxy_margin"},
-  {"objective_proxy_function", "objective_stepwise_proxy"},
-  {"objective_stepwise_proxy_function", "objective_stepwise_proxy"},
   // -- END FairGBM block --
   });
   return aliases;

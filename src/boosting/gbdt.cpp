@@ -102,15 +102,12 @@ void GBDT::Init(const Config* config, const Dataset* train_data, const Objective
 
   int num_constraints = objective_function->NumConstraints();
 
-  // If no lagrange multipliers are specified
-  // Set the first multiplier to 1 (corresponds to objective function) and
-  // all others to 0.
+  // If no lagrange multipliers are specified, start everything at zero
   if ((config->init_lagrange_multipliers).empty()) {
-    std::vector<double> default_lag_multipliers(num_constraints+1, 0);
-    default_lag_multipliers[0] = 1;
+    std::vector<double> default_lag_multipliers(num_constraints, 0);
     lagrangian_multipliers_.push_back(default_lag_multipliers);
   } else {
-    CHECK_EQ(num_constraints+1, (int) config->init_lagrange_multipliers.size());
+    CHECK_EQ(num_constraints, (int) config->init_lagrange_multipliers.size());
     lagrangian_multipliers_.push_back(config->init_lagrange_multipliers);
   }
   // -- END FairGBM block --
@@ -225,6 +222,7 @@ void GBDT::Boosting() {
     // ^ will change gradients and hessians in place
     //
     // NOTE: lagrange_multipliers is a vector of vectors - each element represents the multipliers at a given iteration;
+    // TODO: https://github.com/feedzai/fairgbm/issues/8
 
 #ifdef DEBUG
     // Dump lagrangian multipliers
@@ -592,21 +590,15 @@ bool GBDT::TrainLagrangianOneIter(const score_t *gradients, const score_t *hessi
   std::vector<double> updated_lag_multipliers(current_lag_multipliers);
 
   // Gradient ascent in Lagrangian multipliers (or constraint space)
-  // NOTE:
-  //  - the first Lagrangian multiplier corresponds to the multiplier of the loss
-  //  function (no associated constraint);
-  //  - we're currently NOT UPDATING this multiplier, hence the loop STARTS AT i=1;
-  //  - the gradient for this multiplier will always be the value of the loss;
-  for (uint i = 1; i < lag_updates.size(); i++) {
+  for (uint i = 0; i < lag_updates.size(); i++) {
     updated_lag_multipliers[i] += lagrangian_learning_rate_ * lag_updates[i];
 
     // Ensuring multipliers >= 0 -> using *INEQUALITY* constraints! c(theta) <= 0
     updated_lag_multipliers[i] = std::max(0.0, updated_lag_multipliers[i]);
-    // ^ Note ^
+    // NOTE
     //  - This aims to guarantee that the problem remains bounded, which is true,
     //    provided the lagrange multiplier remains >= 0;
-
-    // If multipliers are allowed to go negative -> using *EQUALITY* constraints!
+    //  - If multipliers are allowed to go negative -> using *EQUALITY* constraints!
   }
   lagrangian_multipliers_.push_back(updated_lag_multipliers);
 

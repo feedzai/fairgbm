@@ -33,7 +33,7 @@ Dataset::Dataset(data_size_t num_data) {
   CHECK_GT(num_data, 0);
   data_filename_ = "noname";
   num_data_ = num_data;
-  metadata_.Init(num_data_, NO_SPECIFIC, NO_SPECIFIC);
+  metadata_.Init(num_data_, NO_SPECIFIC, NO_SPECIFIC, NO_SPECIFIC);
   is_finish_load_ = false;
   group_bin_boundaries_.push_back(0);
   has_raw_ = false;
@@ -850,8 +850,13 @@ bool Dataset::SetFloatField(const char* field_name, const float* field_data,
 #else
     metadata_.SetWeights(field_data, num_element);
 #endif
+  } else if (name == std::string("constraint_group") ||
+             name == std::string("fairness_group") ||
+             name == std::string("sensitive_group") ||
+             name == std::string("protected_group")) {
+    metadata_.SetConstraintGroup(field_data, num_element);
   } else {
-    return false;
+    return false;   // Not successful
   }
   return true;
 }

@@ -9,6 +9,9 @@
 #include "rank_objective.hpp"
 #include "regression_objective.hpp"
 #include "xentropy_objective.hpp"
+#include "constrained_xentropy_objective.hpp"
+#include "constrained_recall_objective.hpp"
+
 
 namespace LightGBM {
 
@@ -37,6 +40,10 @@ ObjectiveFunction* ObjectiveFunction::CreateObjectiveFunction(const std::string&
     return new MulticlassOVA(config);
   } else if (type == std::string("cross_entropy")) {
     return new CrossEntropy(config);
+  } else if (type == std::string("constrained_cross_entropy")) {      // Entry-point for FairGBM code!
+    return new ConstrainedCrossEntropy(config);
+  } else if (type == std::string("constrained_recall_objective")) {   // Entry-point for FairGBM code!
+    return new ConstrainedRecallObjective(config);
   } else if (type == std::string("cross_entropy_lambda")) {
     return new CrossEntropyLambda(config);
   } else if (type == std::string("mape")) {
@@ -79,6 +86,10 @@ ObjectiveFunction* ObjectiveFunction::CreateObjectiveFunction(const std::string&
     return new MulticlassOVA(strs);
   } else if (type == std::string("cross_entropy")) {
     return new CrossEntropy(strs);
+  } else if (type == std::string("constrained_cross_entropy")) {
+    return new ConstrainedCrossEntropy(strs);
+  } else if (type == std::string("constrained_recall_objective")) {
+    return new ConstrainedRecallObjective(strs);
   } else if (type == std::string("cross_entropy_lambda")) {
     return new CrossEntropyLambda(strs);
   } else if (type == std::string("mape")) {

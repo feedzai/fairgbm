@@ -37,6 +37,7 @@ class DatasetLoader;
 *        4. Query Weights, auto calculate by weights and query_boundaries(if both of them are existed)
 *           the weight for i-th query is sum(query_boundaries[i] , .., query_boundaries[i+1]) / (query_boundaries[i + 1] -  query_boundaries[i+1])
 *        5. Initial score. optional. if existing, the model will boost from this score, otherwise will start from 0.
+*        6. [FairGBM-only] Group, used for training during constrained optimization.
 */
 class Metadata {
  public:
@@ -69,8 +70,9 @@ class Metadata {
   * \param num_data Number of training data
   * \param weight_idx Index of weight column, < 0 means doesn't exists
   * \param query_idx Index of query id column, < 0 means doesn't exists
+  * \param constraint_group_idx_ Index of group constraint id column, < 0 means it doesn't exist
   */
-  void Init(data_size_t num_data, int weight_idx, int query_idx);
+  void Init(data_size_t num_data, int weight_idx, int query_idx, int constraint_group_idx_);
 
   /*!
   * \brief Partition label by used indices
@@ -91,6 +93,13 @@ class Metadata {
   void SetWeights(const label_t* weights, data_size_t len);
 
   void SetQuery(const data_size_t* query, data_size_t len);
+
+  /*!
+  * \brief Set constraint group information in bulk (for the whole train dataset)
+  * \param constraint_group constraint group information for each instance.
+  * \param len the number of elements in the constraint_group array.
+  */
+  void SetConstraintGroup(const float* constraint_group, data_size_t len);
 
   /*!
   * \brief Set initial scores
@@ -158,7 +167,7 @@ class Metadata {
   /*!
   * \brief Get data boundaries on queries, if not exists, will return nullptr
   *        we assume data will order by query,
-  *        the interval of [query_boundaris[i], query_boundaris[i+1])
+  *        the interval of [query_boundaries[i], query_boundaries[i+1])
   *        is the data indices for query i.
   * \return Pointer of data boundaries on queries
   */
@@ -198,6 +207,31 @@ class Metadata {
     } else {
       return nullptr;
     }
+  }
+
+  /*!
+  * \brief Set constraint group value for one record
+  * \param idx Index of this record
+  * \param value Group constraint value of this record
+  */
+  inline void SetConstraintGroupAt(data_size_t idx, constraint_group_t value) {
+    constraint_group_[idx] = value;
+  }
+
+  /*!
+  * \brief Get pointer of group
+  * \return Pointer of group
+  */
+  inline const constraint_group_t* group() const { return constraint_group_.data(); }
+
+  /*! \brief Get unique groups in data */
+  inline std::vector<constraint_group_t> group_values() const {
+    std::vector<constraint_group_t> values(constraint_group_);
+    std::sort(values.begin(), values.end());
+
+    auto last = std::unique(values.begin(), values.end());
+    values.erase(last, values.end());
+    return values;
   }
 
   /*!
@@ -246,6 +280,9 @@ class Metadata {
   bool weight_load_from_file_;
   bool query_load_from_file_;
   bool init_score_load_from_file_;
+
+  /*! \brief Group data for group constraints */
+  std::vector<constraint_group_t> constraint_group_;
 };
 
 

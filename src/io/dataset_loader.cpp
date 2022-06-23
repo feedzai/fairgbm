@@ -22,6 +22,7 @@ DatasetLoader::DatasetLoader(const Config& io_config, const PredictFunction& pre
   label_idx_ = 0;
   weight_idx_ = NO_SPECIFIC;
   group_idx_ = NO_SPECIFIC;
+  constraint_group_idx_ = NO_SPECIFIC;
   SetHeader(filename);
   store_raw_ = false;
   if (io_config.linear_tree) {
@@ -143,7 +144,28 @@ void DatasetLoader::SetHeader(const char* filename) {
       }
       ignore_features_.emplace(group_idx_);
     }
+
+    // load constraint group column idx
+    if (config_.constraint_group_column.size() > 0) {
+      if (Common::StartsWith(config_.constraint_group_column, name_prefix)) {
+        std::string name = config_.constraint_group_column.substr(name_prefix.size());
+        if (name2idx.count(name) > 0) {
+          constraint_group_idx_ = name2idx[name];
+          Log::Info("Using column %s as constraint_group id", name.c_str());
+        } else {
+          Log::Fatal("Could not find constraint_group column %s in data file", name.c_str());
+        }
+      } else {
+        if (!Common::AtoiAndCheck(config_.constraint_group_column.c_str(), &constraint_group_idx_)) {
+          Log::Fatal("constraint_group_column is not a number,\n"
+                     "if you want to use a column name,\n"
+                     "please add the prefix \"name:\" to the column name");
+        }
+        Log::Info("Using column number %d as constraint_group id", constraint_group_idx_);
+      }
+    }
   }
+
   if (config_.categorical_feature.size() > 0) {
     if (Common::StartsWith(config_.categorical_feature, name_prefix)) {
       std::string names = config_.categorical_feature.substr(name_prefix.size());
@@ -217,7 +239,7 @@ Dataset* DatasetLoader::LoadFromFile(const char* filename, int rank, int num_mac
         dataset->ResizeRaw(dataset->num_data_);
       }
       // initialize label
-      dataset->metadata_.Init(dataset->num_data_, weight_idx_, group_idx_);
+      dataset->metadata_.Init(dataset->num_data_, weight_idx_, group_idx_, constraint_group_idx_);
       // extract features
       ExtractFeaturesFromMemory(&text_data, parser.get(), dataset.get());
       text_data.clear();
@@ -237,7 +259,7 @@ Dataset* DatasetLoader::LoadFromFile(const char* filename, int rank, int num_mac
         dataset->ResizeRaw(dataset->num_data_);
       }
       // initialize label
-      dataset->metadata_.Init(dataset->num_data_, weight_idx_, group_idx_);
+      dataset->metadata_.Init(dataset->num_data_, weight_idx_, group_idx_, constraint_group_idx_);
       Log::Info("Making second pass...");
       // extract features
       ExtractFeaturesFromFile(filename, parser.get(), used_data_indices, dataset.get());
@@ -279,7 +301,7 @@ Dataset* DatasetLoader::LoadFromFileAlignWithOtherDataset(const char* filename, 
       auto text_data = LoadTextDataToMemory(filename, dataset->metadata_, 0, 1, &num_global_data, &used_data_indices);
       dataset->num_data_ = static_cast<data_size_t>(text_data.size());
       // initialize label
-      dataset->metadata_.Init(dataset->num_data_, weight_idx_, group_idx_);
+      dataset->metadata_.Init(dataset->num_data_, weight_idx_, group_idx_, constraint_group_idx_);
       dataset->CreateValid(train_data);
       if (dataset->has_raw()) {
         dataset->ResizeRaw(dataset->num_data_);
@@ -293,7 +315,7 @@ Dataset* DatasetLoader::LoadFromFileAlignWithOtherDataset(const char* filename, 
       dataset->num_data_ = static_cast<data_size_t>(text_reader.CountLine());
       num_global_data = dataset->num_data_;
       // initialize label
-      dataset->metadata_.Init(dataset->num_data_, weight_idx_, group_idx_);
+      dataset->metadata_.Init(dataset->num_data_, weight_idx_, group_idx_, constraint_group_idx_);
       dataset->CreateValid(train_data);
       if (dataset->has_raw()) {
         dataset->ResizeRaw(dataset->num_data_);
@@ -996,6 +1018,7 @@ void DatasetLoader::ConstructBinMappersFromTextData(int rank, int num_machines,
   CHECK(label_idx_ >= 0 && label_idx_ <= dataset->num_total_features_);
   CHECK(weight_idx_ < 0 || weight_idx_ < dataset->num_total_features_);
   CHECK(group_idx_ < 0 || group_idx_ < dataset->num_total_features_);
+  CHECK(constraint_group_idx_ == NO_SPECIFIC || (constraint_group_idx_ >= 0 && constraint_group_idx_ < dataset->num_total_features_)); // FairGBM
 
   // fill feature_names_ if not header
   if (feature_names_.empty()) {
@@ -1178,6 +1201,8 @@ void DatasetLoader::ExtractFeaturesFromMemory(std::vector<std::string>* text_dat
             dataset->metadata_.SetQueryAt(i, static_cast<data_size_t>(inner_data.second));
           }
         }
+        if (inner_data.first == constraint_group_idx_)
+          dataset->metadata_.SetConstraintGroupAt(i, static_cast<constraint_group_t>(inner_data.second));
       }
       if (dataset->has_raw()) {
         for (size_t j = 0; j < feature_row.size(); ++j) {
@@ -1235,6 +1260,8 @@ void DatasetLoader::ExtractFeaturesFromMemory(std::vector<std::string>* text_dat
             dataset->metadata_.SetQueryAt(i, static_cast<data_size_t>(inner_data.second));
           }
         }
+        if (inner_data.first == constraint_group_idx_)
+          dataset->metadata_.SetConstraintGroupAt(i, static_cast<constraint_group_t>(inner_data.second));
       }
       dataset->FinishOneRow(tid, i, is_feature_added);
       if (dataset->has_raw()) {
@@ -1308,6 +1335,8 @@ void DatasetLoader::ExtractFeaturesFromFile(const char* filename, const Parser* 
             dataset->metadata_.SetQueryAt(start_idx + i, static_cast<data_size_t>(inner_data.second));
           }
         }
+        if (inner_data.first == constraint_group_idx_)
+          dataset->metadata_.SetConstraintGroupAt(start_idx + i, static_cast<constraint_group_t>(inner_data.second));
       }
       if (dataset->has_raw()) {
         for (size_t j = 0; j < feature_row.size(); ++j) {

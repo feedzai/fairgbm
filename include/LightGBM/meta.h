@@ -47,6 +47,13 @@ typedef double label_t;
 typedef float label_t;
 #endif
 
+/*! \brief Type of metadata, include group */
+#ifdef GROUP_T_USE_INT
+  typedef u_int constraint_group_t;
+#else
+  typedef u_short constraint_group_t;
+#endif
+
 const score_t kMinScore = -std::numeric_limits<score_t>::infinity();
 
 const score_t kEpsilon = 1e-15f;

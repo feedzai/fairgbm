@@ -42,7 +42,7 @@ GBDT::GBDT()
   average_output_ = false;
   tree_learner_ = nullptr;
   linear_tree_ = false;
-  output_dir_ = ".";
+  debugging_output_dir_ = ".";
 }
 
 GBDT::~GBDT() {
@@ -94,7 +94,7 @@ void GBDT::Init(const Config* config, const Dataset* train_data, const Objective
 
   // -- START FairGBM block --
   // load output dir
-  output_dir_ = config->output_dir;
+  debugging_output_dir_ = config->debugging_output_dir;
 
   // constraint configurations
   is_constrained_ = objective_function->IsConstrained();
@@ -228,15 +228,15 @@ void GBDT::Boosting() {
 
 #ifdef FAIRGBM_DEBUG
     // Dump lagrangian multipliers
-    write_values<double>(output_dir_, "lagrangian_multipliers.dat", lagrangian_multipliers_.back());
+    write_values<double>(debugging_output_dir_, "lagrangian_multipliers.dat", lagrangian_multipliers_.back());
 
     // Dump the gradients of the Lagrangian (grads of loss + grads of constraints)
     write_values<score_t, Common::AlignmentAllocator<score_t, kAlignedSize>>(
-        output_dir_, "gradients.lagrangian.dat", gradients_);
+        debugging_output_dir_, "gradients.lagrangian.dat", gradients_);
 
     // Dump hessians, we don't currently use them though :P
     write_values<score_t, Common::AlignmentAllocator<score_t, kAlignedSize>>(
-        output_dir_, "hessians.lagrangian.dat", hessians_);
+        debugging_output_dir_, "hessians.lagrangian.dat", hessians_);
 #endif
   }
   // -- END FairGBM block --
@@ -618,7 +618,7 @@ bool GBDT::TrainLagrangianOneIter(const score_t *gradients, const score_t *hessi
 
 #ifdef FAIRGBM_DEBUG
   // Log constraints violation to file
-  write_values<double>(output_dir_, "functions_evals.dat", lag_updates);
+  write_values<double>(debugging_output_dir_, "functions_evals.dat", lag_updates);
 #endif
 
   return false;

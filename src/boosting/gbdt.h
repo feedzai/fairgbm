@@ -147,6 +147,14 @@ class GBDT : public GBDTBase {
   bool TrainOneIter(const score_t* gradients, const score_t* hessians) override;
 
   /*!
+  * \brief Training logic for the constrained optimization step.
+  * \param gradients nullptr for using default objective, otherwise use self-defined boosting
+  * \param hessians nullptr for using default objective, otherwise use self-defined boosting
+  * \return True if cannot train any more
+  */
+  bool TrainLagrangianOneIter(const score_t* gradients, const score_t* hessians) override;
+
+  /*!
   * \brief Rollback one iteration
   */
   void RollbackOneIter() override;
@@ -534,6 +542,20 @@ class GBDT : public GBDTBase {
   ParallelPartitionRunner<data_size_t, false> bagging_runner_;
   Json forced_splits_json_;
   bool linear_tree_;
+
+  // -- START FairGBM block --
+  /*! \brief Whether we're running constrained optimization */
+  bool is_constrained_;
+
+  /*! \brief Shrinkage rate for the Ascent step */
+  double lagrangian_learning_rate;
+
+  /*! \brief Lagrangian multiplier(s) per iteration */
+  std::vector<std::vector<double>> lagrangian_multipliers_;
+
+  /*! \brief Output directory to store debug files (e.g., gradients/hessians) */
+  std::string debugging_output_dir_;
+  // -- END FairGBM block --
 };
 
 }  // namespace LightGBM

@@ -132,6 +132,9 @@ public:
 
     // Function used as a PROXY for the step-wise in the OBJECTIVE
     objective_stepwise_proxy = ValidateProxyFunctionName(config.objective_stepwise_proxy, true);
+
+    // Debug configs
+    debugging_output_dir_ = config.debugging_output_dir;
   }
 
   /*!
@@ -197,8 +200,8 @@ public:
     if (weights_ != nullptr)
       throw std::logic_error("not implemented yet");  // TODO: https://github.com/feedzai/fairgbm/issues/5
 
-    std::vector<double> functions;
-    std::unordered_map<group_t, double> group_fpr, group_fnr;
+    std::vector<double> constraint_values;
+    std::unordered_map<constraint_group_t, double> group_fpr, group_fnr;
 
     // NOTE! ** MULTIPLIERS ARE ORDERED! **
     //  - 1st: group-wise FPR constraints (one multiplier per group)
@@ -210,13 +213,13 @@ public:
     if (IsFPRConstrained())
     {
       ComputeFPR(score, score_threshold_, group_fpr);
-      double max_fpr = Constrained::findMaxValuePair<group_t, double>(group_fpr).second;
+      double max_fpr = Constrained::findMaxValuePair<constraint_group_t, double>(group_fpr).second;
 
       // Assuming group_values_ is in ascending order
       for (const auto &group : group_values_)
       {
         double fpr_constraint_value = max_fpr - group_fpr[group] - fpr_threshold_;
-        functions.push_back(fpr_constraint_value);
+        constraint_values.push_back(fpr_constraint_value);
 
 #ifdef DEBUG
         Log::Debug(
@@ -230,13 +233,13 @@ public:
     if (IsFNRConstrained())
     {
       ComputeFNR(score, score_threshold_, group_fnr);
-      double max_fnr = Constrained::findMaxValuePair<group_t, double>(group_fnr).second;
+      double max_fnr = Constrained::findMaxValuePair<constraint_group_t, double>(group_fnr).second;
 
       // Assuming group_values_ is in ascending order
       for (const auto &group : group_values_)
       {
         double fnr_constraint_value = max_fnr - group_fnr[group] - fnr_threshold_;
-        functions.push_back(fnr_constraint_value);
+        constraint_values.push_back(fnr_constraint_value);
 
 #ifdef DEBUG
         Log::Debug(
@@ -252,7 +255,7 @@ public:
       double global_fpr = ComputeGlobalFPR(score, global_score_threshold_);
       double global_fpr_constraint_value = global_fpr - global_target_fpr_;
 
-      functions.push_back(global_fpr_constraint_value);
+      constraint_values.push_back(global_fpr_constraint_value);
 
 #ifdef DEBUG
       Log::Debug(
@@ -267,7 +270,7 @@ public:
       double global_fnr = ComputeGlobalFNR(score, global_score_threshold_);
       double global_fnr_constraint_value = global_fnr - global_target_fnr_;
 
-      functions.push_back(global_fnr_constraint_value);
+      constraint_values.push_back(global_fnr_constraint_value);
 
 #ifdef DEBUG
       Log::Debug(
@@ -276,23 +279,27 @@ public:
 #endif
     }
 
-    return functions;
+#ifdef DEBUG
+    Constrained::write_values<double>(debugging_output_dir_, "constraint_values.dat", constraint_values);
+#endif
+
+    return constraint_values;
   }
 
   /*!
     * \brief Get gradients of the constraints w.r.t. to the scores (this will use proxy constraints!).
-    * \param double lagrange multipliers in this round
+    * \param double Lagrangian multipliers in this round
     * \param score prediction score in this round
     * \gradients Output gradients
     * \hessians Output hessians
     */
   virtual void GetConstraintGradientsWRTModelOutput(const double *lagrangian_multipliers,
                                                     const double *score, score_t *gradients,
-                                                    score_t *hessians) const
+                                                    score_t * /* hessians */) const
   {
 
-    std::unordered_map<group_t, double> group_fpr, group_fnr;
-    std::pair<group_t, double> max_proxy_fpr, max_proxy_fnr;
+    std::unordered_map<constraint_group_t, double> group_fpr, group_fnr;
+    std::pair<constraint_group_t, double> max_proxy_fpr, max_proxy_fnr;
 
     // Helper constant for BCE-based proxies
     double xent_horizontal_shift = log(exp(proxy_margin_) - 1); // here, proxy_margin_ is the VERTICAL margin
@@ -324,7 +331,7 @@ public:
       else
         throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
 
-      max_proxy_fpr = Constrained::findMaxValuePair<group_t, double>(group_fpr);
+      max_proxy_fpr = Constrained::findMaxValuePair<constraint_group_t, double>(group_fpr);
     }
     if (IsFNRConstrained())
     {
@@ -337,7 +344,7 @@ public:
       else
         throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
 
-      max_proxy_fnr = Constrained::findMaxValuePair<group_t, double>(group_fnr);
+      max_proxy_fnr = Constrained::findMaxValuePair<constraint_group_t, double>(group_fnr);
     }
 
     /** ---------------------------------------------------------------- *
@@ -614,7 +621,7 @@ public:
     * \param probabilities_threshold to consider for computing the FPR
     * \group_fpr Output the FPR per group
     */
-  void ComputeFPR(const double *score, double probabilities_threshold, std::unordered_map<group_t, double> &group_fpr) const
+  void ComputeFPR(const double *score, double probabilities_threshold, std::unordered_map<constraint_group_t, double> &group_fpr) const
   {
     std::unordered_map<int, int> false_positives;
     std::unordered_map<int, int> label_negatives;
@@ -622,7 +629,7 @@ public:
     // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
-      group_t group = group_[i];
+      constraint_group_t group = group_[i];
 
       if (label_[i] == 0)
       {
@@ -678,15 +685,15 @@ public:
     * \param margin to consider for computing the Hinge approximation of FPR
     * \group_fpr Output the proxy FPR per group
     */
-  void ComputeHingeFPR(const double *score, std::unordered_map<group_t, double> &group_fpr) const
+  void ComputeHingeFPR(const double *score, std::unordered_map<constraint_group_t, double> &group_fpr) const
   {
-    std::unordered_map<group_t, double> false_positives; // map of group index to the respective hinge-proxy FPs
-    std::unordered_map<group_t, int> label_negatives;    // map of group index to the respective number of LNs
+    std::unordered_map<constraint_group_t, double> false_positives; // map of group index to the respective hinge-proxy FPs
+    std::unordered_map<constraint_group_t, int> label_negatives;    // map of group index to the respective number of LNs
 
     // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
-      group_t group = group_[i];
+      constraint_group_t group = group_[i];
 
       // HingeFPR uses only label negatives
       if (label_[i] == 0)
@@ -719,15 +726,15 @@ public:
    * @param score array of scores
    * @param group_fpr hash-map of group to proxy-FPR
    */
-  void ComputeQuadraticLossFPR(const double *score, std::unordered_map<group_t, double> &group_fpr) const
+  void ComputeQuadraticLossFPR(const double *score, std::unordered_map<constraint_group_t, double> &group_fpr) const
   {
-    std::unordered_map<group_t, double> false_positives; // map of group index to the respective proxy FPs
-    std::unordered_map<group_t, int> label_negatives;    // map of group index to the respective number of LNs
+    std::unordered_map<constraint_group_t, double> false_positives; // map of group index to the respective proxy FPs
+    std::unordered_map<constraint_group_t, int> label_negatives;    // map of group index to the respective number of LNs
 
     // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
-      group_t group = group_[i];
+      constraint_group_t group = group_[i];
 
       // FPR uses only label NEGATIVES
       if (label_[i] == 0 and score[i] > -proxy_margin_)
@@ -761,16 +768,16 @@ public:
    * @param score array of scores
    * @param group_fpr hash-map of group to proxy-FPR
    */
-  void ComputeXEntropyLossFPR(const double *score, std::unordered_map<group_t, double> &group_fpr) const
+  void ComputeXEntropyLossFPR(const double *score, std::unordered_map<constraint_group_t, double> &group_fpr) const
   {
-    std::unordered_map<group_t, double> false_positives; // map of group index to the respective proxy FPs
-    std::unordered_map<group_t, int> label_negatives;    // map of group index to the respective number of LNs
+    std::unordered_map<constraint_group_t, double> false_positives; // map of group index to the respective proxy FPs
+    std::unordered_map<constraint_group_t, int> label_negatives;    // map of group index to the respective number of LNs
     double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
 
     // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
-      group_t group = group_[i];
+      constraint_group_t group = group_[i];
 
       // FPR uses only label NEGATIVES
       if (label_[i] == 0)
@@ -802,15 +809,15 @@ public:
     * \param probabilities_threshold to consider for computing the FNR
     * \group_fnr Output the FNR per group
     */
-  void ComputeFNR(const double *score, double probabilities_threshold, std::unordered_map<group_t, double> &group_fnr) const
+  void ComputeFNR(const double *score, double probabilities_threshold, std::unordered_map<constraint_group_t, double> &group_fnr) const
   {
-    std::unordered_map<group_t, int> false_negatives;
-    std::unordered_map<group_t, int> label_positives;
+    std::unordered_map<constraint_group_t, int> false_negatives;
+    std::unordered_map<constraint_group_t, int> label_positives;
 
     // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
-      group_t group = group_[i];
+      constraint_group_t group = group_[i];
 
       if (label_[i] == 1)
       {
@@ -865,15 +872,15 @@ public:
     * \param margin to consider for computing the FNR
     * \group_fnr Output the proxy FNR per group
     */
-  void ComputeHingeLossFNR(const double *score, std::unordered_map<group_t, double> &group_fnr) const
+  void ComputeHingeLossFNR(const double *score, std::unordered_map<constraint_group_t, double> &group_fnr) const
   {
-    std::unordered_map<group_t, double> false_negatives; // map of group index to the respective hinge-proxy FNs
-    std::unordered_map<group_t, int> label_positives;
+    std::unordered_map<constraint_group_t, double> false_negatives; // map of group index to the respective hinge-proxy FNs
+    std::unordered_map<constraint_group_t, int> label_positives;
 
     // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
-      group_t group = group_[i];
+      constraint_group_t group = group_[i];
 
       if (label_[i] == 1)
       {
@@ -903,15 +910,15 @@ public:
    * @param score array of scores
    * @param group_fnr hash-map of group to proxy-FNR
    */
-  void ComputeQuadraticLossFNR(const double *score, std::unordered_map<group_t, double> &group_fnr) const
+  void ComputeQuadraticLossFNR(const double *score, std::unordered_map<constraint_group_t, double> &group_fnr) const
   {
-    std::unordered_map<group_t, double> false_negatives; // map of group index to the respective proxy FPs
-    std::unordered_map<group_t, int> label_positives;    // map of group index to the respective number of LNs
+    std::unordered_map<constraint_group_t, double> false_negatives; // map of group index to the respective proxy FPs
+    std::unordered_map<constraint_group_t, int> label_positives;    // map of group index to the respective number of LNs
 
     // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
-      group_t group = group_[i];
+      constraint_group_t group = group_[i];
 
       // FNR uses only label POSITIVES
       if (label_[i] == 1 and score[i] < proxy_margin_)
@@ -945,16 +952,16 @@ public:
    * @param score array of scores
    * @param group_fnr hash-map of group to proxy-FNR
    */
-  void ComputeXEntropyLossFNR(const double *score, std::unordered_map<group_t, double> &group_fnr) const
+  void ComputeXEntropyLossFNR(const double *score, std::unordered_map<constraint_group_t, double> &group_fnr) const
   {
-    std::unordered_map<group_t, double> false_negatives; // map of group index to the respective proxy FPs
-    std::unordered_map<group_t, int> label_positives;    // map of group index to the respective number of LNs
+    std::unordered_map<constraint_group_t, double> false_negatives; // map of group index to the respective proxy FPs
+    std::unordered_map<constraint_group_t, int> label_positives;    // map of group index to the respective number of LNs
     double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
 
     // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
-      group_t group = group_[i];
+      constraint_group_t group = group_[i];
 
       // FNR uses only label POSITIVES
       if (label_[i] == 1)
@@ -1032,14 +1039,14 @@ protected:
   const label_t *weights_;
 
   /*! \brief Pointer for group */
-  const group_t *group_;
+  const constraint_group_t *group_;
   /*! \brief Unique group values */
-  std::vector<group_t> group_values_;
+  std::vector<constraint_group_t> group_values_;
 
   /*! \brief Label positives per group */
-  std::unordered_map<group_t, int> group_label_positives_;
+  std::unordered_map<constraint_group_t, int> group_label_positives_;
   /*! \brief Label Negatives per group */
-  std::unordered_map<group_t, int> group_label_negatives_;
+  std::unordered_map<constraint_group_t, int> group_label_negatives_;
 
   /*! \brief Total number of Label Positives */
   int total_label_positives_ = 0;
@@ -1079,6 +1086,9 @@ protected:
 
   /*! \brief Score threshold used for the global constraints */
   score_t global_score_threshold_ = 0.5;
+
+  /*! \brief Where to save debug files to */
+  std::string debugging_output_dir_;
 };
 } // namespace LightGBM
 

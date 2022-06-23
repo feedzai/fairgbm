@@ -53,6 +53,9 @@ public:
       if (objective_stepwise_proxy.empty()) {
         Log::Fatal("Must provide an `objective_stepwise_proxy` to optimize for Recall. Got empty input.");
       }
+
+      // Disclaimer on using ConstrainedRecallObjective
+      Log::Warning("Directly optimizing for Recall is still being researched and is prone to high variability of outcomes.");
     };
 
     explicit ConstrainedRecallObjective(const std::vector<std::string> &)
@@ -110,7 +113,7 @@ public:
      * @return 0
      */
     double BoostFromScore(int) const override {
-      std::cout << "constrained_recall_objective: boosting from scores == 0;" << std::endl;
+      Log::Info("constrained_recall_objective: boosting from scores == 0;");
       return 0.;
     }
 
@@ -136,11 +139,12 @@ public:
 
       /**
        * NOTE
+       *  - https://github.com/feedzai/fairgbm/issues/11
        *  - This value should be zero in order to optimize solely for TPR (Recall),
-       *  as TPR considers only label positives and ignores label negatives.
+       *  as TPR considers only label positives (LPs) and ignores label negatives (LNs).
        *  - However, initial splits will have -inf information gain if the gradients
-       *  of all label negatives (LNs) are 0;
-       *  - Hence, we're adding a small constant to the gradient of all LNs;
+       *  of all LNs are 0;
+       *  - Hence, we're adding a tiny positive weight to the gradient of all LNs;
        */
       const double label_negative_weight = 1e-2;
 
@@ -175,7 +179,13 @@ public:
           }
 
         } else {
-          // NOTE! trying to use a soft BCE signal for LNs
+          // NOTE: https://github.com/feedzai/fairgbm/issues/11
+          //  - This whole else clause should not be needed to optimize for Recall,
+          //  as LNs have no influence on the FNR loss function or its (proxy-)gradient;
+          //  - However, passing a zero gradient to all LNs leads to weird early stopping
+          //  behavior from the `GBDT::Train` function;
+          //  - Adding this tiny weight to the gradient of LNs seems to fix the issue with
+          //  no (apparent) unintended consequences, as the gradient flowing is really small;
           const double z = Constrained::sigmoid(score[i] + xent_horizontal_shift);
           gradients[i] = (score_t) (label_negative_weight * z);
           hessians[i] = (score_t) (label_negative_weight * z * (1. - z));

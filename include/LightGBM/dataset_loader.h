@@ -85,10 +85,8 @@ class DatasetLoader {
   /*! \brief Whether to store raw feature values */
   bool store_raw_;
 
-  // -- START FairGBM block --
-  /*! \brief index of group constraint column */
-  int group_constraint_idx_;
-  // -- END FairGBM block --
+  /*! \brief index of constraint group column */
+  int constraint_group_idx_;
 };
 
 }  // namespace LightGBM

@@ -29,23 +29,18 @@
 #include <cstring>
 #include <vector>
 
-/*
- * Implements gradients and Hessians for the following point losses.
- * Target y is anything in interval [0, 1].
- *
- * (1) ConstrainedCrossEntropy; "constrained_xentropy";
- *
- * loss(y, p, w) = { -(1-y)*log(1-p)-y*log(p) }*w,
- * with probability p = 1/(1+exp(-f)), where f is being boosted
- *
- * ConvertToOutput: f -> p
- */
-
 namespace LightGBM {
 
-/*!
-* \brief Objective function for cross-entropy (with optional linear weights)
-*/
+/**
+ * Objective function for constrained optimization.
+ * Uses the well-known Binary Cross Entropy (BCE) function for measuring predictive loss, plus
+ * Uses a cross-entropy-based function as a proxy for the step-wise function when computing fairness constraints.
+ *
+ * NOTE:
+ *  - This `constrained_xentropy` objective generally leads to the best constrained results;
+ *  - All results from the FairGBM paper use this objective function with the "cross_entropy" step-wise proxy;
+ *    - This pairing of "constrained cross-entropy objective + cross-entropy proxy for constraints" was tested the most;
+ */
 class ConstrainedCrossEntropy : public ConstrainedObjectiveFunction { // TODO: inherit from both CrossEntropy and ConstrainedObjectiveFunction
 public:
   explicit ConstrainedCrossEntropy(const Config &config)
@@ -142,7 +137,7 @@ public:
         suml += label_[i];
       }
     }
-    double pavg = suml / sumw;
+    double pavg = sumw > 0.0f ? suml / sumw : 0.0f;
     pavg = std::min(pavg, 1.0 - kEpsilon);
     pavg = std::max<double>(pavg, kEpsilon);
     double initscore = std::log(pavg / (1.0f - pavg));

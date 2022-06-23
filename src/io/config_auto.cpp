@@ -167,11 +167,11 @@ const std::unordered_map<std::string, std::string>& Config::alias_table() {
   {"workers", "machines"},
   {"nodes", "machines"},
 
-  // -- START FairGBM block --
+  // FairGBM parameters
   {"lagrangian_learning_rate", "multiplier_learning_rate"},
   {"lagrangian_multiplier_learning_rate", "multiplier_learning_rate"},
-  {"lagrange_multipliers", "init_lagrange_multipliers"},
-  {"init_multipliers", "init_lagrange_multipliers"},
+  {"lagrangian_multipliers", "init_lagrangian_multipliers"},
+  {"init_multipliers", "init_lagrangian_multipliers"},
   {"output_dir", "debugging_output_dir"},
   {"constraint_proxy_function", "constraint_stepwise_proxy"},
   {"constraint_stepwise_proxy_function", "constraint_stepwise_proxy"},
@@ -182,7 +182,6 @@ const std::unordered_map<std::string, std::string>& Config::alias_table() {
   {"target_global_fpr", "global_target_fpr"},
   {"global_fnr", "global_target_fnr"},
   {"target_global_fnr", "global_target_fnr"},
-  // -- END FairGBM block --
   });
   return aliases;
 }
@@ -320,7 +319,7 @@ const std::unordered_set<std::string>& Config::parameter_set() {
   "gpu_use_dp",
   "num_gpu",
 
-  // -- START FairGBM block --
+  // FairGBM parameters
   "debugging_output_dir",
   "constraint_type",
   "constraint_stepwise_proxy",
@@ -330,13 +329,12 @@ const std::unordered_set<std::string>& Config::parameter_set() {
   "constraint_fpr_threshold",
   "constraint_fnr_threshold",
   "score_threshold",
-  "init_lagrange_multipliers",
+  "init_lagrangian_multipliers",
   "multiplier_learning_rate",
   "global_constraint_type",
   "global_target_fpr",
   "global_target_fnr",
   "global_score_threshold"
-  // -- END FairGBM block --
   });
   return params;
 }
@@ -663,8 +661,7 @@ void Config::GetMembersFromString(const std::unordered_map<std::string, std::str
   GetInt(params, "num_gpu", &num_gpu);
   CHECK_GT(num_gpu, 0);
 
-  // -- START FairGBM block --
-  // Update: Add configs for FairGBM
+  // FairGBM parameters
   Config::GetString(params, "debugging_output_dir", &debugging_output_dir);
 
   Config::GetString(params, "constraint_type", &constraint_type);
@@ -689,9 +686,9 @@ void Config::GetMembersFromString(const std::unordered_map<std::string, std::str
   Config::GetDouble(params, "multiplier_learning_rate", &multiplier_learning_rate);
   CHECK_GE(multiplier_learning_rate, 0);
 
-  if (GetString(params, "init_lagrange_multipliers", &tmp_str)) {
-    init_lagrange_multipliers = Common::StringToArray<double>(tmp_str, ',');
-    for (auto lag : init_lagrange_multipliers)
+  if (GetString(params, "init_lagrangian_multipliers", &tmp_str)) {
+    init_lagrangian_multipliers = Common::StringToArray<double>(tmp_str, ',');
+    for (auto lag : init_lagrangian_multipliers)
       CHECK_GE(lag, 0);
   }
 
@@ -706,8 +703,6 @@ void Config::GetMembersFromString(const std::unordered_map<std::string, std::str
 
   Config::GetDouble(params, "global_score_threshold", &global_score_threshold);
   CHECK_GE(global_score_threshold, 0); CHECK_LE(global_score_threshold, 1);
-
-  // -- END FairGBM block --
 }
 
 std::string Config::SaveMembersToString() const {
@@ -817,7 +812,6 @@ std::string Config::SaveMembersToString() const {
   str_buf << "[gpu_use_dp: " << gpu_use_dp << "]\n";
   str_buf << "[num_gpu: " << num_gpu << "]\n";
 
-  // -- START FairGBM block --
   str_buf << "[------- FAIRGBM ------]\n";
   str_buf << "[debugging_output_dir: " << debugging_output_dir << "]\n";
   str_buf << "[constraint_type: " << constraint_type << "]\n";
@@ -827,7 +821,7 @@ std::string Config::SaveMembersToString() const {
   str_buf << "[constraint_fpr_threshold: " << constraint_fpr_threshold << "]\n";
   str_buf << "[constraint_fnr_threshold: " << constraint_fnr_threshold << "]\n";
   str_buf << "[multiplier_learning_rate: " << multiplier_learning_rate << "]\n";
-  str_buf << "[init_lagrange_multipliers: " << Common::Join(init_lagrange_multipliers, ",") << "]\n";
+  str_buf << "[init_lagrangian_multipliers: " << Common::Join(init_lagrangian_multipliers, ",") << "]\n";
 
   // Global constraint parameters
   str_buf << "[global_constraint_type: " << global_constraint_type << "]\n";
@@ -836,8 +830,7 @@ std::string Config::SaveMembersToString() const {
   str_buf << "[global_score_threshold: " << global_score_threshold << "]\n";
 
   // TODO -- Add option to normalize multipliers
-  // str_buf << "[normalize_lagrange_multipliers: ";
-  // -- END FairGBM block --
+  // str_buf << "[normalize_lagrangian_multipliers: ";
 
   return str_buf.str();
 }

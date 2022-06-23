@@ -455,8 +455,8 @@ inline static std::vector<T> StringToArrayFast(const std::string& str, int n) {
   return ret;
 }
 
-template<typename T>
-inline static std::string Join(const std::vector<T>& strs, const char* delimiter, const bool force_C_locale = false) {
+template<typename T, typename Allocator>
+inline static std::string Join(const std::vector<T, Allocator>& strs, const char* delimiter, const bool force_C_locale = false) {
   if (strs.empty()) {
     return std::string("");
   }
@@ -1205,7 +1205,7 @@ struct __TToStringHelper<T, true, true> {
 * Converts an array to a string with with values separated by the space character.
 * This method replaces Common's ``ArrayToString`` and ``ArrayToStringFast`` functionality
 * and is locale-independent.
-* 
+*
 * \note If ``high_precision_output`` is set to true,
 *       floating point values are output with more digits of precision.
 */

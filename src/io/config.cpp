@@ -226,10 +226,10 @@ void Config::Set(const std::unordered_map<std::string, std::string>& params) {
   std::sort(eval_at.begin(), eval_at.end());
 
   std::vector<std::string> new_valid;
-  for (size_t i = 0; i < valid.size(); ++i) {
-    if (valid[i] != data) {
+  for (const auto & i : valid) {
+    if (i != data) {
       // Only push the non-training data
-      new_valid.push_back(valid[i]);
+      new_valid.push_back(i);
     } else {
       is_provide_training_metric = true;
     }
@@ -253,6 +253,10 @@ void Config::Set(const std::unordered_map<std::string, std::string>& params) {
 
   // check for conflicts
   CheckParamConflict();
+
+#ifdef DEBUG
+  Log::Debug("Loading configs from Map; constraint_group_column=%s\n", this->constraint_group_column.c_str());
+#endif
 }
 
 bool CheckMultiClassObjective(const std::string& objective) {

@@ -197,13 +197,13 @@ struct Config {
   // desc = learning rate for the Lagrangian multipliers (which enforce the constraints)
   double multiplier_learning_rate = 0.1;
 
-  // alias = lagrange_multipliers, init_multipliers
+  // alias = lagrangian_multipliers, init_multipliers
   // type = multi-double
   // default = 0,0,...,0
   // desc = used only for constrained optimization (ignored for standard LightGBM)
   // desc = list representing the magnitude of *initial* (first iteration only) penalties for each constraint
   // desc = list should have the same number of elements as the number of constraints
-  std::vector<double> init_lagrange_multipliers;
+  std::vector<double> init_lagrangian_multipliers;
 
   // default = 31
   // alias = num_leaf, max_leaves, max_leaf

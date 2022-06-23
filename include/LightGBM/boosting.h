@@ -85,7 +85,7 @@ class LIGHTGBM_EXPORT Boosting {
   virtual bool TrainOneIter(const score_t* gradients, const score_t* hessians) = 0;
 
   /*!
-  * \brief Gradient ascent step w.r.t. Lagrange multipliers (used only for constrained optimization)
+  * \brief Gradient ascent step w.r.t. Lagrangian multipliers (used only for constrained optimization)
   * \param gradients nullptr for using default objective, otherwise use self-defined boosting
   * \param hessians nullptr for using default objective, otherwise use self-defined boosting
   * \return True if cannot train anymore (or training has ended due to early stopping)

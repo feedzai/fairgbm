@@ -49,9 +49,9 @@ typedef float label_t;
 
 /*! \brief Type of metadata, include group */
 #ifdef GROUP_T_USE_INT
-  typedef u_int group_t;
+  typedef u_int constraint_group_t;
 #else
-  typedef u_short group_t;
+  typedef u_short constraint_group_t;
 #endif
 
 const score_t kMinScore = -std::numeric_limits<score_t>::infinity();

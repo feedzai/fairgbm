@@ -92,7 +92,6 @@ void GBDT::Init(const Config* config, const Dataset* train_data, const Objective
 
   is_constant_hessian_ = GetIsConstHessian(objective_function);
 
-  // -- START FairGBM block --
   // load output dir
   debugging_output_dir_ = config->debugging_output_dir;
 
@@ -102,15 +101,14 @@ void GBDT::Init(const Config* config, const Dataset* train_data, const Objective
 
   int num_constraints = objective_function->NumConstraints();
 
-  // If no lagrange multipliers are specified, start everything at zero
-  if ((config->init_lagrange_multipliers).empty()) {
+  // If no Lagrangian multipliers are specified, start everything at zero
+  if ((config->init_lagrangian_multipliers).empty()) {
     std::vector<double> default_lag_multipliers(num_constraints, 0);
     lagrangian_multipliers_.push_back(default_lag_multipliers);
   } else {
-    CHECK_EQ(num_constraints, (int) config->init_lagrange_multipliers.size());
-    lagrangian_multipliers_.push_back(config->init_lagrange_multipliers);
+    CHECK_EQ(num_constraints, (int) config->init_lagrangian_multipliers.size());
+    lagrangian_multipliers_.push_back(config->init_lagrangian_multipliers);
   }
-  // -- END FairGBM block --
 
   tree_learner_ = std::unique_ptr<TreeLearner>(
     TreeLearner::CreateTreeLearner(config_->tree_learner, config_->device_type, config_.get())
@@ -210,7 +208,6 @@ void GBDT::Boosting() {
   objective_function_->GetGradients(score, gradients_.data(), hessians_.data());
   // ^ a.k.a. GetPredictiveLossGradientsWRTModelOutput
 
-  // -- START FairGBM block --
   if (is_constrained_) {
     auto constrained_objective_function = dynamic_cast<const ConstrainedObjectiveFunction *>(objective_function_);
 
@@ -221,7 +218,7 @@ void GBDT::Boosting() {
             score, gradients_.data(), hessians_.data());
     // ^ will change gradients and hessians in place
     //
-    // NOTE: lagrange_multipliers is a vector of vectors - each element represents the multipliers at a given iteration;
+    // NOTE: lagrangian_multipliers is a vector of vectors - each element represents the multipliers at a given iteration;
     // TODO: https://github.com/feedzai/fairgbm/issues/8
 
 #ifdef DEBUG
@@ -237,7 +234,6 @@ void GBDT::Boosting() {
         debugging_output_dir_, "hessians.lagrangian.dat", hessians_);
 #endif
   }
-  // -- END FairGBM block --
 }
 
 data_size_t GBDT::BaggingHelper(data_size_t start, data_size_t cnt, data_size_t* buffer) {
@@ -328,21 +324,16 @@ void GBDT::Train(int snapshot_freq, const std::string& model_output_path) {
   bool is_finished = false, is_finished_lagrangian = false;
   auto start_time = std::chrono::steady_clock::now();
 
-  // -- START FairGBM block --
   for (int iter = 0; iter < config_->num_iterations and (!is_finished or !is_finished_lagrangian); ++iter) {
 
-    // Descent step!
+    // Do one training iteration
+    // - execute a descent step on the loss function;
+    // - (optionally) execute an ascent step w.r.t. the Lagrangian multipliers (only if using constrained optim.)
     is_finished = TrainOneIter(nullptr, nullptr);
-
-    // Ascent step! (only if running constrained optimization)
-    if (is_constrained_) {
-      is_finished_lagrangian = TrainLagrangianOneIter(nullptr, nullptr);
-    }
 
     if (!is_finished) {
       is_finished = EvalAndCheckEarlyStopping();
     }
-    // -- END FairGBM block --
 
     auto end_time = std::chrono::steady_clock::now();
     // output used time per iteration
@@ -443,7 +434,7 @@ double GBDT::BoostFromAverage(int class_id, bool update_scorer) {
 
 /**
  * @brief Descent step!
- * 
+ *
  * @param gradients
  * @param hessians
  * @return whether training has ended
@@ -562,6 +553,12 @@ bool GBDT::TrainOneIter(const score_t* gradients, const score_t* hessians) {
     return true;
   }
 
+  // Only if running constrained optimization!
+  // Ascent step: update value of Lagrangian multipliers
+  if (is_constrained_) {
+    TrainLagrangianOneIter(nullptr, nullptr);
+  }
+
   ++iter_;
   return false;
 }
@@ -570,12 +567,12 @@ bool GBDT::TrainOneIter(const score_t* gradients, const score_t* hessians) {
 //  - implement normalization / bound on multipliers;
 //  - implement early stopping criteria (convergence fulfilled);
 /*!
-* \brief Gradient ascent step w.r.t. Lagrange multipliers (used only for constrained optimization)
+* \brief Gradient ascent step w.r.t. Lagrangian multipliers (used only for constrained optimization)
 * \param gradients nullptr for using default objective, otherwise use self-defined boosting
 * \param hessians nullptr for using default objective, otherwise use self-defined boosting
 * \return True if cannot train anymore (or training has ended due to early stopping)
 */
-bool GBDT::TrainLagrangianOneIter(const score_t *gradients, const score_t *hessians) {
+bool GBDT::TrainLagrangianOneIter(const score_t* /* gradients */, const score_t* /* hessians */) {
   auto constrained_objective_function = dynamic_cast<const ConstrainedObjectiveFunction *>(objective_function_);
 
   int64_t num_score = 0;
@@ -583,7 +580,7 @@ bool GBDT::TrainLagrangianOneIter(const score_t *gradients, const score_t *hessi
   auto lag_updates = constrained_objective_function->GetLagrangianGradientsWRTMultipliers(
       GetTrainingScore(&num_score));
 
-  // Get Lagrange multipliers of the latest iteration
+  // Get Lagrangian multipliers of the latest iteration
   auto current_lag_multipliers = lagrangian_multipliers_.back();
 
   // Initialize updated lagrangian multipliers w/ previous value
@@ -597,7 +594,7 @@ bool GBDT::TrainLagrangianOneIter(const score_t *gradients, const score_t *hessi
     updated_lag_multipliers[i] = std::max(0.0, updated_lag_multipliers[i]);
     // NOTE
     //  - This aims to guarantee that the problem remains bounded, which is true,
-    //    provided the lagrange multiplier remains >= 0;
+    //    provided the Lagrangian multiplier remains >= 0;
     //  - If multipliers are allowed to go negative -> using *EQUALITY* constraints!
   }
   lagrangian_multipliers_.push_back(updated_lag_multipliers);
@@ -625,13 +622,12 @@ void GBDT::RollbackOneIter() {
   for (int cur_tree_id = 0; cur_tree_id < num_tree_per_iteration_; ++cur_tree_id) {
     models_.pop_back();
   }
-  --iter_;
 
-  // -- START FairGBM block --
   // remove lagrangian multipliers if constrained objective
-  if (objective_function_->IsConstrained())
+  if (is_constrained_)
     lagrangian_multipliers_.pop_back();
-  // -- END FairGBM block --
+
+  --iter_;
 }
 
 bool GBDT::EvalAndCheckEarlyStopping() {
@@ -919,7 +915,7 @@ void GBDT::ResetConfig(const Config* config) {
   if (!config->feature_contri.empty()) {
     CHECK_EQ(static_cast<size_t>(train_data_->num_total_features()), config->feature_contri.size());
   }
-  if (objective_function_ != nullptr && objective_function_->IsRenewTreeOutput() && 
+  if (objective_function_ != nullptr && objective_function_->IsRenewTreeOutput() &&
       !config->monotone_constraints.empty()) {
     Log::Fatal(
       "Cannot use ``monotone_constraints`` in %s objective, please disable it.",

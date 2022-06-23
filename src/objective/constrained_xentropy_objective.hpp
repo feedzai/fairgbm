@@ -17,8 +17,6 @@
 #ifndef LIGHTGBM_OBJECTIVE_CONSTRAINED_XENTROPY_OBJECTIVE_HPP_
 #define LIGHTGBM_OBJECTIVE_CONSTRAINED_XENTROPY_OBJECTIVE_HPP_
 
-//#define FAIRGBM_DEBUG     // Print debug messages
-
 #include <LightGBM/meta.h>
 #include <LightGBM/objective_function.h>
 #include <LightGBM/utils/common.h>
@@ -54,8 +52,9 @@ public:
           : deterministic_(config.deterministic) {
     SetUpFromConfig(config);
 
-    if (not objective_stepwise_proxy.empty())
-      std::cerr << "ERR: Ignoring argument objective_stepwise_proxy=" << objective_stepwise_proxy << std::endl;
+    if (not objective_stepwise_proxy.empty()) {
+      Log::Warning("Ignoring argument objective_stepwise_proxy=%s.", objective_stepwise_proxy.c_str());
+    }
   }
 
   explicit ConstrainedCrossEntropy(const std::vector<std::string> &)
@@ -65,7 +64,7 @@ public:
   ~ConstrainedCrossEntropy() override = default;
 
   double ComputePredictiveLoss(label_t label, double score) const override {
-    return XentLoss(label, sigmoid(score));
+    return XentLoss(label, Constrained::sigmoid(score));
   }
 
   /**
@@ -83,7 +82,7 @@ public:
       // compute pointwise gradients and Hessians with implied unit weights
       #pragma omp parallel for schedule(static)
       for (data_size_t i = 0; i < num_data_; ++i) {
-        const double z = 1. / (1. + std::exp(-score[i]));  // NOTE: Computing sigmoid of logodds
+        const double z = Constrained::sigmoid(score[i]);
 
         gradients[i] = static_cast<score_t>(z - label_[i]);     // 1st derivative
         hessians[i] = static_cast<score_t>(z * (1.0f - z));     // 2nd derivative
@@ -93,7 +92,7 @@ public:
       // compute pointwise gradients and Hessians with given weights
       #pragma omp parallel for schedule(static)
       for (data_size_t i = 0; i < num_data_; ++i) {
-        const double z = 1.0f / (1.0f + std::exp(-score[i]));   // NOTE: Computing sigmoid of logodds
+        const double z = Constrained::sigmoid(score[i]);
 
         gradients[i] = static_cast<score_t>((z - label_[i]) * weights_[i]);
         hessians[i] = static_cast<score_t>(z * (1.0f - z) * weights_[i]);
@@ -125,16 +124,16 @@ public:
     double suml = 0.0f;
     double sumw = 0.0f;
     if (weights_ != nullptr) {
-#pragma omp parallel for schedule(static) reduction(+:suml, sumw) if (!deterministic_)
 
+      #pragma omp parallel for schedule(static) reduction(+:suml, sumw) if (!deterministic_)
       for (data_size_t i = 0; i < num_data_; ++i) {
         suml += label_[i] * weights_[i];
         sumw += weights_[i];
       }
     } else {
       sumw = static_cast<double>(num_data_);
-#pragma omp parallel for schedule(static) reduction(+:suml) if (!deterministic_)
 
+      #pragma omp parallel for schedule(static) reduction(+:suml) if (!deterministic_)
       for (data_size_t i = 0; i < num_data_; ++i) {
         suml += label_[i];
       }

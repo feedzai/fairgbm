@@ -168,6 +168,11 @@ const std::unordered_map<std::string, std::string>& Config::alias_table() {
   {"nodes", "machines"},
 
   // -- START FairGBM block --
+  {"lagrangian_learning_rate_", "multiplier_learning_rate"},
+  {"lagrangian_multiplier_learning_rate", "multiplier_learning_rate"},
+  {"lagrange_multipliers", "init_lagrange_multipliers"},
+  {"init_multipliers", "init_lagrange_multipliers"},
+  {"output_dir", "debugging_output_dir"},
   {"global_fpr", "global_target_fpr"},
   {"target_global_fpr", "global_target_fpr"},
   {"global_fnr", "global_target_fnr"},
@@ -326,7 +331,7 @@ const std::unordered_set<std::string>& Config::parameter_set() {
   "constraint_fnr_threshold",
   "score_threshold",
   "init_lagrange_multipliers",
-  "lagrangian_learning_rate",
+  "multiplier_learning_rate",
   "global_constraint_type",
   "global_target_fpr",
   "global_target_fnr",
@@ -673,7 +678,7 @@ void Config::GetMembersFromString(const std::unordered_map<std::string, std::str
   Config::GetString(params, "constraint_group_column", &constraint_group_column);
 
   Config::GetDouble(params, "constraint_fpr_threshold", &constraint_fpr_threshold);
-  CHECK_GE(constraint_fpr_threshold, 0); CHECK_LE(constraint_fpr_threshold, 1);
+  CHECK_GE(constraint_fpr_threshold, 0); CHECK_LT(constraint_fpr_threshold, 1);
 
   Config::GetDouble(params, "constraint_fnr_threshold", &constraint_fnr_threshold);
   CHECK_GE(constraint_fnr_threshold, 0); CHECK_LE(constraint_fnr_threshold, 1);
@@ -681,12 +686,12 @@ void Config::GetMembersFromString(const std::unordered_map<std::string, std::str
   Config::GetDouble(params, "score_threshold", &score_threshold);
   CHECK_GE(score_threshold, 0); CHECK_LE(score_threshold, 1);
 
-  Config::GetDouble(params, "lagrangian_learning_rate", &lagrangian_learning_rate);
-  CHECK_GE(lagrangian_learning_rate, 0);
+  Config::GetDouble(params, "multiplier_learning_rate", &multiplier_learning_rate);
+  CHECK_GE(multiplier_learning_rate, 0);
 
   if (GetString(params, "init_lagrange_multipliers", &tmp_str)) {
-    init_lagrangians = Common::StringToArray<double>(tmp_str, ',');
-    for (auto lag : init_lagrangians)
+    init_lagrange_multipliers = Common::StringToArray<double>(tmp_str, ',');
+    for (auto lag : init_lagrange_multipliers)
       CHECK_GE(lag, 0);
   }
 
@@ -821,11 +826,8 @@ std::string Config::SaveMembersToString() const {
   str_buf << "[score_threshold: " << score_threshold << "]\n";
   str_buf << "[constraint_fpr_threshold: " << constraint_fpr_threshold << "]\n";
   str_buf << "[constraint_fnr_threshold: " << constraint_fnr_threshold << "]\n";
-  str_buf << "[lagrangian_learning_rate: " << lagrangian_learning_rate << "]\n";
-  str_buf << "[init_lagrange_multipliers: ";
-  for (auto &lag : init_lagrangians)
-    str_buf << lag << ",";
-  str_buf << "]\n";
+  str_buf << "[multiplier_learning_rate: " << multiplier_learning_rate << "]\n";
+  str_buf << "[init_lagrange_multipliers: " << Common::Join(init_lagrange_multipliers, ",") << "]\n";
 
   // Global constraint parameters
   str_buf << "[global_constraint_type: " << global_constraint_type << "]\n";

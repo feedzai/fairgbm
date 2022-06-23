@@ -98,20 +98,20 @@ void GBDT::Init(const Config* config, const Dataset* train_data, const Objective
 
   // constraint configurations
   is_constrained_ = objective_function->IsConstrained();
-  lagrangian_learning_rate = config_->lagrangian_learning_rate;
+  lagrangian_learning_rate_ = config_->multiplier_learning_rate;
 
-  auto num_constraints = objective_function->NumConstraints();
+  int num_constraints = objective_function->NumConstraints();
 
   // If no lagrange multipliers are specified
   // Set the first multiplier to 1 (corresponds to objective function) and
   // all others to 0.
-  if ((config->init_lagrangians).empty()) {
+  if ((config->init_lagrange_multipliers).empty()) {
     std::vector<double> default_lag_multipliers(num_constraints+1, 0);
     default_lag_multipliers[0] = 1;
     lagrangian_multipliers_.push_back(default_lag_multipliers);
   } else {
-    CHECK_EQ(num_constraints+1, config->init_lagrangians.size());
-    lagrangian_multipliers_.push_back(config->init_lagrangians);
+    CHECK_EQ(num_constraints+1, (int) config->init_lagrange_multipliers.size());
+    lagrangian_multipliers_.push_back(config->init_lagrange_multipliers);
   }
   // -- END FairGBM block --
 
@@ -226,16 +226,16 @@ void GBDT::Boosting() {
     //
     // NOTE: lagrange_multipliers is a vector of vectors - each element represents the multipliers at a given iteration;
 
-#ifdef FAIRGBM_DEBUG
+#ifdef DEBUG
     // Dump lagrangian multipliers
-    write_values<double>(debugging_output_dir_, "lagrangian_multipliers.dat", lagrangian_multipliers_.back());
+    Constrained::write_values<double>(debugging_output_dir_, "lagrangian_multipliers.dat", lagrangian_multipliers_.back());
 
     // Dump the gradients of the Lagrangian (grads of loss + grads of constraints)
-    write_values<score_t, Common::AlignmentAllocator<score_t, kAlignedSize>>(
+    Constrained::write_values<score_t, Common::AlignmentAllocator<score_t, kAlignedSize>>(
         debugging_output_dir_, "gradients.lagrangian.dat", gradients_);
 
     // Dump hessians, we don't currently use them though :P
-    write_values<score_t, Common::AlignmentAllocator<score_t, kAlignedSize>>(
+    Constrained::write_values<score_t, Common::AlignmentAllocator<score_t, kAlignedSize>>(
         debugging_output_dir_, "hessians.lagrangian.dat", hessians_);
 #endif
   }
@@ -327,16 +327,11 @@ void GBDT::Bagging(int iter) {
 
 void GBDT::Train(int snapshot_freq, const std::string& model_output_path) {
   Common::FunctionTimer fun_timer("GBDT::Train", global_timer);
-  bool is_finished = false;
+  bool is_finished = false, is_finished_lagrangian = false;
   auto start_time = std::chrono::steady_clock::now();
 
   // -- START FairGBM block --
-  for (int iter = 0;
-       iter < config_->num_iterations && !is_finished;
-       ++iter) {
-
-    // if (iter % 250 == 0)
-    //   std::cout << "Iter i=" << iter << std::endl;
+  for (int iter = 0; iter < config_->num_iterations && !is_finished; ++iter) {
 
     // Descent step!
     is_finished = TrainOneIter(nullptr, nullptr);
@@ -573,9 +568,9 @@ bool GBDT::TrainOneIter(const score_t* gradients, const score_t* hessians) {
   return false;
 }
 
-// TODO
-//  - implement early stopping criteria (convergence fulfilled);
+// TODO: https://github.com/feedzai/fairgbm/issues/7
 //  - implement normalization / bound on multipliers;
+//  - implement early stopping criteria (convergence fulfilled);
 /*!
 * \brief Gradient ascent step w.r.t. Lagrange multipliers (used only for constrained optimization)
 * \param gradients nullptr for using default objective, otherwise use self-defined boosting
@@ -590,11 +585,11 @@ bool GBDT::TrainLagrangianOneIter(const score_t *gradients, const score_t *hessi
   auto lag_updates = constrained_objective_function->GetLagrangianGradientsWRTMultipliers(
       GetTrainingScore(&num_score));
 
-  // Get current lagrange multipliers values
-  auto current_lag_multipliers = lagrangian_multipliers_.back(); // Multipliers of the latest iteration
+  // Get Lagrange multipliers of the latest iteration
+  auto current_lag_multipliers = lagrangian_multipliers_.back();
 
   // Initialize updated lagrangian multipliers w/ previous value
-  std::vector<double> updated_lag_multipliers(current_lag_multipliers.begin(), current_lag_multipliers.end());
+  std::vector<double> updated_lag_multipliers(current_lag_multipliers);
 
   // Gradient ascent in Lagrangian multipliers (or constraint space)
   // NOTE:
@@ -603,7 +598,7 @@ bool GBDT::TrainLagrangianOneIter(const score_t *gradients, const score_t *hessi
   //  - we're currently NOT UPDATING this multiplier, hence the loop STARTS AT i=1;
   //  - the gradient for this multiplier will always be the value of the loss;
   for (uint i = 1; i < lag_updates.size(); i++) {
-    updated_lag_multipliers[i] += lagrangian_learning_rate * lag_updates[i];
+    updated_lag_multipliers[i] += lagrangian_learning_rate_ * lag_updates[i];
 
     // Ensuring multipliers >= 0 -> using *INEQUALITY* constraints! c(theta) <= 0
     updated_lag_multipliers[i] = std::max(0.0, updated_lag_multipliers[i]);
@@ -615,9 +610,9 @@ bool GBDT::TrainLagrangianOneIter(const score_t *gradients, const score_t *hessi
   }
   lagrangian_multipliers_.push_back(updated_lag_multipliers);
 
-#ifdef FAIRGBM_DEBUG
+#ifdef DEBUG
   // Log constraints violation to file
-  write_values<double>(debugging_output_dir_, "functions_evals.dat", lag_updates);
+  Constrained::write_values<double>(debugging_output_dir_, "functions_evals.dat", lag_updates);
 #endif
 
   return false;
@@ -970,8 +965,7 @@ void GBDT::ResetBaggingConfig(const Config* config, bool is_change_dataset) {
   if (objective_function_ != nullptr) {
     num_pos_data = objective_function_->NumPositiveData();
   }
-  bool balance_bagging_cond = 
-    (config->pos_bagging_fraction < 1.0 || config->neg_bagging_fraction < 1.0) && (num_pos_data > 0);
+  bool balance_bagging_cond = (config->pos_bagging_fraction < 1.0 || config->neg_bagging_fraction < 1.0) && (num_pos_data > 0);
   if ((config->bagging_fraction < 1.0 || balance_bagging_cond) && config->bagging_freq > 0) {
     need_re_bagging_ = false;
     if (!is_change_dataset &&

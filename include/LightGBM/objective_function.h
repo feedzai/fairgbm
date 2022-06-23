@@ -145,7 +145,6 @@ public:
     label_ = metadata.label();
     weights_ = metadata.weights();
 
-    // ----------------------------------------------------- START FAIRBGM
     // Store Information about the group
     group_ = metadata.group();
     group_values_ = metadata.group_values();
@@ -154,7 +153,6 @@ public:
     total_label_positives_ = 0;
     total_label_negatives_ = 0;
     ComputeLabelCounts();
-    // -----------------------------------------------------END FAIRGM Update
 
     CHECK_NOTNULL(label_);
     Common::CheckElementsIntervalClosed<label_t>(label_, 0.0f, 1.0f, num_data_, GetName());
@@ -197,7 +195,7 @@ public:
   virtual std::vector<double> GetLagrangianGradientsWRTMultipliers(const double *score) const
   {
     if (weights_ != nullptr)
-      throw std::runtime_error("not implemented yet");
+      throw std::logic_error("not implemented yet");  // TODO: https://github.com/feedzai/fairgbm/issues/5
 
     std::vector<double> functions;
     std::unordered_map<group_t, double> group_fpr, group_fnr;
@@ -211,7 +209,8 @@ public:
 
     // 1st Lagrange multiplier corresponds to predictive loss function
     double sum_loss = 0.0;
-    //      #pragma omp parallel for schedule(static) reduction(+:sum_loss)
+
+//    #pragma omp parallel for schedule(static) reduction(+:sum_loss)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       sum_loss += this->ComputePredictiveLoss(label_[i], score[i]);
@@ -223,7 +222,7 @@ public:
     if (IsFPRConstrained())
     {
       ComputeFPR(score, score_threshold_, group_fpr);
-      double max_fpr = findMaxValuePair<group_t, double>(group_fpr).second;
+      double max_fpr = Constrained::findMaxValuePair<group_t, double>(group_fpr).second;
 
       // Assuming group_values_ is in ascending order
       for (const auto &group : group_values_)
@@ -231,8 +230,10 @@ public:
         double fpr_constraint_value = max_fpr - group_fpr[group] - fpr_threshold_;
         functions.push_back(fpr_constraint_value);
 
-#ifdef FAIRGBM_DEBUG
-        std::cout << "DEBUG; true FPR constraint value: c=" << max_fpr << "-" << group_fpr[group] << "=" << fpr_constraint_value << std::endl;
+#ifdef DEBUG
+        Log::Debug(
+                "DEBUG; true FPR constraint value: c = %.3f - %.3f = %.3f\n",
+                max_fpr, group_fpr[group], fpr_constraint_value);
 #endif
       }
     }
@@ -241,7 +242,7 @@ public:
     if (IsFNRConstrained())
     {
       ComputeFNR(score, score_threshold_, group_fnr);
-      double max_fnr = findMaxValuePair<group_t, double>(group_fnr).second;
+      double max_fnr = Constrained::findMaxValuePair<group_t, double>(group_fnr).second;
 
       // Assuming group_values_ is in ascending order
       for (const auto &group : group_values_)
@@ -249,8 +250,10 @@ public:
         double fnr_constraint_value = max_fnr - group_fnr[group] - fnr_threshold_;
         functions.push_back(fnr_constraint_value);
 
-#ifdef FAIRGBM_DEBUG
-        std::cout << "DEBUG; true FNR constraint value: c=" << max_fnr << "-" << group_fnr[group] << "=" << fnr_constraint_value << std::endl;
+#ifdef DEBUG
+        Log::Debug(
+                "DEBUG; true FNR constraint value: c = %.3f - %.3f = %.3f\n",
+                max_fnr, group_fnr[group], fnr_constraint_value);
 #endif
       }
     }
@@ -263,8 +266,10 @@ public:
 
       functions.push_back(global_fpr_constraint_value);
 
-#ifdef FAIRGBM_DEBUG
-      std::cout << "DEBUG; true global FPR constraint value: c=" << global_fpr << "-" << global_target_fpr_ << "=" << global_fpr_constraint_value << std::endl;
+#ifdef DEBUG
+      Log::Debug(
+              "DEBUG; true global FPR constraint value: c = %.3f - %.3f = %.3f\n",
+              global_fpr, global_target_fpr_, global_fpr_constraint_value);
 #endif
     }
 
@@ -276,8 +281,10 @@ public:
 
       functions.push_back(global_fnr_constraint_value);
 
-#ifdef FAIRGBM_DEBUG
-      std::cout << "DEBUG; true global FNR constraint value: c=" << global_fnr << "-" << global_target_fnr_ << "=" << global_fnr_constraint_value << std::endl;
+#ifdef DEBUG
+      Log::Debug(
+              "DEBUG; true global FNR constraint value: c = %.3f - %.3f = %.3f\n",
+              global_fnr, global_target_fnr_, global_fnr_constraint_value);
 #endif
     }
 
@@ -329,7 +336,7 @@ public:
       else
         throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
 
-      max_proxy_fpr = findMaxValuePair<group_t, double>(group_fpr);
+      max_proxy_fpr = Constrained::findMaxValuePair<group_t, double>(group_fpr);
     }
     if (IsFNRConstrained())
     {
@@ -342,7 +349,7 @@ public:
       else
         throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
 
-      max_proxy_fnr = findMaxValuePair<group_t, double>(group_fnr);
+      max_proxy_fnr = Constrained::findMaxValuePair<group_t, double>(group_fnr);
     }
 
     /** ---------------------------------------------------------------- *
@@ -350,11 +357,11 @@ public:
      *  ---------------------------------------------------------------- */
     if (weights_ != nullptr)
     {
-      throw std::runtime_error("not implemented");
+      throw std::logic_error("not implemented yet");  // TODO: https://github.com/feedzai/fairgbm/issues/5
     }
 
     // compute pointwise gradients and hessians with implied unit weights
-    //      #pragma omp parallel for schedule(static)     // FIXME: there seems to be weird behavior with this directive
+//    #pragma omp parallel for schedule(static)       // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       const auto group = group_[i];
@@ -404,13 +411,15 @@ public:
             fpr_constraints_gradient_wrt_pred = score[i] <= -proxy_margin_ ? 0. : 1. / group_ln;
 
           // Derivative for BCE-based proxy FPR
-          else if (constraint_stepwise_proxy == "cross_entropy")
-            fpr_constraints_gradient_wrt_pred = (sigmoid(score[i] + xent_horizontal_shift)) / group_ln;
-          //              fpr_constraints_gradient_wrt_pred = (sigmoid(score[i]) - label_[i]) / group_ln;   // without margin
+          else if (constraint_stepwise_proxy == "cross_entropy") {
+            fpr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i] + xent_horizontal_shift)) / group_ln;
+//            fpr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / group_ln;   // without margin
+          }
 
           // Loss-function implicitly defined as having a hinge-based derivative (quadratic loss)
-          else if (constraint_stepwise_proxy == "quadratic")
+          else if (constraint_stepwise_proxy == "quadratic") {
             fpr_constraints_gradient_wrt_pred = std::max(0., score[i] + proxy_margin_) / group_ln;
+          }
 
           else
             throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
@@ -464,13 +473,15 @@ public:
             fnr_constraints_gradient_wrt_pred = score[i] >= proxy_margin_ ? 0. : -1. / group_lp;
 
           // Derivative for BCE-based proxy FNR
-          else if (constraint_stepwise_proxy == "cross_entropy")
-            fnr_constraints_gradient_wrt_pred = (sigmoid(score[i] - xent_horizontal_shift) - 1) / group_lp;
-          //              fnr_constraints_gradient_wrt_pred = (sigmoid(score[i]) - label_[i]) / group_lp;   // without margin
+          else if (constraint_stepwise_proxy == "cross_entropy") {
+            fnr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i] - xent_horizontal_shift) - 1) / group_lp;
+//            fnr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / group_lp;   // without margin
+          }
 
           // Loss-function implicitly defined as having a hinge-based derivative (quadratic loss)
-          else if (constraint_stepwise_proxy == "quadratic")
+          else if (constraint_stepwise_proxy == "quadratic") {
             fnr_constraints_gradient_wrt_pred = std::min(0., score[i] - proxy_margin_) / group_lp;
+          }
 
           else
             throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
@@ -517,17 +528,20 @@ public:
         { // Condition for non-zero gradient
           double global_fpr_constraint_gradient_wrt_pred;
           // Gradient for hinge proxy FPR
-          if (constraint_stepwise_proxy == "hinge")
+          if (constraint_stepwise_proxy == "hinge") {
             global_fpr_constraint_gradient_wrt_pred = score[i] >= -proxy_margin_ ? 1. / total_label_negatives_ : 0.;
+          }
 
           // Gradient for BCE proxy FPR
-          else if (constraint_stepwise_proxy == "cross_entropy")
-            global_fpr_constraint_gradient_wrt_pred = (sigmoid(score[i] + xent_horizontal_shift)) / total_label_negatives_;
-          //              global_fpr_constraint_gradient_wrt_pred = (sigmoid(score[i]) - label_[i]) / total_label_negatives_;   // without margin
+          else if (constraint_stepwise_proxy == "cross_entropy") {
+            global_fpr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i] + xent_horizontal_shift)) / total_label_negatives_;
+//            global_fpr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / total_label_negatives_;   // without margin
+          }
 
           // Hinge-based gradient (for quadratic proxy FPR)
-          else if (constraint_stepwise_proxy == "quadratic")
+          else if (constraint_stepwise_proxy == "quadratic") {
             global_fpr_constraint_gradient_wrt_pred = std::max(0., score[i] + proxy_margin_) / total_label_negatives_;
+          }
 
           else
             throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
@@ -548,20 +562,24 @@ public:
           double global_fnr_constraint_gradient_wrt_pred;
 
           // Gradient for hinge proxy FNR
-          if (constraint_stepwise_proxy == "hinge")
+          if (constraint_stepwise_proxy == "hinge") {
             global_fnr_constraint_gradient_wrt_pred = score[i] >= proxy_margin_ ? 0. : -1. / total_label_positives_;
+          }
 
           // Gradient for BCE proxy FNR
-          else if (constraint_stepwise_proxy == "cross_entropy")
-            global_fnr_constraint_gradient_wrt_pred = (sigmoid(score[i] - xent_horizontal_shift) - 1) / total_label_positives_;
-          //              global_fnr_constraint_gradient_wrt_pred = (sigmoid(score[i]) - label_[i]) / total_label_positives_;   // without margin
+          else if (constraint_stepwise_proxy == "cross_entropy") {
+            global_fnr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i] - xent_horizontal_shift) - 1) / total_label_positives_;
+//            global_fnr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / total_label_positives_;   // without margin
+          }
 
           // Hinge-based gradient (for quadratic proxy FNR)
-          else if (constraint_stepwise_proxy == "quadratic")
+          else if (constraint_stepwise_proxy == "quadratic") {
             global_fnr_constraint_gradient_wrt_pred = std::min(0., score[i] - proxy_margin_) / total_label_positives_;
+          }
 
-          else
+          else {
             throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
+          }
 
           // Update instance gradient and hessian
           gradients[i] += (score_t)(lagrangian_multipliers[multipliers_base_index] *
@@ -695,7 +713,7 @@ public:
     std::unordered_map<group_t, double> false_positives; // map of group index to the respective hinge-proxy FPs
     std::unordered_map<group_t, int> label_negatives;    // map of group index to the respective number of LNs
 
-    // #pragma omp parallel for schedule(static) // FIXME
+    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       group_t group = group_[i];
@@ -736,7 +754,7 @@ public:
     std::unordered_map<group_t, double> false_positives; // map of group index to the respective proxy FPs
     std::unordered_map<group_t, int> label_negatives;    // map of group index to the respective number of LNs
 
-    // #pragma omp parallel for schedule(static) // FIXME
+    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       group_t group = group_[i];
@@ -779,7 +797,7 @@ public:
     std::unordered_map<group_t, int> label_negatives;    // map of group index to the respective number of LNs
     double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
 
-    // #pragma omp parallel for schedule(static)
+    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       group_t group = group_[i];
@@ -1093,4 +1111,4 @@ protected:
 };
 } // namespace LightGBM
 
-#endif // LightGBM_OBJECTIVE_FUNCTION_H_
+#endif   // LightGBM_OBJECTIVE_FUNCTION_H_

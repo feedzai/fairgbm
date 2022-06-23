@@ -21,67 +21,57 @@
 #include <sys/stat.h>
 
 
-namespace LightGBM {
+namespace LightGBM::Constrained {
 
-    inline double sigmoid(double x) {
-      return 1. / (1. + std::exp(-x));
-    }
+/**
+ * Standard sigmoid mathematical function.
+ * @param x the input to the function.
+ * @return the sigmoid of the input.
+ */
+inline double sigmoid(double x) {
+  return 1. / (1. + std::exp(-x));
+}
 
-    template <class Key, class Value>
-    std::pair<Key, Value> findMaxValuePair(std::unordered_map<Key, Value> const &x)
-    {
-      return *std::max_element(
-              x.begin(), x.end(),
-              [](const std::pair<Key, Value> &p1, const std::pair<Key, Value> &p2) {
-                  return p1.second < p2.second;
-              }
-      );
-    }
+/**
+ * Finds the (key, value) pair with highest value.
+ * @tparam Key The type of the Map Key.
+ * @tparam Value The type of the Map Value.
+ * @param x Reference to the map to search over.
+ * @return The <K, V> pair with highest value V.
+ */
+template <class Key, class Value>
+std::pair<Key, Value> findMaxValuePair(std::unordered_map<Key, Value> const &x)
+{
+  return *std::max_element(
+          x.begin(), x.end(),
+          [](const std::pair<Key, Value> &p1, const std::pair<Key, Value> &p2) {
+              return p1.second < p2.second;
+          }
+  );
+}
 
-    template<typename T, typename Allocator = std::allocator<T>>
-    void write_values(const std::string& dir, const std::string& filename,
-                      std::vector<T, Allocator> values) {
-      struct stat buf;
+/**
+ * Writes the given values to the end of the given file.
+ * @tparam T The type of values in the input vector.
+ * @tparam Allocator The type of allocator in the input vector.
+ * @param dir The directory of the file to write on.
+ * @param filename The name of the file to write on.
+ * @param values A vector of the values to append to the file.
+ */
+template<typename T, typename Allocator = std::allocator<T>>
+void write_values(const std::string& dir, const std::string& filename,
+                  std::vector<T, Allocator> values) {
+  struct stat buf;
 
-      std::string filename_path = dir + "/" + filename;
-      bool file_exists = (stat(filename_path.c_str(), &buf) != -1);
+  std::string filename_path = dir + "/" + filename;
+  bool file_exists = (stat(filename_path.c_str(), &buf) != -1);
 
-      std::stringstream tmp_buf;
-      for (auto e : values) {
-        tmp_buf << e << ",";
-      }
+  std::ofstream outfile;
+  outfile.open(filename_path, std::ios::out | (file_exists ? std::ios::app : std::ios::trunc));
+  outfile << LightGBM::Common::Join(values, ",") << std::endl;
 
-      tmp_buf.seekp(-1, tmp_buf.cur);
-      tmp_buf << std::endl;
-
-      std::ofstream outfile;
-      outfile.open(filename_path, std::ios::out | (file_exists ? std::ios::app : std::ios::trunc));
-      outfile << tmp_buf.str();
-
-      outfile.close();
-    }
-
-    template<typename T>
-    void write_values(const std::string& dir, const std::string& filename, const T* arr, int arr_len) {
-      struct stat buf;
-
-      std::string filename_path = dir + "/" + filename;
-      bool file_exists = (stat(filename_path.c_str(), &buf) != -1);
-
-      std::stringstream tmp_buf;
-      for (int i = 0; i < arr_len; i++) {
-        tmp_buf << arr[i] << ",";
-      }
-
-      tmp_buf.seekp(-1, tmp_buf.cur);
-      tmp_buf << std::endl;
-
-      std::ofstream outfile;
-      outfile.open(filename_path, std::ios::out | (file_exists ? std::ios::app : std::ios::trunc));
-      outfile << tmp_buf.str();
-
-      outfile.close();
-    }
+  outfile.close();
+}
 
 }
 

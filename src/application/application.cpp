@@ -52,7 +52,7 @@ Application::~Application() {
 /**
  * Loads the application config, either as command-line arguments or from a config file.
  * @param argc Number of command-line arguments.
- * @param argv Array of strings containing the command-line arguments. The most common element will be "config=<path>".
+ * @param argv Array of strings containing the command-line arguments. A common element is "config=<path>".
  */
 void Application::LoadParameters(int argc, char** argv) {
   std::unordered_map<std::string, std::string> params;

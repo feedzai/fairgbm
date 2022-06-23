@@ -1021,7 +1021,7 @@ void DatasetLoader::ConstructBinMappersFromTextData(int rank, int num_machines,
   CHECK(label_idx_ >= 0 && label_idx_ <= dataset->num_total_features_);
   CHECK(weight_idx_ < 0 || weight_idx_ < dataset->num_total_features_);
   CHECK(group_idx_ < 0 || group_idx_ < dataset->num_total_features_);
-  CHECK(group_constraint_idx_ < 0 || group_constraint_idx_ < dataset->num_total_features_); // FairGBM
+  CHECK(group_constraint_idx_ == NO_SPECIFIC || (group_constraint_idx_ >= 0 && group_constraint_idx_ < dataset->num_total_features_)); // FairGBM
 
   // fill feature_names_ if not header
   if (feature_names_.empty()) {
@@ -1344,7 +1344,7 @@ void DatasetLoader::ExtractFeaturesFromFile(const char* filename, const Parser* 
         }
         // -- START FairGBM block --
         if (inner_data.first == group_constraint_idx_)
-          dataset->metadata_.SetGroupConstraintAt(start_idx + i, static_cast<data_size_t>(inner_data.second));
+          dataset->metadata_.SetGroupConstraintAt(start_idx + i, static_cast<group_t>(inner_data.second));
         // -- END FairGBM block --
       }
       if (dataset->has_raw()) {

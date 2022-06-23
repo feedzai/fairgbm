@@ -271,7 +271,7 @@ if(${MM_MALLOC})
 endif()
 
 if(UNIX OR MINGW OR CYGWIN)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -lstdc++fs -pthread -Wextra -Wall -Wno-ignored-attributes -Wno-unknown-pragmas -Wno-return-type ")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -Wextra -Wall -Wno-ignored-attributes -Wno-unknown-pragmas -Wno-return-type ")
     if(USE_DEBUG)
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
     else()
@@ -338,21 +338,13 @@ file(GLOB SOURCES
     src/objective/*.cpp
     src/network/*.cpp
     src/treelearner/*.cpp
-    src/application/*.cpp
 if(USE_CUDA)
     src/treelearner/*.cu
 endif(USE_CUDA)
 )
 
-# To ease out the debugging
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
-
-## NOTE: CUSTOM FLAGS
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++fs")    #NOTE: may only be needed for running on the hdp
-
-#add_executable(lightgbm src/main.cpp ${SOURCES})   # NOTE: this was the original command!
-add_executable(lightgbm src/main.multiple_runs.cpp ${SOURCES})  # NOTE: changed it to this one!
+add_executable(lightgbm src/main.cpp src/application/application.cpp ${SOURCES})
+#add_executable(fairgbm_multiple_runs src/main.multiple_runs.cpp src/application/application.cpp ${SOURCES})
 list(APPEND SOURCES "src/c_api.cpp")
 
 # Only build the R part of the library if building for
@@ -365,7 +357,6 @@ if (BUILD_STATIC_LIB)
   add_library(_lightgbm STATIC ${SOURCES})
 else()
   add_library(_lightgbm SHARED ${SOURCES})
-  # add_library(_lightgbm SHARED ${SOURCES} include/LightGBM/utils/constrained.hpp)
 endif(BUILD_STATIC_LIB)
 
 if(MSVC)

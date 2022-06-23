@@ -37,7 +37,7 @@ class DatasetLoader;
 *        4. Query Weights, auto calculate by weights and query_boundaries(if both of them are existed)
 *           the weight for i-th query is sum(query_boundaries[i] , .., query_boundaries[i+1]) / (query_boundaries[i + 1] -  query_boundaries[i+1])
 *        5. Initial score. optional. if existing, the model will boost from this score, otherwise will start from 0.
-*        6. [FairGBM-only] Group, used for training during constrain optimization.
+*        6. [FairGBM-only] Group, used for training during constrained optimization.
 */
 class Metadata {
  public:
@@ -208,8 +208,8 @@ class Metadata {
   * \param idx Index of this record
   * \param value Group constraint value of this record
   */
-  inline void SetGroupConstraintAt(data_size_t idx, data_size_t value) {
-    group_[idx] = static_cast<data_size_t>(value);
+  inline void SetGroupConstraintAt(data_size_t idx, group_t value) {
+    group_[idx] = value;
   }
 
   /*!
@@ -220,7 +220,7 @@ class Metadata {
 
   /*! \brief Get unique groups in data */
   inline std::vector<group_t> group_values() const {
-    std::vector<group_t> values = group_; // copy
+    std::vector<group_t> values(group_);
     std::sort(values.begin(), values.end());
 
     auto last = std::unique(values.begin(), values.end());

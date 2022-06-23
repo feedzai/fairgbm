@@ -548,10 +548,10 @@ class GBDT : public GBDTBase {
   bool is_constrained_;
 
   /*! \brief Shrinkage rate for the Ascent step */
-  double lagrangian_learning_rate;
+  double lagrangian_learning_rate_;
 
   /*! \brief Lagrangian multiplier(s) per iteration */
-  std::vector<std::vector<double>> lagrangian_multipliers_;
+  std::vector<std::vector<double>> lagrangian_multipliers_;   // TODO: https://github.com/feedzai/fairgbm/issues/8
 
   /*! \brief Output directory to store debug files (e.g., gradients/hessians) */
   std::string debugging_output_dir_;

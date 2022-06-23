@@ -43,10 +43,15 @@ public:
       if (not this->IsGlobalFPRConstrained())
         throw std::invalid_argument("Must provide a global FPR constraint in order to optimize for Recall!");
 
-      if (objective_stepwise_proxy == "cross_entropy" or constraint_stepwise_proxy == "cross_entropy")
-        assert(proxy_margin_ > 1e-2); // Must be strictly positive
+      if (objective_stepwise_proxy == "cross_entropy" or constraint_stepwise_proxy == "cross_entropy") {
+        if (proxy_margin_ < DBL_MIN) {
+          Log::Fatal("Proxy margin must be positive. It was %f.", proxy_margin_);
+        }
+      }
 
-      assert(not objective_stepwise_proxy.empty());
+      if (objective_stepwise_proxy.empty()) {
+        Log::Fatal("Must provide an `objective_stepwise_proxy` to optimize for Recall. Got empty input.");
+      }
     };
 
     explicit ConstrainedRecallObjective(const std::vector<std::string> &)
@@ -122,7 +127,20 @@ public:
      * @param hessians
      */
     void GetGradients(const double *score, score_t *gradients, score_t *hessians) const override {
+      /**
+       * How much to shift the cross-entropy function (horizontally) to get
+       * the target proxy_margin_ at x=0; i.e., f(0) = proxy_margin_
+       */
       const double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
+
+      /**
+       * NOTE
+       *  - This value should be zero in order to optimize solely for TPR (Recall),
+       *  as TPR considers only label positives and ignores label negatives.
+       *  - However, initial splits will have -inf information gain if the gradients
+       *  of all label negatives are 0;
+       *  - Hence, we're adding a small constant to the gradient of all LNs;
+       */
       const double label_negative_weight = 1e-2;
 
       #pragma omp parallel for schedule(static)
@@ -136,7 +154,7 @@ public:
           }
 
           else if (objective_stepwise_proxy == "cross_entropy") {
-            const double z = sigmoid(score[i] - xent_horizontal_shift);
+            const double z = Constrained::sigmoid(score[i] - xent_horizontal_shift);
             gradients[i] = (score_t) (z - 1.);
             hessians[i] = (score_t) (z * (1. - z));
           }
@@ -156,12 +174,8 @@ public:
           }
 
         } else {
-          // NOTE!
-          //  - Initial splits will have -inf information gain if the gradients of all label negatives are 0;
-          //  - We're adding a small constant indiscriminately to the gradient of all LNs;
-
           // NOTE! trying to use a soft BCE signal for negative labels
-          const double z = sigmoid(score[i] + xent_horizontal_shift);
+          const double z = Constrained::sigmoid(score[i] + xent_horizontal_shift);
           gradients[i] = (score_t) (label_negative_weight * z);
           hessians[i] = (score_t) (label_negative_weight * z * (1. - z));
         }

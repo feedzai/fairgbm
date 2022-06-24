@@ -193,6 +193,9 @@ _lgbmmodel_doc_fit = (
         Input feature matrix.
     y : {y_shape}
         The target values (class labels in classification, real numbers in regression).
+    constraint_group : {constraint_group_shape}
+        The constraint group of each instance (for enforcing fairness constraints).
+        Only used for constrained optimization.
     sample_weight : {sample_weight_shape}
         Weights of training data.
     init_score : {init_score_shape}
@@ -548,10 +551,12 @@ class LGBMModel(_LGBMModelBase):
         return self
 
     def fit(self, X, y,
-            sample_weight=None, init_score=None, group=None,
-            eval_set=None, eval_names=None, eval_sample_weight=None,
-            eval_class_weight=None, eval_init_score=None, eval_group=None,
-            eval_metric=None, early_stopping_rounds=None, verbose=True,
+
+            constraint_group=None, sample_weight=None, init_score=None,
+            group=None, eval_set=None, eval_names=None,
+            eval_sample_weight=None, eval_class_weight=None,
+            eval_init_score=None, eval_group=None, eval_metric=None,
+            early_stopping_rounds=None, verbose=True,
             feature_name='auto', categorical_feature='auto',
             callbacks=None, init_model=None):
         """Docstring is set after definition, using a template."""
@@ -643,12 +648,19 @@ class LGBMModel(_LGBMModelBase):
         self._n_features_in = self._n_features
 
         def _construct_dataset(X, y, sample_weight, init_score, group, params,
+                               constraint_group,
                                categorical_feature='auto'):
             return Dataset(X, label=y, weight=sample_weight, group=group,
                            init_score=init_score, params=params,
+                           constraint_group=constraint_group,
                            categorical_feature=categorical_feature)
 
-        train_set = _construct_dataset(_X, _y, sample_weight, init_score, group, params,
+        train_set = _construct_dataset(_X, _y,
+                                       sample_weight=sample_weight,
+                                       init_score=init_score,
+                                       group=group,
+                                       params=params,
+                                       constraint_group=constraint_group,
                                        categorical_feature=categorical_feature)
 
         valid_sets = []
@@ -683,8 +695,11 @@ class LGBMModel(_LGBMModelBase):
                             valid_weight = np.multiply(valid_weight, valid_class_sample_weight)
                     valid_init_score = _get_meta_data(eval_init_score, 'eval_init_score', i)
                     valid_group = _get_meta_data(eval_group, 'eval_group', i)
-                    valid_set = _construct_dataset(valid_data[0], valid_data[1],
-                                                   valid_weight, valid_init_score, valid_group, params)
+                    valid_constraint_group = _get_meta_data(constraint_group, 'constraint_group', i)
+                    valid_set = _construct_dataset(X=valid_data[0], y=valid_data[1],
+                                                   sample_weight=valid_weight, init_score=valid_init_score,
+                                                   constraint_group=valid_constraint_group,
+                                                   group=valid_group, params=params)
                 valid_sets.append(valid_set)
 
         if isinstance(init_model, LGBMModel):
@@ -715,9 +730,10 @@ class LGBMModel(_LGBMModelBase):
     fit.__doc__ = _lgbmmodel_doc_fit.format(
         X_shape="array-like or sparse matrix of shape = [n_samples, n_features]",
         y_shape="array-like of shape = [n_samples]",
+        constraint_group_shape="array-like of shape = [n_samples] or None, optional (default=None)",
         sample_weight_shape="array-like of shape = [n_samples] or None, optional (default=None)",
         init_score_shape="array-like of shape = [n_samples] or None, optional (default=None)",
-        group_shape="array-like or None, optional (default=None)"
+        group_shape="array-like or None, optional (default=None)",
     ) + "\n\n" + _lgbmmodel_doc_custom_eval_note
 
     def predict(self, X, raw_score=False, start_iteration=0, num_iteration=None,
@@ -844,6 +860,8 @@ class LGBMClassifier(_LGBMClassifierBase, LGBMModel):
     """LightGBM classifier."""
 
     def fit(self, X, y,
+
+            constraint_group=None,
             sample_weight=None, init_score=None,
             eval_set=None, eval_names=None, eval_sample_weight=None,
             eval_class_weight=None, eval_init_score=None, eval_metric=None,
@@ -896,7 +914,9 @@ class LGBMClassifier(_LGBMClassifierBase, LGBMModel):
                 else:
                     valid_sets[i] = (valid_x, self._le.transform(valid_y))
 
-        super().fit(X, _y, sample_weight=sample_weight, init_score=init_score, eval_set=valid_sets,
+        super().fit(X, _y,
+                    constraint_group=constraint_group, sample_weight=sample_weight,
+                    init_score=init_score, eval_set=valid_sets,
                     eval_names=eval_names, eval_sample_weight=eval_sample_weight,
                     eval_class_weight=eval_class_weight, eval_init_score=eval_init_score,
                     eval_metric=eval_metric, early_stopping_rounds=early_stopping_rounds,

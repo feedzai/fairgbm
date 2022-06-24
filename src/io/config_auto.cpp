@@ -170,6 +170,7 @@ const std::unordered_map<std::string, std::string>& Config::alias_table() {
   // FairGBM parameters
   {"lagrangian_learning_rate", "multiplier_learning_rate"},
   {"lagrangian_multiplier_learning_rate", "multiplier_learning_rate"},
+  {"init_lagrange_multipliers", "init_lagrangian_multipliers"},
   {"lagrangian_multipliers", "init_lagrangian_multipliers"},
   {"init_multipliers", "init_lagrangian_multipliers"},
   {"output_dir", "debugging_output_dir"},

@@ -33,7 +33,6 @@ Metadata::~Metadata() {
 }
 
 void Metadata::Init(data_size_t num_data, int weight_idx, int query_idx, int constraint_group_idx_) {
-  std::lock_guard<std::mutex> lock(mutex_);
   num_data_ = num_data;
   label_ = std::vector<label_t>(num_data_);
   if (weight_idx >= 0) {
@@ -323,7 +322,7 @@ void Metadata::SetLabel(const label_t* label, data_size_t len) {
   }
 }
 
-void Metadata::SetConstraintGroup(const float* constraint_group, data_size_t len) {
+void Metadata::SetConstraintGroup(const constraint_group_t* constraint_group, data_size_t len) {
   std::lock_guard<std::mutex> lock(mutex_);
   if (constraint_group == nullptr) {
     Log::Fatal("constraint_group cannot be nullptr");
@@ -337,7 +336,7 @@ void Metadata::SetConstraintGroup(const float* constraint_group, data_size_t len
 
   #pragma omp parallel for schedule(static, 512) if (num_data_ >= 1024)
   for (data_size_t i = 0; i < num_data_; ++i) {
-    constraint_group_[i] = static_cast<constraint_group_t>(Common::AvoidInf(constraint_group[i]));
+    constraint_group_[i] = static_cast<constraint_group_t>(constraint_group[i]);
   }
 }
 

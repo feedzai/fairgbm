@@ -255,7 +255,7 @@ void Config::Set(const std::unordered_map<std::string, std::string>& params) {
   CheckParamConflict();
 
 #ifdef DEBUG
-  Log::Debug("Loading configs from Map; constraint_group_column=%s\n", this->constraint_group_column.c_str());
+  Log::Info("Loading configs from Map; constraint_group_column=%s\n", this->constraint_group_column.c_str());
 #endif
 }
 

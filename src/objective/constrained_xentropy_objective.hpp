@@ -125,7 +125,7 @@ public:
     if (weights_ != nullptr) {
 
       #pragma omp parallel for schedule(static) reduction(+:suml, sumw) if (!deterministic_)
-      for (data_size_t i = 0; i < num_data_; ++i) {
+      for (data_size_t i = 0; i < num_data_gr; ++i) {
         suml += label_[i] * weights_[i];
         sumw += weights_[i];
       }
@@ -137,7 +137,7 @@ public:
         suml += label_[i];
       }
     }
-    double pavg = sumw > 0.0f ? suml / sumw : 0.0f;
+    double pavg = suml / sumw;
     pavg = std::min(pavg, 1.0 - kEpsilon);
     pavg = std::max<double>(pavg, kEpsilon);
     double initscore = std::log(pavg / (1.0f - pavg));

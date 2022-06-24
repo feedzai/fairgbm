@@ -99,7 +99,7 @@ class Metadata {
   * \param constraint_group constraint group information for each instance.
   * \param len the number of elements in the constraint_group array.
   */
-  void SetConstraintGroup(const float* constraint_group, data_size_t len);
+  void SetConstraintGroup(const constraint_group_t* constraint_group, data_size_t len);
 
   /*!
   * \brief Set initial scores
@@ -222,7 +222,7 @@ class Metadata {
   * \brief Get pointer of group
   * \return Pointer of group
   */
-  inline const constraint_group_t* group() const { return constraint_group_.data(); }
+  inline const constraint_group_t* constraint_group() const { return constraint_group_.data(); }
 
   /*! \brief Get unique groups in data */
   inline std::vector<constraint_group_t> group_values() const {

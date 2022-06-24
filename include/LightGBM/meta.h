@@ -47,11 +47,11 @@ typedef double label_t;
 typedef float label_t;
 #endif
 
-/*! \brief Type of metadata, include group */
-#ifdef GROUP_T_USE_INT
-  typedef u_int constraint_group_t;
+/*! \brief Type of metadata, include constraint group */
+#ifdef CONSTRAINT_GROUP_T_USE_INT8_T
+  typedef int8_t constraint_group_t;
 #else
-  typedef u_short constraint_group_t;
+  typedef int32_t constraint_group_t;
 #endif
 
 const score_t kMinScore = -std::numeric_limits<score_t>::infinity();

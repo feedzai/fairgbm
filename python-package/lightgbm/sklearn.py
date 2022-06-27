@@ -647,20 +647,21 @@ class LGBMModel(_LGBMModelBase):
         # copy for consistency
         self._n_features_in = self._n_features
 
-        def _construct_dataset(X, y, sample_weight, init_score, group, params,
+        def _construct_dataset(X, y,
                                constraint_group,
+                               sample_weight, group,
+                               init_score, params,
                                categorical_feature='auto'):
-            return Dataset(X, label=y, weight=sample_weight, group=group,
-                           init_score=init_score, params=params,
+            return Dataset(X, label=y,
                            constraint_group=constraint_group,
+                           weight=sample_weight, group=group,
+                           init_score=init_score, params=params,
                            categorical_feature=categorical_feature)
 
         train_set = _construct_dataset(_X, _y,
-                                       sample_weight=sample_weight,
-                                       init_score=init_score,
-                                       group=group,
-                                       params=params,
                                        constraint_group=constraint_group,
+                                       sample_weight=sample_weight, group=group,
+                                       init_score=init_score, params=params,
                                        categorical_feature=categorical_feature)
 
         valid_sets = []
@@ -697,9 +698,9 @@ class LGBMModel(_LGBMModelBase):
                     valid_group = _get_meta_data(eval_group, 'eval_group', i)
                     valid_constraint_group = _get_meta_data(constraint_group, 'constraint_group', i)
                     valid_set = _construct_dataset(X=valid_data[0], y=valid_data[1],
-                                                   sample_weight=valid_weight, init_score=valid_init_score,
                                                    constraint_group=valid_constraint_group,
-                                                   group=valid_group, params=params)
+                                                   sample_weight=valid_weight, group=valid_group,
+                                                   init_score=valid_init_score, params=params)
                 valid_sets.append(valid_set)
 
         if isinstance(init_model, LGBMModel):

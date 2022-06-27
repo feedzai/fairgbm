@@ -1629,7 +1629,9 @@ class Dataset:
                 ctypes.c_int(FIELD_TYPE_MAPPER[field_name])))
             return self
         dtype = np.float32
-        if field_name == 'group' or field_name == 'constraint_group':
+        if field_name == 'group':
+            dtype = np.int32
+        elif field_name == 'constraint_group':
             dtype = np.int32
         elif field_name == 'init_score':
             dtype = np.float64

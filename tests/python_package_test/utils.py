@@ -10,12 +10,46 @@ from sklearn.utils import check_random_state
 
 
 @lru_cache(maxsize=None)
+def load_baf_base():
+    pd = pytest.importorskip(
+        "pandas",
+        reason="The `pandas` package must be installed to import BAF-base and run fairness tests.")
+
+    local_root_path = Path(__file__).parent.parent.parent / "examples" / "FairGBM"
+    label_col = "fraud_bool"
+    sensitive_col = "customer_age"
+    # month_col = "month"
+    categorical_cols = ["payment_type", "employment_status", "housing_status", "source", "device_os"]
+    age_category_threshold = 50
+
+    def split_X_Y_S(path):
+        # Read data from path
+        data = pd.read_csv(path, header=0, sep="\t", index_col=None)
+
+        # Set categorical columns as such (needed for LightGBM to be able to identify which cols are categorical)
+        data = data.astype({col: "category" for col in categorical_cols})
+
+        # Split X, Y, S
+        X = data[[col for col in data.columns if col != label_col]]
+        Y = data[label_col]
+        S = (data[sensitive_col] >= age_category_threshold).astype(int)
+        return X, Y, S
+
+    data_paths = {
+        "train": local_root_path / "BAF-base.train",
+        "test": local_root_path / "BAF-base.test",
+    }
+
+    return {key: split_X_Y_S(path) for key, path in data_paths.items()}
+
+
+@lru_cache(maxsize=None)
 def load_compas():
     pd = pytest.importorskip(
         "pandas",
         reason="The `pandas` package must be installed to import COMPAS and run fairness tests.")
 
-    local_root_path = Path(__file__).parent.parent.parent / "examples" / "FairGBM"
+    local_root_path = Path(__file__).parent.parent.parent / "examples" / "FairGBM-other"
     target_col_name = "two_year_recid"
     sensitive_col_name = "race_Caucasian"
 
@@ -32,21 +66,6 @@ def load_compas():
     }
 
     return {key: read_data(path) for key, path in data_paths.items()}
-
-
-@lru_cache(maxsize=None)
-def load_california_housing_classification(price_threshold=100_000, seed=42):
-    X, Y = sklearn.datasets.fetch_california_housing(return_X_y=True)
-
-    # Binarize target column for classification
-    Y = (Y >= price_threshold).astype(np.float32)
-
-    # Let's generate a sensitive attribute column for testing
-    # NOTE: training is "unaware" as the sensitive column is not part of the training features
-    rng = np.random.RandomState(seed)
-    S = (rng.random(size=y.shape) > 0.80).astype(np.int32)
-
-    return X, Y, S
 
 
 @lru_cache(maxsize=None)

@@ -2,10 +2,18 @@ Binary Classification with Fairness Constraints
 ===============================================
 > Example of training a binary classifier with fairness constraints.
 
-Dataset source: https://github.com/propublica/compas-analysis/
-
 ***You must follow the [installation instructions](https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html)
 for the following commands to work. The `lightgbm` binary must be built and available at the root of this project.***
+
+Dataset
+-------
+
+The BAF (Bank Account Fraud) dataset is a real-world dataset on banking fraud.
+More details [here](https://github.com/feedzai/bank-account-fraud).
+
+For this example we're using a sample of 10% of the BAF-Base dataset.
+Fairness is measured as the FPR ratio between people aged under 50 and those aged 50 or above (as per the dataset's
+[datasheet](https://github.com/feedzai/bank-account-fraud/blob/main/documents/datasheet.pdf)).
 
 
 Training

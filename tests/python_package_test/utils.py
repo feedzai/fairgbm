@@ -2,11 +2,13 @@
 from functools import lru_cache
 from pathlib import Path
 from typing import Tuple
+import logging
 
 import pytest
 import numpy as np
 import sklearn.datasets
 from sklearn.utils import check_random_state
+from sklearn.metrics import roc_curve, confusion_matrix
 
 
 @lru_cache(maxsize=None)
@@ -171,3 +173,68 @@ def make_ranking(n_samples=100, n_features=20, n_informative=5, gmax=2,
         X[:, j] = bias + coef * y_vec
 
     return X, y_vec, group_id_vec
+
+
+def threshold_at_target(
+        y_true: np.ndarray,
+        y_pred: np.ndarray,
+        tpr: float = None,
+        fpr: float = None,
+    ) -> float:
+    """Computes the threshold at the given target.
+    Does not untie rows, may miss target in the presence of ties.
+    Uses scikit-learn to compute ROC curve.
+    """
+    fpr_vals, tpr_vals, thresholds = roc_curve(y_true, y_pred, pos_label=1)
+
+    # Find threshold that hits **at least** the target TPR
+    if tpr:
+        threshold_idx = np.argmax(np.argwhere(tpr_vals < tpr)) + 1
+
+    # Find threshold that hits **at most** the target FPR
+    elif fpr:
+        threshold_idx = np.argmax(np.argwhere(fpr_vals <= fpr))
+
+    threshold = thresholds[threshold_idx]
+
+    # Sanity check!
+    y_pred_binarized = (y_pred >= threshold)
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred_binarized).ravel()
+    actual_tpr = tp / (tp + fn)
+    actual_fpr = fp / (fp + tn)
+    if (tpr and actual_tpr < tpr) or (fpr and actual_fpr > fpr):
+        logging.error(f"Missed target metric: TPR={actual_tpr:.1%}, FPR={actual_fpr:.1%};")
+
+    return threshold
+
+
+def binarize_predictions(y_true, y_pred, tpr: float = None, fpr: float = None):
+    threshold = threshold_at_target(y_true, y_pred, tpr=tpr, fpr=fpr)
+    return (y_pred >= threshold).astype(int)
+
+
+def evaluate_recall(y_true, y_pred):
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    recall = tp / (tp + fn)
+    return recall
+
+
+def evaluate_fairness(y_true, y_pred, sensitive_col, metric_col="fpr"):
+    pd = pytest.importorskip("pandas")
+    aequitas_group = pytest.importorskip("aequitas.group")
+
+    g = aequitas_group.Group()
+    aequitas_df = pd.DataFrame({
+        "label": y_true,
+        "prediction": y_pred,
+        "sensitive": sensitive_col.astype(str)
+    })
+
+    aequitas_results, _ = g.get_crosstabs(
+        aequitas_df,
+        label_col="label",
+        score_col="prediction",
+        attr_cols=["sensitive"])
+
+    perf_metrics = aequitas_results[metric_col]
+    return perf_metrics.min() / perf_metrics.max()

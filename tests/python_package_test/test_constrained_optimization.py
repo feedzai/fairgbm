@@ -136,7 +136,7 @@ def test_fairgbm_vs_lightgbm(lightgbm_params, fairgbm_params, target_fpr, target
 
     # Assert FairGBM's fairness is strictly better then LightGBM's fairness
     # (very low target FPR values may lead to high stochasticity and in some cases FairGBM may be worse than LightGBM)
-    assert fairgbm_fairness > lightgbm_fairness + 0.05, (
+    assert fairgbm_fairness > lightgbm_fairness, (
         f"FairGBM achieved fairness ({target_fairness_metric} ratio) of {fairgbm_fairness:.1%} at {target_fpr:.1%}"
         f" global FPR, while LightGBM achieved fairness {lightgbm_fairness:.1%};"
     )

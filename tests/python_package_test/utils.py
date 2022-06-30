@@ -219,7 +219,7 @@ def evaluate_recall(y_true, y_pred):
     return recall
 
 
-def evaluate_fairness(y_true, y_pred, sensitive_col, metric_col="fpr"):
+def evaluate_fairness(y_true, y_pred, sensitive_col, metric_col="FPR"):
     pd = pytest.importorskip("pandas")
     aequitas_group = pytest.importorskip("aequitas.group")
 
@@ -236,5 +236,5 @@ def evaluate_fairness(y_true, y_pred, sensitive_col, metric_col="fpr"):
         score_col="prediction",
         attr_cols=["sensitive"])
 
-    perf_metrics = aequitas_results[metric_col]
+    perf_metrics = aequitas_results[metric_col.lower()]
     return perf_metrics.min() / perf_metrics.max()

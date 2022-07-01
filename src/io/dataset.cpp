@@ -936,8 +936,12 @@ bool Dataset::GetIntField(const char* field_name, data_size_t* out_len,
     *out_ptr = metadata_.query_boundaries();
     *out_len = metadata_.num_queries() + 1;
   }  else if (name == std::string("constraint_group")) {
+#ifdef CONSTRAINT_GROUP_T_USE_INT8_T
+    Log::Fatal("GetIntField doesn't support CONSTRAINT_GROUP_T_USE_INT8_T");
+#else
     *out_ptr = metadata_.constraint_group();
     *out_len = num_data_;
+#endif
   } else {
     return false;
   }

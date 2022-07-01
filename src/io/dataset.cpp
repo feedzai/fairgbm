@@ -875,16 +875,7 @@ bool Dataset::SetIntField(const char* field_name, const int* field_data,
   if (name == std::string("query") || name == std::string("group")) {
     metadata_.SetQuery(field_data, num_element);
   }  else if (name == std::string("constraint_group")) {
-    // Make sure the cast from int to constraint_group_t is possible
-    const int * max_value = std::max_element(field_data, field_data + num_element);
-    if (*max_value > std::numeric_limits<constraint_group_t>::max()) {
-      Log::Fatal(
-              "constraint group data does not fit within the type constraint_group_t; "
-              "maximum value is %d, but it should be less than or equal to %d",
-              *max_value, std::numeric_limits<constraint_group_t>::max());
-    }
-    std::vector<constraint_group_t> constraint_group_data(field_data, field_data + num_element);
-    metadata_.SetConstraintGroup(constraint_group_data.data(), num_element);
+    metadata_.SetConstraintGroup(field_data, num_element);
   } else {
     return false;
   }

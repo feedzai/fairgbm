@@ -4,9 +4,11 @@ on:
   push:
     branches:
     - master
+    - main-fairgbm
   pull_request:
     branches:
     - master
+    - main-fairgbm
 
 env:
   CONDA_ENV: test-env

@@ -12,6 +12,7 @@
 
 #include <string>
 #include <functional>
+#include <atomic>
 
 namespace LightGBM {
 /*!
@@ -302,7 +303,7 @@ public:
     std::pair<constraint_group_t, double> max_proxy_fpr, max_proxy_fnr;
 
     // Helper constant for BCE-based proxies
-    double xent_horizontal_shift = log(exp(proxy_margin_) - 1); // here, proxy_margin_ is the VERTICAL margin
+    const double xent_horizontal_shift = log(exp(proxy_margin_) - 1); // here, proxy_margin_ is the VERTICAL margin
 
     /** ---------------------------------------------------------------- *
      *                        FPR (Proxy) Constraint
@@ -623,21 +624,27 @@ public:
     */
   void ComputeFPR(const double *score, double probabilities_threshold, std::unordered_map<constraint_group_t, double> &group_fpr) const
   {
+    std::mutex fp_mutex, ln_mutex;
     std::unordered_map<int, int> false_positives;
     std::unordered_map<int, int> label_negatives;
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+    #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
 
       if (label_[i] == 0)
       {
-        label_negatives[group] += 1;
+        {
+          std::lock_guard<std::mutex> lock(ln_mutex);
+          label_negatives[group] += 1;
+        }
 
         const double z = 1.0f / (1.0f + std::exp(-score[i]));
-        if (z >= probabilities_threshold)
+        if (z >= probabilities_threshold) {
+          std::lock_guard<std::mutex> lock(fp_mutex);
           false_positives[group] += 1;
+        }
       }
     }
 
@@ -661,9 +668,9 @@ public:
    */
   double ComputeGlobalFPR(const double *score, double probabilities_threshold) const
   {
-    int false_positives = 0, label_negatives = 0;
+    std::atomic<int> false_positives(0), label_negatives(0);
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+    #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       if (label_[i] == 0)
@@ -687,10 +694,11 @@ public:
     */
   void ComputeHingeFPR(const double *score, std::unordered_map<constraint_group_t, double> &group_fpr) const
   {
+    std::mutex fp_mutex, ln_mutex;
     std::unordered_map<constraint_group_t, double> false_positives; // map of group index to the respective hinge-proxy FPs
     std::unordered_map<constraint_group_t, int> label_negatives;    // map of group index to the respective number of LNs
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+    #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
@@ -698,11 +706,17 @@ public:
       // HingeFPR uses only label negatives
       if (label_[i] == 0)
       {
-        label_negatives[group] += 1;
+        {
+          std::lock_guard<std::mutex> lock(ln_mutex);
+          label_negatives[group] += 1;
+        }
 
         // proxy_margin_ is the line intercept value
         const double hinge_score = proxy_margin_ + score[i];
-        false_positives[group] += std::max(0.0, hinge_score);
+        {
+          std::lock_guard<std::mutex> lock(fp_mutex);
+          false_positives[group] += std::max(0.0, hinge_score);
+        }
       }
     }
 
@@ -728,10 +742,11 @@ public:
    */
   void ComputeQuadraticLossFPR(const double *score, std::unordered_map<constraint_group_t, double> &group_fpr) const
   {
+    std::mutex fp_mutex, ln_mutex;
     std::unordered_map<constraint_group_t, double> false_positives; // map of group index to the respective proxy FPs
     std::unordered_map<constraint_group_t, int> label_negatives;    // map of group index to the respective number of LNs
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+    #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
@@ -739,12 +754,18 @@ public:
       // FPR uses only label NEGATIVES
       if (label_[i] == 0 and score[i] > -proxy_margin_)
       { // Conditions for non-zero proxy-FPR value
-        label_negatives[group] += 1;
+        {
+          std::lock_guard<std::mutex> lock(ln_mutex);
+          label_negatives[group] += 1;
+        }
 
         // proxy_margin_ corresponds to the symmetric of the function's zero point; f(-proxy_margin_)=0
         const double quadratic_score = (1. / 2.) * std::pow(score[i] + proxy_margin_, 2);
         assert(quadratic_score >= 0.);
-        false_positives[group] += quadratic_score;
+        {
+          std::lock_guard<std::mutex> lock(fp_mutex);
+          false_positives[group] += quadratic_score;
+        }
       }
     }
 
@@ -770,11 +791,12 @@ public:
    */
   void ComputeXEntropyLossFPR(const double *score, std::unordered_map<constraint_group_t, double> &group_fpr) const
   {
+    std::mutex fp_mutex, ln_mutex;
     std::unordered_map<constraint_group_t, double> false_positives; // map of group index to the respective proxy FPs
     std::unordered_map<constraint_group_t, int> label_negatives;    // map of group index to the respective number of LNs
-    double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
+    const double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+    #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
@@ -782,12 +804,18 @@ public:
       // FPR uses only label NEGATIVES
       if (label_[i] == 0)
       {
-        label_negatives[group] += 1;
+        {
+          std::lock_guard<std::mutex> lock(ln_mutex);
+          label_negatives[group] += 1;
+        }
 
         // proxy_margin_ corresponds to the vertical margin at x=0; l(0) = proxy_margin_
         const double xent_score = log(1 + exp(score[i] + xent_horizontal_shift));
         assert(xent_score >= 0.);
-        false_positives[group] += xent_score;
+        {
+          std::lock_guard<std::mutex> lock(fp_mutex);
+          false_positives[group] += xent_score;
+        }
       }
     }
 
@@ -811,21 +839,27 @@ public:
     */
   void ComputeFNR(const double *score, double probabilities_threshold, std::unordered_map<constraint_group_t, double> &group_fnr) const
   {
+    std::mutex fn_mutex, lp_mutex;
     std::unordered_map<constraint_group_t, int> false_negatives;
     std::unordered_map<constraint_group_t, int> label_positives;
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+    #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
 
       if (label_[i] == 1)
       {
-        label_positives[group] += 1;
+        {
+          std::lock_guard<std::mutex> lock(lp_mutex);
+          label_positives[group] += 1;
+        }
 
         const double z = 1.0f / (1.0f + std::exp(-score[i]));
-        if (z < probabilities_threshold)
+        if (z < probabilities_threshold) {
+          std::lock_guard<std::mutex> lock(fn_mutex);
           false_negatives[group] += 1;
+        }
       }
     }
 
@@ -848,9 +882,9 @@ public:
    */
   double ComputeGlobalFNR(const double *score, double probabilities_threshold) const
   {
-    int false_negatives = 0, label_positives = 0;
+    std::atomic<int> false_negatives(0), label_positives(0);
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+    #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       if (label_[i] == 1)
@@ -874,20 +908,27 @@ public:
     */
   void ComputeHingeLossFNR(const double *score, std::unordered_map<constraint_group_t, double> &group_fnr) const
   {
+    std::mutex fn_mutex, lp_mutex;
     std::unordered_map<constraint_group_t, double> false_negatives; // map of group index to the respective hinge-proxy FNs
     std::unordered_map<constraint_group_t, int> label_positives;
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+    #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
 
       if (label_[i] == 1)
       {
-        label_positives[group] += 1;
+        {
+          std::lock_guard<std::mutex> lock(lp_mutex);
+          label_positives[group] += 1;
+        }
 
         const double hinge_score = proxy_margin_ - score[i];
-        false_negatives[group] += std::max(0.0, hinge_score);
+        {
+          std::lock_guard<std::mutex> lock(fn_mutex);
+          false_negatives[group] += std::max(0.0, hinge_score);
+        }
       }
     }
 
@@ -912,10 +953,11 @@ public:
    */
   void ComputeQuadraticLossFNR(const double *score, std::unordered_map<constraint_group_t, double> &group_fnr) const
   {
+    std::mutex fn_mutex, lp_mutex;
     std::unordered_map<constraint_group_t, double> false_negatives; // map of group index to the respective proxy FPs
     std::unordered_map<constraint_group_t, int> label_positives;    // map of group index to the respective number of LNs
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+    #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
@@ -923,12 +965,18 @@ public:
       // FNR uses only label POSITIVES
       if (label_[i] == 1 and score[i] < proxy_margin_)
       { // Conditions for non-zero proxy-FNR value
-        label_positives[group] += 1;
+        {
+          std::lock_guard<std::mutex> lock(lp_mutex);
+          label_positives[group] += 1;
+        }
 
         // proxy_margin_ corresponds to the function's zero point; f(proxy_margin_)=0
         const double quadratic_score = (1. / 2.) * std::pow(score[i] - proxy_margin_, 2);
         assert(quadratic_score >= 0.);
-        false_negatives[group] += quadratic_score;
+        {
+          std::lock_guard<std::mutex> lock(fn_mutex);
+          false_negatives[group] += quadratic_score;
+        }
       }
     }
 
@@ -954,11 +1002,12 @@ public:
    */
   void ComputeXEntropyLossFNR(const double *score, std::unordered_map<constraint_group_t, double> &group_fnr) const
   {
+    std::mutex fn_mutex, lp_mutex;
     std::unordered_map<constraint_group_t, double> false_negatives; // map of group index to the respective proxy FPs
     std::unordered_map<constraint_group_t, int> label_positives;    // map of group index to the respective number of LNs
-    double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
+    const double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+    #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
@@ -966,12 +1015,18 @@ public:
       // FNR uses only label POSITIVES
       if (label_[i] == 1)
       {
-        label_positives[group] += 1;
+        {
+          std::lock_guard<std::mutex> lock(lp_mutex);
+          label_positives[group] += 1;
+        }
 
         // proxy_margin_ corresponds to the vertical margin at x=0; l(0) = proxy_margin_
         const double xent_score = log(1 + exp(xent_horizontal_shift - score[i]));
         assert(xent_score >= 0.);
-        false_negatives[group] += xent_score;
+        {
+          std::lock_guard<std::mutex> lock(fn_mutex);
+          false_negatives[group] += xent_score;
+        }
       }
     }
 
@@ -992,17 +1047,21 @@ public:
     */
   void ComputeLabelCounts()
   {
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+    std::mutex lp_mutex, ln_mutex;
+
+    #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       if (label_[i] == 1)
       {
+        std::lock_guard<std::mutex> lock(lp_mutex);
         this->group_label_positives_[group_[i]] += 1;
         this->total_label_positives_ += 1;
       }
 
       else if (label_[i] == 0)
       {
+        std::lock_guard<std::mutex> lock(ln_mutex);
         this->group_label_negatives_[group_[i]] += 1;
         this->total_label_negatives_ += 1;
       }

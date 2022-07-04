@@ -12,7 +12,6 @@
 
 #include <string>
 #include <functional>
-#include <atomic>
 
 namespace LightGBM {
 /*!
@@ -668,9 +667,9 @@ public:
    */
   double ComputeGlobalFPR(const double *score, double probabilities_threshold) const
   {
-    std::atomic<int> false_positives(0), label_negatives(0);
+    int false_positives = 0, label_negatives = 0;
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) reduction(+ : false_positives, label_negatives)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       if (label_[i] == 0)
@@ -882,9 +881,9 @@ public:
    */
   double ComputeGlobalFNR(const double *score, double probabilities_threshold) const
   {
-    std::atomic<int> false_negatives(0), label_positives(0);
+    int false_negatives = 0, label_positives = 0;
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) reduction(+ : false_negatives, label_positives)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       if (label_[i] == 1)

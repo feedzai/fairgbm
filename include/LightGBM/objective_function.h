@@ -356,7 +356,7 @@ public:
     }
 
     // compute pointwise gradients and hessians with implied unit weights
-//    #pragma omp parallel for schedule(static)       // TODO: https://github.com/feedzai/fairgbm/issues/6
+    #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       const auto group = group_[i];

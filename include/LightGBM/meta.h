@@ -51,7 +51,7 @@ typedef float label_t;
 #ifdef CONSTRAINT_GROUP_T_USE_INT8_T
   typedef int8_t constraint_group_t;
 #else
-  typedef int32_t constraint_group_t;
+  typedef int constraint_group_t;
 #endif
 
 const score_t kMinScore = -std::numeric_limits<score_t>::infinity();

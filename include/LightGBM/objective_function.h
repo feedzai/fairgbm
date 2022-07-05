@@ -110,9 +110,9 @@ public:
     if (constraint_type == "FNR,FPR")
       constraint_type = "FPR,FNR";
 
+    score_threshold_ = (score_t)config.score_threshold;
     fpr_threshold_ = (score_t)config.constraint_fpr_threshold;
     fnr_threshold_ = (score_t)config.constraint_fnr_threshold;
-    score_threshold_ = (score_t)config.score_threshold;
     proxy_margin_ = (score_t)config.stepwise_proxy_margin;
 
     /** Global constraint parameters **/
@@ -209,6 +209,7 @@ public:
     //  - 3rd: global FPR constraint      (a single multiplier)
     //  - 4th: global FNR constraint      (a single multiplier)
 
+    // TODO: https://github.com/feedzai/fairgbm/issues/6    // All of these logic branches can be parallelized
     // Multiplier corresponding to group-wise FPR constraints
     if (IsFPRConstrained())
     {
@@ -356,6 +357,7 @@ public:
     }
 
     // compute pointwise gradients and hessians with implied unit weights
+//    #pragma omp parallel for schedule(static,512)
     #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {

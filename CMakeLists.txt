@@ -178,7 +178,7 @@ if(USE_CUDA)
 
     LIST(APPEND CMAKE_CUDA_FLAGS ${CUDA_ARCH_FLAGS})
     if(USE_DEBUG)
-      SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -g")
+      SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -g -fno-omit-frame-pointer")
     else()
       SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 -lineinfo")
     endif()

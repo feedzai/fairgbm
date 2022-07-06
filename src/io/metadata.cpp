@@ -334,13 +334,9 @@ void Metadata::SetConstraintGroup(const int* constraint_group, data_size_t len) 
     constraint_group_.resize(num_data_);
   }
 
-  // Make sure the cast from int to constraint_group_t is possible
-  const int max_allowed = std::numeric_limits<constraint_group_t>::max();
-
   #pragma omp parallel for schedule(static, 512) if (num_data_ >= 1024)
   for (data_size_t i = 0; i < num_data_; ++i) {
-    CHECK_LT(constraint_group[i], max_allowed)
-    SetConstraintGroupAt(i, static_cast<constraint_group_t>(constraint_group[i]));
+    SetConstraintGroupAt(i, constraint_group[i]);
   }
 }
 

@@ -1202,7 +1202,7 @@ void DatasetLoader::ExtractFeaturesFromMemory(std::vector<std::string>* text_dat
           }
         }
         if (inner_data.first == constraint_group_idx_)
-          dataset->metadata_.SetConstraintGroupAt(i, static_cast<constraint_group_t>(inner_data.second));
+          dataset->metadata_.SetConstraintGroupAt(i, inner_data.second);
       }
       if (dataset->has_raw()) {
         for (size_t j = 0; j < feature_row.size(); ++j) {
@@ -1261,7 +1261,7 @@ void DatasetLoader::ExtractFeaturesFromMemory(std::vector<std::string>* text_dat
           }
         }
         if (inner_data.first == constraint_group_idx_)
-          dataset->metadata_.SetConstraintGroupAt(i, static_cast<constraint_group_t>(inner_data.second));
+          dataset->metadata_.SetConstraintGroupAt(i, inner_data.second);
       }
       dataset->FinishOneRow(tid, i, is_feature_added);
       if (dataset->has_raw()) {
@@ -1336,7 +1336,7 @@ void DatasetLoader::ExtractFeaturesFromFile(const char* filename, const Parser* 
           }
         }
         if (inner_data.first == constraint_group_idx_)
-          dataset->metadata_.SetConstraintGroupAt(start_idx + i, static_cast<constraint_group_t>(inner_data.second));
+          dataset->metadata_.SetConstraintGroupAt(start_idx + i, inner_data.second);
       }
       if (dataset->has_raw()) {
         for (size_t j = 0; j < feature_row.size(); ++j) {

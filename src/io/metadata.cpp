@@ -339,13 +339,8 @@ void Metadata::SetConstraintGroup(const int* constraint_group, data_size_t len) 
 
   #pragma omp parallel for schedule(static, 512) if (num_data_ >= 1024)
   for (data_size_t i = 0; i < num_data_; ++i) {
-    if (constraint_group[i] > max_allowed) {
-      Log::Fatal(
-              "constraint group data does not fit within the type constraint_group_t; "
-              "maximum value is %d, but it should be less than or equal to %d",
-              constraint_group[i], max_allowed);
-    }
-    constraint_group_[i] = static_cast<constraint_group_t>(constraint_group[i]);
+    CHECK_LT(constraint_group[i], max_allowed)
+    SetConstraintGroupAt(i, static_cast<constraint_group_t>(constraint_group[i]));
   }
 }
 

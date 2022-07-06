@@ -215,6 +215,7 @@ class Metadata {
   * \param value Group constraint value of this record
   */
   inline void SetConstraintGroupAt(data_size_t idx, constraint_group_t value) {
+    CHECK_GE(value, 0)
     constraint_group_[idx] = value;
   }
 

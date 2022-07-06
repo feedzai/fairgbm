@@ -99,7 +99,7 @@ class Metadata {
   * \param constraint_group constraint group information for each instance.
   * \param len the number of elements in the constraint_group array.
   */
-  void SetConstraintGroup(const float* constraint_group, data_size_t len);
+  void SetConstraintGroup(const int* constraint_group, data_size_t len);
 
   /*!
   * \brief Set initial scores
@@ -214,18 +214,22 @@ class Metadata {
   * \param idx Index of this record
   * \param value Group constraint value of this record
   */
-  inline void SetConstraintGroupAt(data_size_t idx, constraint_group_t value) {
-    constraint_group_[idx] = value;
+  template <typename T>
+  inline void SetConstraintGroupAt(data_size_t idx, T value) {
+    // Make sure the cast from T to constraint_group_t is possible
+    CHECK_LE(value, std::numeric_limits<constraint_group_t>::max())
+    CHECK_GE(value, 0)
+    constraint_group_[idx] = static_cast<constraint_group_t>(value);
   }
 
   /*!
   * \brief Get pointer of group
   * \return Pointer of group
   */
-  inline const constraint_group_t* group() const { return constraint_group_.data(); }
+  inline const constraint_group_t* constraint_group() const { return constraint_group_.data(); }
 
   /*! \brief Get unique groups in data */
-  inline std::vector<constraint_group_t> group_values() const {
+  inline std::vector<constraint_group_t> unique_constraint_groups() const {
     std::vector<constraint_group_t> values(constraint_group_);
     std::sort(values.begin(), values.end());
 

@@ -110,9 +110,9 @@ public:
     if (constraint_type == "FNR,FPR")
       constraint_type = "FPR,FNR";
 
+    score_threshold_ = (score_t)config.score_threshold;
     fpr_threshold_ = (score_t)config.constraint_fpr_threshold;
     fnr_threshold_ = (score_t)config.constraint_fnr_threshold;
-    score_threshold_ = (score_t)config.score_threshold;
     proxy_margin_ = (score_t)config.stepwise_proxy_margin;
 
     /** Global constraint parameters **/
@@ -149,8 +149,8 @@ public:
     weights_ = metadata.weights();
 
     // Store Information about the group
-    group_ = metadata.group();
-    group_values_ = metadata.group_values();
+    group_ = metadata.constraint_group();
+    group_values_ = metadata.unique_constraint_groups();
 
     // Store Information about the labels
     total_label_positives_ = 0;
@@ -209,6 +209,7 @@ public:
     //  - 3rd: global FPR constraint      (a single multiplier)
     //  - 4th: global FNR constraint      (a single multiplier)
 
+    // TODO: https://github.com/feedzai/fairgbm/issues/6    // All of these logic branches can be parallelized
     // Multiplier corresponding to group-wise FPR constraints
     if (IsFPRConstrained())
     {
@@ -302,7 +303,7 @@ public:
     std::pair<constraint_group_t, double> max_proxy_fpr, max_proxy_fnr;
 
     // Helper constant for BCE-based proxies
-    double xent_horizontal_shift = log(exp(proxy_margin_) - 1); // here, proxy_margin_ is the VERTICAL margin
+    const double xent_horizontal_shift = log(exp(proxy_margin_) - 1); // here, proxy_margin_ is the VERTICAL margin
 
     /** ---------------------------------------------------------------- *
      *                        FPR (Proxy) Constraint
@@ -356,7 +357,8 @@ public:
     }
 
     // compute pointwise gradients and hessians with implied unit weights
-//    #pragma omp parallel for schedule(static)       // TODO: https://github.com/feedzai/fairgbm/issues/6
+//    #pragma omp parallel for schedule(static,512)
+    #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       const auto group = group_[i];
@@ -626,7 +628,6 @@ public:
     std::unordered_map<int, int> false_positives;
     std::unordered_map<int, int> label_negatives;
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
@@ -636,8 +637,9 @@ public:
         label_negatives[group] += 1;
 
         const double z = 1.0f / (1.0f + std::exp(-score[i]));
-        if (z >= probabilities_threshold)
+        if (z >= probabilities_threshold) {
           false_positives[group] += 1;
+        }
       }
     }
 
@@ -663,7 +665,7 @@ public:
   {
     int false_positives = 0, label_negatives = 0;
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+    #pragma omp parallel for schedule(static) reduction(+ : false_positives, label_negatives)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       if (label_[i] == 0)
@@ -690,7 +692,6 @@ public:
     std::unordered_map<constraint_group_t, double> false_positives; // map of group index to the respective hinge-proxy FPs
     std::unordered_map<constraint_group_t, int> label_negatives;    // map of group index to the respective number of LNs
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
@@ -731,7 +732,6 @@ public:
     std::unordered_map<constraint_group_t, double> false_positives; // map of group index to the respective proxy FPs
     std::unordered_map<constraint_group_t, int> label_negatives;    // map of group index to the respective number of LNs
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
@@ -772,9 +772,8 @@ public:
   {
     std::unordered_map<constraint_group_t, double> false_positives; // map of group index to the respective proxy FPs
     std::unordered_map<constraint_group_t, int> label_negatives;    // map of group index to the respective number of LNs
-    double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
+    const double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
@@ -814,7 +813,6 @@ public:
     std::unordered_map<constraint_group_t, int> false_negatives;
     std::unordered_map<constraint_group_t, int> label_positives;
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
@@ -824,8 +822,9 @@ public:
         label_positives[group] += 1;
 
         const double z = 1.0f / (1.0f + std::exp(-score[i]));
-        if (z < probabilities_threshold)
+        if (z < probabilities_threshold) {
           false_negatives[group] += 1;
+        }
       }
     }
 
@@ -850,7 +849,7 @@ public:
   {
     int false_negatives = 0, label_positives = 0;
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+    #pragma omp parallel for schedule(static) reduction(+ : false_negatives, label_positives)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       if (label_[i] == 1)
@@ -877,7 +876,6 @@ public:
     std::unordered_map<constraint_group_t, double> false_negatives; // map of group index to the respective hinge-proxy FNs
     std::unordered_map<constraint_group_t, int> label_positives;
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
@@ -915,7 +913,6 @@ public:
     std::unordered_map<constraint_group_t, double> false_negatives; // map of group index to the respective proxy FPs
     std::unordered_map<constraint_group_t, int> label_positives;    // map of group index to the respective number of LNs
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
@@ -956,9 +953,8 @@ public:
   {
     std::unordered_map<constraint_group_t, double> false_negatives; // map of group index to the respective proxy FPs
     std::unordered_map<constraint_group_t, int> label_positives;    // map of group index to the respective number of LNs
-    double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
+    const double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
 
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       constraint_group_t group = group_[i];
@@ -992,17 +988,21 @@ public:
     */
   void ComputeLabelCounts()
   {
-    // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+    std::mutex lp_mutex, ln_mutex;
+
+    #pragma omp parallel for schedule(static)
     for (data_size_t i = 0; i < num_data_; ++i)
     {
       if (label_[i] == 1)
       {
+        std::lock_guard<std::mutex> lock(lp_mutex);
         this->group_label_positives_[group_[i]] += 1;
         this->total_label_positives_ += 1;
       }
 
       else if (label_[i] == 0)
       {
+        std::lock_guard<std::mutex> lock(ln_mutex);
         this->group_label_negatives_[group_[i]] += 1;
         this->total_label_negatives_ += 1;
       }

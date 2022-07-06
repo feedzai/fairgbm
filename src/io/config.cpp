@@ -254,9 +254,7 @@ void Config::Set(const std::unordered_map<std::string, std::string>& params) {
   // check for conflicts
   CheckParamConflict();
 
-#ifdef DEBUG
   Log::Debug("Loading configs from Map; constraint_group_column=%s\n", this->constraint_group_column.c_str());
-#endif
 }
 
 bool CheckMultiClassObjective(const std::string& objective) {

@@ -271,6 +271,7 @@ class LGBMDeprecationWarning(UserWarning):
     pass
 
 
+# TODO: update _ConfigAliases with new FairGBM configs
 class _ConfigAliases:
     aliases = {"bin_construct_sample_cnt": {"bin_construct_sample_cnt",
                                             "subsample_for_bin"},
@@ -434,7 +435,8 @@ C_API_FEATURE_IMPORTANCE_GAIN = 1
 FIELD_TYPE_MAPPER = {"label": C_API_DTYPE_FLOAT32,
                      "weight": C_API_DTYPE_FLOAT32,
                      "init_score": C_API_DTYPE_FLOAT64,
-                     "group": C_API_DTYPE_INT32}
+                     "group": C_API_DTYPE_INT32,
+                     "constraint_group": C_API_DTYPE_INT32}
 
 """String name to int feature importance type mapper"""
 FEATURE_IMPORTANCE_TYPE_MAPPER = {"split": C_API_FEATURE_IMPORTANCE_SPLIT,
@@ -1051,7 +1053,7 @@ class _InnerPredictor:
 class Dataset:
     """Dataset in LightGBM."""
 
-    def __init__(self, data, label=None, reference=None,
+    def __init__(self, data, label=None, reference=None, constraint_group=None,
                  weight=None, group=None, init_score=None, silent=False,
                  feature_name='auto', categorical_feature='auto', params=None,
                  free_raw_data=True):
@@ -1066,6 +1068,9 @@ class Dataset:
             Label of the data.
         reference : Dataset or None, optional (default=None)
             If this is Dataset for validation, training data should be used as reference.
+        constraint_group : list, numpy 1-D array, pandas Series or None, optional (default=None)
+            The constraint group for each instance (to enforce fairness constraints).
+            Only used for constrained optimization.
         weight : list, numpy 1-D array, pandas Series or None, optional (default=None)
             Weight for each instance.
         group : list, numpy 1-D array, pandas Series or None, optional (default=None)
@@ -1099,6 +1104,7 @@ class Dataset:
         self.data = data
         self.label = label
         self.reference = reference
+        self.constraint_group = constraint_group
         self.weight = weight
         self.group = group
         self.init_score = init_score
@@ -1196,7 +1202,7 @@ class Dataset:
             return self
         self.set_init_score(init_score)
 
-    def _lazy_init(self, data, label=None, reference=None,
+    def _lazy_init(self, data, label=None, reference=None, constraint_group=None,
                    weight=None, group=None, init_score=None, predictor=None,
                    silent=False, feature_name='auto',
                    categorical_feature='auto', params=None):
@@ -1282,6 +1288,8 @@ class Dataset:
             self.set_label(label)
         if self.get_label() is None:
             raise ValueError("Label should not be None")
+        if constraint_group is not None:
+            self.set_constraint_group(constraint_group)
         if weight is not None:
             self.set_weight(weight)
         if group is not None:
@@ -1435,6 +1443,7 @@ class Dataset:
                 if self.used_indices is None:
                     # create valid
                     self._lazy_init(self.data, label=self.label, reference=self.reference,
+                                    constraint_group=self.constraint_group,
                                     weight=self.weight, group=self.group,
                                     init_score=self.init_score, predictor=self._predictor,
                                     silent=self.silent, feature_name=self.feature_name, params=self.params)
@@ -1465,7 +1474,7 @@ class Dataset:
                         self._set_init_score_by_predictor(self._predictor, self.data, used_indices)
             else:
                 # create train
-                self._lazy_init(self.data, label=self.label,
+                self._lazy_init(self.data, label=self.label, constraint_group=self.constraint_group,
                                 weight=self.weight, group=self.group,
                                 init_score=self.init_score, predictor=self._predictor,
                                 silent=self.silent, feature_name=self.feature_name,
@@ -1621,6 +1630,8 @@ class Dataset:
             return self
         dtype = np.float32
         if field_name == 'group':
+            dtype = np.int32
+        elif field_name == 'constraint_group':
             dtype = np.int32
         elif field_name == 'init_score':
             dtype = np.float64
@@ -1801,6 +1812,26 @@ class Dataset:
             label = list_to_1d_numpy(_label_from_pandas(label), name='label')
             self.set_field('label', label)
             self.label = self.get_field('label')  # original values can be modified at cpp side
+        return self
+
+    def set_constraint_group(self, constraint_group):
+        """Set constraint group of each instance (which group they belong to for enforcing fairness constraints).
+
+        Parameters
+        ----------
+        constraint_group : list, numpy 1-D array, pandas Series or None
+            The constraint group information to be set into Dataset.
+
+        Returns
+        -------
+        self : Dataset
+            Dataset with set label.
+        """
+        self.constraint_group = constraint_group
+        if self.handle is not None and constraint_group is not None:
+            constraint_group = list_to_1d_numpy(constraint_group, np.int32, name='constraint_group')
+            self.set_field('constraint_group', constraint_group)
+            self.constraint_group = self.get_field('constraint_group')  # original values can be modified at cpp side
         return self
 
     def set_weight(self, weight):

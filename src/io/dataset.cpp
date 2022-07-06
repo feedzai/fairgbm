@@ -850,11 +850,6 @@ bool Dataset::SetFloatField(const char* field_name, const float* field_data,
 #else
     metadata_.SetWeights(field_data, num_element);
 #endif
-  } else if (name == std::string("constraint_group") ||
-             name == std::string("fairness_group") ||
-             name == std::string("sensitive_group") ||
-             name == std::string("protected_group")) {
-    metadata_.SetConstraintGroup(field_data, num_element);
   } else {
     return false;   // Not successful
   }
@@ -879,6 +874,8 @@ bool Dataset::SetIntField(const char* field_name, const int* field_data,
   name = Common::Trim(name);
   if (name == std::string("query") || name == std::string("group")) {
     metadata_.SetQuery(field_data, num_element);
+  }  else if (name == std::string("constraint_group")) {
+    metadata_.SetConstraintGroup(field_data, num_element);
   } else {
     return false;
   }
@@ -929,6 +926,13 @@ bool Dataset::GetIntField(const char* field_name, data_size_t* out_len,
   if (name == std::string("query") || name == std::string("group")) {
     *out_ptr = metadata_.query_boundaries();
     *out_len = metadata_.num_queries() + 1;
+  }  else if (name == std::string("constraint_group")) {
+#ifdef CONSTRAINT_GROUP_T_USE_INT8_T
+    Log::Fatal("GetIntField doesn't support CONSTRAINT_GROUP_T_USE_INT8_T");
+#else
+    *out_ptr = metadata_.constraint_group();
+    *out_len = num_data_;
+#endif
   } else {
     return false;
   }

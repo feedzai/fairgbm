@@ -149,8 +149,8 @@ public:
     weights_ = metadata.weights();
 
     // Store Information about the group
-    group_ = metadata.group();
-    group_values_ = metadata.group_values();
+    group_ = metadata.constraint_group();
+    group_values_ = metadata.unique_constraint_groups();
 
     // Store Information about the labels
     total_label_positives_ = 0;

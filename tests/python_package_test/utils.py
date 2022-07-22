@@ -178,8 +178,8 @@ def make_ranking(n_samples=100, n_features=20, n_informative=5, gmax=2,
 def threshold_at_target(
         y_true: np.ndarray,
         y_pred: np.ndarray,
-        tpr: float = None,
-        fpr: float = None,
+        target_tpr: float = None,
+        target_fpr: float = None,
     ) -> float:
     """Computes the threshold at the given target.
     Does not untie rows, may miss target in the presence of ties.
@@ -188,12 +188,12 @@ def threshold_at_target(
     fpr_vals, tpr_vals, thresholds = roc_curve(y_true, y_pred, pos_label=1)
 
     # Find threshold that hits **at least** the target TPR
-    if tpr:
-        threshold_idx = np.argmax(np.argwhere(tpr_vals < tpr)) + 1
+    if target_tpr:
+        threshold_idx = np.argmax(np.argwhere(tpr_vals < target_tpr)) + 1
 
     # Find threshold that hits **at most** the target FPR
-    elif fpr:
-        threshold_idx = np.argmax(np.argwhere(fpr_vals <= fpr))
+    elif target_fpr:
+        threshold_idx = np.argmax(np.argwhere(fpr_vals <= target_fpr))
 
     threshold = thresholds[threshold_idx]
 
@@ -202,8 +202,8 @@ def threshold_at_target(
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred_binarized).ravel()
     actual_tpr = tp / (tp + fn)
     actual_fpr = fp / (fp + tn)
-    if (tpr and actual_tpr < tpr) or (fpr and actual_fpr > fpr):
-        logging.error(f"Missed target metric: TPR={actual_tpr:.1%}, FPR={actual_fpr:.1%};")
+    if (target_tpr and actual_tpr < target_tpr) or (target_fpr and actual_fpr > target_fpr):
+        raise Exception(f"Missed target metric: TPR={actual_tpr:.1%}, FPR={actual_fpr:.1%};")
 
     return threshold
 

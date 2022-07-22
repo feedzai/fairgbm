@@ -15,20 +15,6 @@ def lightgbm_params() -> dict:
         "seed": 3402,
         "num_iterations": 1000,
     }
-    # return {
-    #     "objective": "cross_entropy",
-    #     "seed": 3402,
-    #
-    #     # The following hyperparameters were found via tuning and should work reasonably well
-    #     'n_estimators': 282,
-    #     'max_depth': 5,
-    #     'learning_rate': 0.08045625153147128,
-    #     'num_leaves': 65,
-    #     'boosting_type': 'goss',
-    #     'min_data_in_leaf': 22,
-    #     'max_bin': 220,
-    #     'enable_bundle': True,
-    # }
 
 
 @pytest.fixture(params=[0.05, 0.075, 0.10, 0.20, 0.50])
@@ -41,7 +27,6 @@ def target_fnr(target_fpr):
     return 1 - target_fpr - 0.10    # loose target for FNR
 
 
-# @pytest.fixture(params=["FPR", "FNR"])
 @pytest.fixture(params=["FPR"])
 def target_fairness_metric(request):
     return request.param
@@ -90,7 +75,7 @@ def test_fairgbm_fairness(fairgbm_params, target_fpr, target_fnr, target_fairnes
         f"{target_recall:.1%} recall."
     )
 
-    # Assert Fairness makes sense; it should be better than 80% for most cases
+    # Assert Fairness makes sense
     target_metric_val = target_fpr if target_fairness_metric == "FPR" else target_fnr
     assert (fairness > 0.70) if (target_metric_val >= 0.10) else (fairness > 0.60), (
         f"FairGBM achieved fairness ({target_fairness_metric} ratio) of {fairness:.1%} at {target_fpr:.1%} global FPR, "
@@ -130,7 +115,7 @@ def test_fairgbm_vs_lightgbm(lightgbm_params, fairgbm_params, target_fpr, target
     )
 
     # Assert FairGBM's performance is within some margin of LightGBM's performance
-    assert fairgbm_recall > lightgbm_recall * 0.8, (
+    assert lightgbm_recall > fairgbm_recall > lightgbm_recall * 0.8, (
         f"FairGBM achieved recall={fairgbm_recall:.1%}; LightGBM achieved recall={lightgbm_recall:.1%};"
     )
 

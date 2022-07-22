@@ -587,7 +587,7 @@ bool GBDT::TrainLagrangianOneIter(const score_t* /* gradients */, const score_t*
   std::vector<double> updated_lag_multipliers(current_lag_multipliers);
 
   // Gradient ascent in Lagrangian multipliers (or constraint space)
-  for (uint i = 0; i < lag_updates.size(); i++) {
+  for (unsigned int i = 0; i < lag_updates.size(); i++) {
     updated_lag_multipliers[i] += lagrangian_learning_rate_ * lag_updates[i];
 
     // Ensuring multipliers >= 0 -> using *INEQUALITY* constraints! c(theta) <= 0

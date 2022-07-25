@@ -209,7 +209,7 @@ def threshold_at_target(
 
 
 def binarize_predictions(y_true, y_pred, tpr: float = None, fpr: float = None):
-    threshold = threshold_at_target(y_true, y_pred, tpr=tpr, fpr=fpr)
+    threshold = threshold_at_target(y_true, y_pred, target_tpr=tpr, target_fpr=fpr)
     return (y_pred >= threshold).astype(int)
 
 

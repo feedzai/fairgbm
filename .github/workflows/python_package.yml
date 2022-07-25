@@ -23,9 +23,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            task: regular
-            python_version: 3.6
+          #- os: ubuntu-latest
+          #  task: regular
+          #  python_version: 3.6
           - os: ubuntu-latest
             task: sdist
             python_version: 3.9

@@ -1,7 +1,4 @@
 # coding: utf-8
-
-"""
-
 import copy
 import itertools
 import math
@@ -2796,5 +2793,3 @@ def test_reset_params_works_with_metric_num_class_and_boosting():
     expected_params = dict(dataset_params, **booster_params)
     assert bst.params == expected_params
     assert new_bst.params == expected_params
-
-"""

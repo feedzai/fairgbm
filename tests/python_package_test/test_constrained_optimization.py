@@ -1,7 +1,5 @@
 # coding: utf-8
 
-"""
-
 import logging
 
 import pytest
@@ -128,5 +126,3 @@ def test_fairgbm_vs_lightgbm(lightgbm_params, fairgbm_params, target_fpr, target
         f"FairGBM achieved fairness ({target_fairness_metric} ratio) of {fairgbm_fairness:.1%} at {target_fpr:.1%}"
         f" global FPR, while LightGBM achieved fairness {lightgbm_fairness:.1%};"
     )
-
-"""

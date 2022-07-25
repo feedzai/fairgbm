@@ -25,7 +25,7 @@ jobs:
         include:
           - os: ubuntu-latest
             task: regular
-            python_version: 3.7
+            python_version: 3.8
           - os: ubuntu-latest
             task: sdist
             python_version: 3.9

@@ -1,9 +1,9 @@
 
-"""
+
 
 # coding: utf-8
 """Tests for lightgbm.dask module"""
-
+"""
 import inspect
 import pickle
 import random

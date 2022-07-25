@@ -1,3 +1,6 @@
+
+"""
+
 # coding: utf-8
 """Tests for lightgbm.dask module"""
 
@@ -1370,3 +1373,6 @@ def test_predict_with_raw_score(task, output, cluster):
         if task.endswith('classification'):
             pred_proba_raw = model.predict_proba(dX, raw_score=True).compute()
             assert_eq(raw_predictions, pred_proba_raw)
+
+
+"""

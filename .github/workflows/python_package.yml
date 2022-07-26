@@ -26,24 +26,24 @@ jobs:
           #- os: ubuntu-latest
           #  task: regular
           #  python_version: 3.6
-          - os: ubuntu-latest
+          - os: macOS-latest
             task: sdist
             python_version: 3.9
-          - os: ubuntu-latest
+          - os: macOS-latest
             task: bdist
             python_version: 3.8
-          - os: ubuntu-latest
+          - os: macOS-latest
             task: if-else
             python_version: 3.8
           #- os: ubuntu-latest
           #  task: mpi
           #  method: source
           #  python_version: 3.9
-          - os: ubuntu-latest
+          - os: macOS-latest
             task: mpi
             method: pip
             python_version: 3.7
-          - os: ubuntu-latest
+          - os: macOS-latest
             task: mpi
             method: wheel
             python_version: 3.7

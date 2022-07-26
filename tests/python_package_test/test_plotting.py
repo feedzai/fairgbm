@@ -1,73 +1,73 @@
-# # coding: utf-8
-# import pytest
-# from sklearn.model_selection import train_test_split
+# coding: utf-8
+import pytest
+from sklearn.model_selection import train_test_split
 
-# import lightgbm as lgb
-# from lightgbm.compat import GRAPHVIZ_INSTALLED, MATPLOTLIB_INSTALLED
+import lightgbm as lgb
+from lightgbm.compat import GRAPHVIZ_INSTALLED, MATPLOTLIB_INSTALLED
 
-# if MATPLOTLIB_INSTALLED:
-#     import matplotlib
-#     matplotlib.use('Agg')
-# if GRAPHVIZ_INSTALLED:
-#     import graphviz
+if MATPLOTLIB_INSTALLED:
+    import matplotlib
+    matplotlib.use('Agg')
+if GRAPHVIZ_INSTALLED:
+    import graphviz
 
-# from .utils import load_breast_cancer
-
-
-# @pytest.fixture(scope="module")
-# def breast_cancer_split():
-#     return train_test_split(*load_breast_cancer(return_X_y=True),
-#                             test_size=0.1, random_state=1)
+from .utils import load_breast_cancer
 
 
-# @pytest.fixture(scope="module")
-# def train_data(breast_cancer_split):
-#     X_train, _, y_train, _ = breast_cancer_split
-#     return lgb.Dataset(X_train, y_train)
+@pytest.fixture(scope="module")
+def breast_cancer_split():
+    return train_test_split(*load_breast_cancer(return_X_y=True),
+                            test_size=0.1, random_state=1)
 
 
-# @pytest.fixture
-# def params():
-#     return {"objective": "binary",
-#             "verbose": -1,
-#             "num_leaves": 3}
+@pytest.fixture(scope="module")
+def train_data(breast_cancer_split):
+    X_train, _, y_train, _ = breast_cancer_split
+    return lgb.Dataset(X_train, y_train)
 
 
-# @pytest.mark.skipif(not MATPLOTLIB_INSTALLED, reason='matplotlib is not installed')
-# def test_plot_importance(params, breast_cancer_split, train_data):
-#     X_train, _, y_train, _ = breast_cancer_split
+@pytest.fixture
+def params():
+    return {"objective": "binary",
+            "verbose": -1,
+            "num_leaves": 3}
 
-#     gbm0 = lgb.train(params, train_data, num_boost_round=10)
-#     ax0 = lgb.plot_importance(gbm0)
-#     assert isinstance(ax0, matplotlib.axes.Axes)
-#     assert ax0.get_title() == 'Feature importance'
-#     assert ax0.get_xlabel() == 'Feature importance'
-#     assert ax0.get_ylabel() == 'Features'
-#     assert len(ax0.patches) <= 30
 
-#     gbm1 = lgb.LGBMClassifier(n_estimators=10, num_leaves=3, silent=True)
-#     gbm1.fit(X_train, y_train)
+@pytest.mark.skipif(not MATPLOTLIB_INSTALLED, reason='matplotlib is not installed')
+def test_plot_importance(params, breast_cancer_split, train_data):
+    X_train, _, y_train, _ = breast_cancer_split
 
-#     ax1 = lgb.plot_importance(gbm1, color='r', title='t', xlabel='x', ylabel='y')
-#     assert isinstance(ax1, matplotlib.axes.Axes)
-#     assert ax1.get_title() == 't'
-#     assert ax1.get_xlabel() == 'x'
-#     assert ax1.get_ylabel() == 'y'
-#     assert len(ax1.patches) <= 30
-#     for patch in ax1.patches:
-#         assert patch.get_facecolor() == (1., 0, 0, 1.)  # red
+    gbm0 = lgb.train(params, train_data, num_boost_round=10)
+    ax0 = lgb.plot_importance(gbm0)
+    assert isinstance(ax0, matplotlib.axes.Axes)
+    assert ax0.get_title() == 'Feature importance'
+    assert ax0.get_xlabel() == 'Feature importance'
+    assert ax0.get_ylabel() == 'Features'
+    assert len(ax0.patches) <= 30
 
-#     ax2 = lgb.plot_importance(gbm0, color=['r', 'y', 'g', 'b'],
-#                               title=None, xlabel=None, ylabel=None)
-#     assert isinstance(ax2, matplotlib.axes.Axes)
-#     assert ax2.get_title() == ''
-#     assert ax2.get_xlabel() == ''
-#     assert ax2.get_ylabel() == ''
-#     assert len(ax2.patches) <= 30
-#     assert ax2.patches[0].get_facecolor() == (1., 0, 0, 1.)  # r
-#     assert ax2.patches[1].get_facecolor() == (.75, .75, 0, 1.)  # y
-#     assert ax2.patches[2].get_facecolor() == (0, .5, 0, 1.)  # g
-#     assert ax2.patches[3].get_facecolor() == (0, 0, 1., 1.)  # b
+    gbm1 = lgb.LGBMClassifier(n_estimators=10, num_leaves=3, silent=True)
+    gbm1.fit(X_train, y_train)
+
+    ax1 = lgb.plot_importance(gbm1, color='r', title='t', xlabel='x', ylabel='y')
+    assert isinstance(ax1, matplotlib.axes.Axes)
+    assert ax1.get_title() == 't'
+    assert ax1.get_xlabel() == 'x'
+    assert ax1.get_ylabel() == 'y'
+    assert len(ax1.patches) <= 30
+    for patch in ax1.patches:
+        assert patch.get_facecolor() == (1., 0, 0, 1.)  # red
+
+    ax2 = lgb.plot_importance(gbm0, color=['r', 'y', 'g', 'b'],
+                              title=None, xlabel=None, ylabel=None)
+    assert isinstance(ax2, matplotlib.axes.Axes)
+    assert ax2.get_title() == ''
+    assert ax2.get_xlabel() == ''
+    assert ax2.get_ylabel() == ''
+    assert len(ax2.patches) <= 30
+    assert ax2.patches[0].get_facecolor() == (1., 0, 0, 1.)  # r
+    assert ax2.patches[1].get_facecolor() == (.75, .75, 0, 1.)  # y
+    assert ax2.patches[2].get_facecolor() == (0, .5, 0, 1.)  # g
+    assert ax2.patches[3].get_facecolor() == (0, 0, 1., 1.)  # b
 
 
 # @pytest.mark.skipif(not MATPLOTLIB_INSTALLED, reason='matplotlib is not installed')

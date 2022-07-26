@@ -47,7 +47,8 @@ else  # Linux
             locales \
             netcat \
             unzip \
-            zip
+            zip \
+            graphviz
         if [[ $COMPILER == "clang" ]]; then
             sudo apt-get install --no-install-recommends -y \
                 clang \

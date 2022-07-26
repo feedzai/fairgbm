@@ -38,7 +38,7 @@ jobs:
           #- os: ubuntu-latest
           #  task: mpi
           #  method: source
-            python_version: 3.9
+          #  python_version: 3.9
           - os: ubuntu-latest
             task: mpi
             method: pip

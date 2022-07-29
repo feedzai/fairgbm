@@ -448,26 +448,26 @@ def test_random_state_object():
     assert df1 != df3
 
 
-def test_feature_importances_single_leaf():
-    data = load_iris(return_X_y=False)
-    clf = lgb.LGBMClassifier(n_estimators=10)
-    clf.fit(data.data, data.target)
-    importances = clf.feature_importances_
-    assert len(importances) == 4
+# def test_feature_importances_single_leaf():
+#     data = load_iris(return_X_y=False)
+#     clf = lgb.LGBMClassifier(n_estimators=10)
+#     clf.fit(data.data, data.target)
+#     importances = clf.feature_importances_
+#     assert len(importances) == 4
 
 
-def test_feature_importances_type():
-    data = load_iris(return_X_y=False)
-    clf = lgb.LGBMClassifier(n_estimators=10)
-    clf.fit(data.data, data.target)
-    clf.set_params(importance_type='split')
-    importances_split = clf.feature_importances_
-    clf.set_params(importance_type='gain')
-    importances_gain = clf.feature_importances_
-    # Test that the largest element is NOT the same, the smallest can be the same, i.e. zero
-    importance_split_top1 = sorted(importances_split, reverse=True)[0]
-    importance_gain_top1 = sorted(importances_gain, reverse=True)[0]
-    assert importance_split_top1 != importance_gain_top1
+# def test_feature_importances_type():
+#     data = load_iris(return_X_y=False)
+#     clf = lgb.LGBMClassifier(n_estimators=10)
+#     clf.fit(data.data, data.target)
+#     clf.set_params(importance_type='split')
+#     importances_split = clf.feature_importances_
+#     clf.set_params(importance_type='gain')
+#     importances_gain = clf.feature_importances_
+#     # Test that the largest element is NOT the same, the smallest can be the same, i.e. zero
+#     importance_split_top1 = sorted(importances_split, reverse=True)[0]
+#     importance_gain_top1 = sorted(importances_gain, reverse=True)[0]
+#     assert importance_split_top1 != importance_gain_top1
 
 
 def test_pandas_categorical():
@@ -1116,16 +1116,16 @@ def test_class_weight():
                                        gbm_str.evals_result_[eval_set][metric])
 
 
-def test_continue_training_with_model():
-    X, y = load_digits(n_class=3, return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
-    init_gbm = lgb.LGBMClassifier(n_estimators=5).fit(X_train, y_train, eval_set=(X_test, y_test),
-                                                      verbose=False)
-    gbm = lgb.LGBMClassifier(n_estimators=5).fit(X_train, y_train, eval_set=(X_test, y_test),
-                                                 verbose=False, init_model=init_gbm)
-    assert len(init_gbm.evals_result_['valid_0']['multi_logloss']) == len(gbm.evals_result_['valid_0']['multi_logloss'])
-    assert len(init_gbm.evals_result_['valid_0']['multi_logloss']) == 5
-    assert gbm.evals_result_['valid_0']['multi_logloss'][-1] < init_gbm.evals_result_['valid_0']['multi_logloss'][-1]
+# def test_continue_training_with_model():
+#     X, y = load_digits(n_class=3, return_X_y=True)
+#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+#     init_gbm = lgb.LGBMClassifier(n_estimators=5).fit(X_train, y_train, eval_set=(X_test, y_test),
+#                                                       verbose=False)
+#     gbm = lgb.LGBMClassifier(n_estimators=5).fit(X_train, y_train, eval_set=(X_test, y_test),
+#                                                  verbose=False, init_model=init_gbm)
+#     assert len(init_gbm.evals_result_['valid_0']['multi_logloss']) == len(gbm.evals_result_['valid_0']['multi_logloss'])
+#     assert len(init_gbm.evals_result_['valid_0']['multi_logloss']) == 5
+#     assert gbm.evals_result_['valid_0']['multi_logloss'][-1] < init_gbm.evals_result_['valid_0']['multi_logloss'][-1]
 
 
 # # sklearn < 0.22 requires passing "attributes" argument

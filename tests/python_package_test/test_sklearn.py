@@ -146,27 +146,27 @@ def test_multiclass():
 #     assert gbm.best_score_['valid_0']['ndcg@3'] > 0.6253
 
 
-def test_regression_with_custom_objective():
-    X, y = load_boston(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
-    gbm = lgb.LGBMRegressor(n_estimators=50, silent=True, objective=objective_ls)
-    gbm.fit(X_train, y_train, eval_set=[(X_test, y_test)], early_stopping_rounds=5, verbose=False)
-    ret = mean_squared_error(y_test, gbm.predict(X_test))
-    assert ret < 7.0
-    assert gbm.evals_result_['valid_0']['l2'][gbm.best_iteration_ - 1] == pytest.approx(ret)
+# def test_regression_with_custom_objective():
+#     X, y = load_boston(return_X_y=True)
+#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+#     gbm = lgb.LGBMRegressor(n_estimators=50, silent=True, objective=objective_ls)
+#     gbm.fit(X_train, y_train, eval_set=[(X_test, y_test)], early_stopping_rounds=5, verbose=False)
+#     ret = mean_squared_error(y_test, gbm.predict(X_test))
+#     assert ret < 7.0
+#     assert gbm.evals_result_['valid_0']['l2'][gbm.best_iteration_ - 1] == pytest.approx(ret)
 
 
-def test_binary_classification_with_custom_objective():
-    X, y = load_digits(n_class=2, return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
-    gbm = lgb.LGBMClassifier(n_estimators=50, silent=True, objective=logregobj)
-    gbm.fit(X_train, y_train, eval_set=[(X_test, y_test)], early_stopping_rounds=5, verbose=False)
-    # prediction result is actually not transformed (is raw) due to custom objective
-    y_pred_raw = gbm.predict_proba(X_test)
-    assert not np.all(y_pred_raw >= 0)
-    y_pred = 1.0 / (1.0 + np.exp(-y_pred_raw))
-    ret = binary_error(y_test, y_pred)
-    assert ret < 0.05
+# def test_binary_classification_with_custom_objective():
+#     X, y = load_digits(n_class=2, return_X_y=True)
+#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+#     gbm = lgb.LGBMClassifier(n_estimators=50, silent=True, objective=logregobj)
+#     gbm.fit(X_train, y_train, eval_set=[(X_test, y_test)], early_stopping_rounds=5, verbose=False)
+#     # prediction result is actually not transformed (is raw) due to custom objective
+#     y_pred_raw = gbm.predict_proba(X_test)
+#     assert not np.all(y_pred_raw >= 0)
+#     y_pred = 1.0 / (1.0 + np.exp(-y_pred_raw))
+#     ret = binary_error(y_test, y_pred)
+#     assert ret < 0.05
 
 
 def test_dart():
@@ -647,309 +647,309 @@ def test_evaluate_train_set():
     assert 'l2' in gbm.evals_result_['valid_1']
 
 
-def test_metrics():
-    X, y = load_boston(return_X_y=True)
-    params = {'n_estimators': 2, 'verbose': -1}
-    params_fit = {'X': X, 'y': y, 'eval_set': (X, y), 'verbose': False}
+# def test_metrics():
+#     X, y = load_boston(return_X_y=True)
+#     params = {'n_estimators': 2, 'verbose': -1}
+#     params_fit = {'X': X, 'y': y, 'eval_set': (X, y), 'verbose': False}
 
-    # no custom objective, no custom metric
-    # default metric
-    gbm = lgb.LGBMRegressor(**params).fit(**params_fit)
-    assert len(gbm.evals_result_['training']) == 1
-    assert 'l2' in gbm.evals_result_['training']
+#     # no custom objective, no custom metric
+#     # default metric
+#     gbm = lgb.LGBMRegressor(**params).fit(**params_fit)
+#     assert len(gbm.evals_result_['training']) == 1
+#     assert 'l2' in gbm.evals_result_['training']
 
-    # non-default metric
-    gbm = lgb.LGBMRegressor(metric='mape', **params).fit(**params_fit)
-    assert len(gbm.evals_result_['training']) == 1
-    assert 'mape' in gbm.evals_result_['training']
+#     # non-default metric
+#     gbm = lgb.LGBMRegressor(metric='mape', **params).fit(**params_fit)
+#     assert len(gbm.evals_result_['training']) == 1
+#     assert 'mape' in gbm.evals_result_['training']
 
-    # no metric
-    gbm = lgb.LGBMRegressor(metric='None', **params).fit(**params_fit)
-    assert gbm.evals_result_ is None
+#     # no metric
+#     gbm = lgb.LGBMRegressor(metric='None', **params).fit(**params_fit)
+#     assert gbm.evals_result_ is None
 
-    # non-default metric in eval_metric
-    gbm = lgb.LGBMRegressor(**params).fit(eval_metric='mape', **params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'l2' in gbm.evals_result_['training']
-    assert 'mape' in gbm.evals_result_['training']
+#     # non-default metric in eval_metric
+#     gbm = lgb.LGBMRegressor(**params).fit(eval_metric='mape', **params_fit)
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'l2' in gbm.evals_result_['training']
+#     assert 'mape' in gbm.evals_result_['training']
 
-    # non-default metric with non-default metric in eval_metric
-    gbm = lgb.LGBMRegressor(metric='gamma', **params).fit(eval_metric='mape', **params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'gamma' in gbm.evals_result_['training']
-    assert 'mape' in gbm.evals_result_['training']
+#     # non-default metric with non-default metric in eval_metric
+#     gbm = lgb.LGBMRegressor(metric='gamma', **params).fit(eval_metric='mape', **params_fit)
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'gamma' in gbm.evals_result_['training']
+#     assert 'mape' in gbm.evals_result_['training']
 
-    # non-default metric with multiple metrics in eval_metric
-    gbm = lgb.LGBMRegressor(metric='gamma',
-                            **params).fit(eval_metric=['l2', 'mape'], **params_fit)
-    assert len(gbm.evals_result_['training']) == 3
-    assert 'gamma' in gbm.evals_result_['training']
-    assert 'l2' in gbm.evals_result_['training']
-    assert 'mape' in gbm.evals_result_['training']
+#     # non-default metric with multiple metrics in eval_metric
+#     gbm = lgb.LGBMRegressor(metric='gamma',
+#                             **params).fit(eval_metric=['l2', 'mape'], **params_fit)
+#     assert len(gbm.evals_result_['training']) == 3
+#     assert 'gamma' in gbm.evals_result_['training']
+#     assert 'l2' in gbm.evals_result_['training']
+#     assert 'mape' in gbm.evals_result_['training']
 
-    # non-default metric with multiple metrics in eval_metric for LGBMClassifier
-    X_classification, y_classification = load_breast_cancer(return_X_y=True)
-    params_classification = {'n_estimators': 2, 'verbose': -1,
-                             'objective': 'binary', 'metric': 'binary_logloss'}
-    params_fit_classification = {'X': X_classification, 'y': y_classification,
-                                 'eval_set': (X_classification, y_classification),
-                                 'verbose': False}
-    gbm = lgb.LGBMClassifier(**params_classification).fit(eval_metric=['fair', 'error'],
-                                                          **params_fit_classification)
-    assert len(gbm.evals_result_['training']) == 3
-    assert 'fair' in gbm.evals_result_['training']
-    assert 'binary_error' in gbm.evals_result_['training']
-    assert 'binary_logloss' in gbm.evals_result_['training']
+#     # non-default metric with multiple metrics in eval_metric for LGBMClassifier
+#     X_classification, y_classification = load_breast_cancer(return_X_y=True)
+#     params_classification = {'n_estimators': 2, 'verbose': -1,
+#                              'objective': 'binary', 'metric': 'binary_logloss'}
+#     params_fit_classification = {'X': X_classification, 'y': y_classification,
+#                                  'eval_set': (X_classification, y_classification),
+#                                  'verbose': False}
+#     gbm = lgb.LGBMClassifier(**params_classification).fit(eval_metric=['fair', 'error'],
+#                                                           **params_fit_classification)
+#     assert len(gbm.evals_result_['training']) == 3
+#     assert 'fair' in gbm.evals_result_['training']
+#     assert 'binary_error' in gbm.evals_result_['training']
+#     assert 'binary_logloss' in gbm.evals_result_['training']
 
-    # default metric for non-default objective
-    gbm = lgb.LGBMRegressor(objective='regression_l1', **params).fit(**params_fit)
-    assert len(gbm.evals_result_['training']) == 1
-    assert 'l1' in gbm.evals_result_['training']
+#     # default metric for non-default objective
+#     gbm = lgb.LGBMRegressor(objective='regression_l1', **params).fit(**params_fit)
+#     assert len(gbm.evals_result_['training']) == 1
+#     assert 'l1' in gbm.evals_result_['training']
 
-    # non-default metric for non-default objective
-    gbm = lgb.LGBMRegressor(objective='regression_l1', metric='mape',
-                            **params).fit(**params_fit)
-    assert len(gbm.evals_result_['training']) == 1
-    assert 'mape' in gbm.evals_result_['training']
+#     # non-default metric for non-default objective
+#     gbm = lgb.LGBMRegressor(objective='regression_l1', metric='mape',
+#                             **params).fit(**params_fit)
+#     assert len(gbm.evals_result_['training']) == 1
+#     assert 'mape' in gbm.evals_result_['training']
 
-    # no metric
-    gbm = lgb.LGBMRegressor(objective='regression_l1', metric='None',
-                            **params).fit(**params_fit)
-    assert gbm.evals_result_ is None
+#     # no metric
+#     gbm = lgb.LGBMRegressor(objective='regression_l1', metric='None',
+#                             **params).fit(**params_fit)
+#     assert gbm.evals_result_ is None
 
-    # non-default metric in eval_metric for non-default objective
-    gbm = lgb.LGBMRegressor(objective='regression_l1',
-                            **params).fit(eval_metric='mape', **params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'l1' in gbm.evals_result_['training']
-    assert 'mape' in gbm.evals_result_['training']
+#     # non-default metric in eval_metric for non-default objective
+#     gbm = lgb.LGBMRegressor(objective='regression_l1',
+#                             **params).fit(eval_metric='mape', **params_fit)
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'l1' in gbm.evals_result_['training']
+#     assert 'mape' in gbm.evals_result_['training']
 
-    # non-default metric with non-default metric in eval_metric for non-default objective
-    gbm = lgb.LGBMRegressor(objective='regression_l1', metric='gamma',
-                            **params).fit(eval_metric='mape', **params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'gamma' in gbm.evals_result_['training']
-    assert 'mape' in gbm.evals_result_['training']
+#     # non-default metric with non-default metric in eval_metric for non-default objective
+#     gbm = lgb.LGBMRegressor(objective='regression_l1', metric='gamma',
+#                             **params).fit(eval_metric='mape', **params_fit)
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'gamma' in gbm.evals_result_['training']
+#     assert 'mape' in gbm.evals_result_['training']
 
-    # non-default metric with multiple metrics in eval_metric for non-default objective
-    gbm = lgb.LGBMRegressor(objective='regression_l1', metric='gamma',
-                            **params).fit(eval_metric=['l2', 'mape'], **params_fit)
-    assert len(gbm.evals_result_['training']) == 3
-    assert 'gamma' in gbm.evals_result_['training']
-    assert 'l2' in gbm.evals_result_['training']
-    assert 'mape' in gbm.evals_result_['training']
+#     # non-default metric with multiple metrics in eval_metric for non-default objective
+#     gbm = lgb.LGBMRegressor(objective='regression_l1', metric='gamma',
+#                             **params).fit(eval_metric=['l2', 'mape'], **params_fit)
+#     assert len(gbm.evals_result_['training']) == 3
+#     assert 'gamma' in gbm.evals_result_['training']
+#     assert 'l2' in gbm.evals_result_['training']
+#     assert 'mape' in gbm.evals_result_['training']
 
-    # custom objective, no custom metric
-    # default regression metric for custom objective
-    gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, **params).fit(**params_fit)
-    assert len(gbm.evals_result_['training']) == 1
-    assert 'l2' in gbm.evals_result_['training']
+#     # # custom objective, no custom metric
+#     # # default regression metric for custom objective
+#     # gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, **params).fit(**params_fit)
+#     # assert len(gbm.evals_result_['training']) == 1
+#     # assert 'l2' in gbm.evals_result_['training']
 
-    # non-default regression metric for custom objective
-    gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric='mape', **params).fit(**params_fit)
-    assert len(gbm.evals_result_['training']) == 1
-    assert 'mape' in gbm.evals_result_['training']
+#     # # non-default regression metric for custom objective
+#     # gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric='mape', **params).fit(**params_fit)
+#     # assert len(gbm.evals_result_['training']) == 1
+#     # assert 'mape' in gbm.evals_result_['training']
 
-    # multiple regression metrics for custom objective
-    gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric=['l1', 'gamma'],
-                            **params).fit(**params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'l1' in gbm.evals_result_['training']
-    assert 'gamma' in gbm.evals_result_['training']
+#     # # multiple regression metrics for custom objective
+#     # gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric=['l1', 'gamma'],
+#     #                         **params).fit(**params_fit)
+#     # assert len(gbm.evals_result_['training']) == 2
+#     # assert 'l1' in gbm.evals_result_['training']
+#     # assert 'gamma' in gbm.evals_result_['training']
 
-    # no metric
-    gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric='None',
-                            **params).fit(**params_fit)
-    assert gbm.evals_result_ is None
+#     # no metric
+#     gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric='None',
+#                             **params).fit(**params_fit)
+#     assert gbm.evals_result_ is None
 
-    # default regression metric with non-default metric in eval_metric for custom objective
-    gbm = lgb.LGBMRegressor(objective=custom_dummy_obj,
-                            **params).fit(eval_metric='mape', **params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'l2' in gbm.evals_result_['training']
-    assert 'mape' in gbm.evals_result_['training']
+#     # default regression metric with non-default metric in eval_metric for custom objective
+#     gbm = lgb.LGBMRegressor(objective=custom_dummy_obj,
+#                             **params).fit(eval_metric='mape', **params_fit)
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'l2' in gbm.evals_result_['training']
+#     assert 'mape' in gbm.evals_result_['training']
 
-    # non-default regression metric with metric in eval_metric for custom objective
-    gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric='mape',
-                            **params).fit(eval_metric='gamma', **params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'mape' in gbm.evals_result_['training']
-    assert 'gamma' in gbm.evals_result_['training']
+#     # non-default regression metric with metric in eval_metric for custom objective
+#     gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric='mape',
+#                             **params).fit(eval_metric='gamma', **params_fit)
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'mape' in gbm.evals_result_['training']
+#     assert 'gamma' in gbm.evals_result_['training']
 
-    # multiple regression metrics with metric in eval_metric for custom objective
-    gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric=['l1', 'gamma'],
-                            **params).fit(eval_metric='l2', **params_fit)
-    assert len(gbm.evals_result_['training']) == 3
-    assert 'l1' in gbm.evals_result_['training']
-    assert 'gamma' in gbm.evals_result_['training']
-    assert 'l2' in gbm.evals_result_['training']
+#     # multiple regression metrics with metric in eval_metric for custom objective
+#     gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric=['l1', 'gamma'],
+#                             **params).fit(eval_metric='l2', **params_fit)
+#     assert len(gbm.evals_result_['training']) == 3
+#     assert 'l1' in gbm.evals_result_['training']
+#     assert 'gamma' in gbm.evals_result_['training']
+#     assert 'l2' in gbm.evals_result_['training']
 
-    # multiple regression metrics with multiple metrics in eval_metric for custom objective
-    gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric=['l1', 'gamma'],
-                            **params).fit(eval_metric=['l2', 'mape'], **params_fit)
-    assert len(gbm.evals_result_['training']) == 4
-    assert 'l1' in gbm.evals_result_['training']
-    assert 'gamma' in gbm.evals_result_['training']
-    assert 'l2' in gbm.evals_result_['training']
-    assert 'mape' in gbm.evals_result_['training']
+#     # multiple regression metrics with multiple metrics in eval_metric for custom objective
+#     gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric=['l1', 'gamma'],
+#                             **params).fit(eval_metric=['l2', 'mape'], **params_fit)
+#     assert len(gbm.evals_result_['training']) == 4
+#     assert 'l1' in gbm.evals_result_['training']
+#     assert 'gamma' in gbm.evals_result_['training']
+#     assert 'l2' in gbm.evals_result_['training']
+#     assert 'mape' in gbm.evals_result_['training']
 
-    # no custom objective, custom metric
-    # default metric with custom metric
-    gbm = lgb.LGBMRegressor(**params).fit(eval_metric=constant_metric, **params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'l2' in gbm.evals_result_['training']
-    assert 'error' in gbm.evals_result_['training']
+#     # no custom objective, custom metric
+#     # default metric with custom metric
+#     gbm = lgb.LGBMRegressor(**params).fit(eval_metric=constant_metric, **params_fit)
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'l2' in gbm.evals_result_['training']
+#     assert 'error' in gbm.evals_result_['training']
 
-    # non-default metric with custom metric
-    gbm = lgb.LGBMRegressor(metric='mape',
-                            **params).fit(eval_metric=constant_metric, **params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'mape' in gbm.evals_result_['training']
-    assert 'error' in gbm.evals_result_['training']
+#     # non-default metric with custom metric
+#     gbm = lgb.LGBMRegressor(metric='mape',
+#                             **params).fit(eval_metric=constant_metric, **params_fit)
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'mape' in gbm.evals_result_['training']
+#     assert 'error' in gbm.evals_result_['training']
 
-    # multiple metrics with custom metric
-    gbm = lgb.LGBMRegressor(metric=['l1', 'gamma'],
-                            **params).fit(eval_metric=constant_metric, **params_fit)
-    assert len(gbm.evals_result_['training']) == 3
-    assert 'l1' in gbm.evals_result_['training']
-    assert 'gamma' in gbm.evals_result_['training']
-    assert 'error' in gbm.evals_result_['training']
+#     # multiple metrics with custom metric
+#     gbm = lgb.LGBMRegressor(metric=['l1', 'gamma'],
+#                             **params).fit(eval_metric=constant_metric, **params_fit)
+#     assert len(gbm.evals_result_['training']) == 3
+#     assert 'l1' in gbm.evals_result_['training']
+#     assert 'gamma' in gbm.evals_result_['training']
+#     assert 'error' in gbm.evals_result_['training']
 
-    # custom metric (disable default metric)
-    gbm = lgb.LGBMRegressor(metric='None',
-                            **params).fit(eval_metric=constant_metric, **params_fit)
-    assert len(gbm.evals_result_['training']) == 1
-    assert 'error' in gbm.evals_result_['training']
+#     # custom metric (disable default metric)
+#     gbm = lgb.LGBMRegressor(metric='None',
+#                             **params).fit(eval_metric=constant_metric, **params_fit)
+#     assert len(gbm.evals_result_['training']) == 1
+#     assert 'error' in gbm.evals_result_['training']
 
-    # default metric for non-default objective with custom metric
-    gbm = lgb.LGBMRegressor(objective='regression_l1',
-                            **params).fit(eval_metric=constant_metric, **params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'l1' in gbm.evals_result_['training']
-    assert 'error' in gbm.evals_result_['training']
+#     # default metric for non-default objective with custom metric
+#     gbm = lgb.LGBMRegressor(objective='regression_l1',
+#                             **params).fit(eval_metric=constant_metric, **params_fit)
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'l1' in gbm.evals_result_['training']
+#     assert 'error' in gbm.evals_result_['training']
 
-    # non-default metric for non-default objective with custom metric
-    gbm = lgb.LGBMRegressor(objective='regression_l1', metric='mape',
-                            **params).fit(eval_metric=constant_metric, **params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'mape' in gbm.evals_result_['training']
-    assert 'error' in gbm.evals_result_['training']
+#     # non-default metric for non-default objective with custom metric
+#     gbm = lgb.LGBMRegressor(objective='regression_l1', metric='mape',
+#                             **params).fit(eval_metric=constant_metric, **params_fit)
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'mape' in gbm.evals_result_['training']
+#     assert 'error' in gbm.evals_result_['training']
 
-    # multiple metrics for non-default objective with custom metric
-    gbm = lgb.LGBMRegressor(objective='regression_l1', metric=['l1', 'gamma'],
-                            **params).fit(eval_metric=constant_metric, **params_fit)
-    assert len(gbm.evals_result_['training']) == 3
-    assert 'l1' in gbm.evals_result_['training']
-    assert 'gamma' in gbm.evals_result_['training']
-    assert 'error' in gbm.evals_result_['training']
+#     # multiple metrics for non-default objective with custom metric
+#     gbm = lgb.LGBMRegressor(objective='regression_l1', metric=['l1', 'gamma'],
+#                             **params).fit(eval_metric=constant_metric, **params_fit)
+#     assert len(gbm.evals_result_['training']) == 3
+#     assert 'l1' in gbm.evals_result_['training']
+#     assert 'gamma' in gbm.evals_result_['training']
+#     assert 'error' in gbm.evals_result_['training']
 
-    # custom metric (disable default metric for non-default objective)
-    gbm = lgb.LGBMRegressor(objective='regression_l1', metric='None',
-                            **params).fit(eval_metric=constant_metric, **params_fit)
-    assert len(gbm.evals_result_['training']) == 1
-    assert 'error' in gbm.evals_result_['training']
+#     # custom metric (disable default metric for non-default objective)
+#     gbm = lgb.LGBMRegressor(objective='regression_l1', metric='None',
+#                             **params).fit(eval_metric=constant_metric, **params_fit)
+#     assert len(gbm.evals_result_['training']) == 1
+#     assert 'error' in gbm.evals_result_['training']
 
-    # custom objective, custom metric
-    # custom metric for custom objective
-    gbm = lgb.LGBMRegressor(objective=custom_dummy_obj,
-                            **params).fit(eval_metric=constant_metric, **params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'error' in gbm.evals_result_['training']
+#     # custom objective, custom metric
+#     # custom metric for custom objective
+#     gbm = lgb.LGBMRegressor(objective=custom_dummy_obj,
+#                             **params).fit(eval_metric=constant_metric, **params_fit)
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'error' in gbm.evals_result_['training']
 
-    # non-default regression metric with custom metric for custom objective
-    gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric='mape',
-                            **params).fit(eval_metric=constant_metric, **params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'mape' in gbm.evals_result_['training']
-    assert 'error' in gbm.evals_result_['training']
+#     # non-default regression metric with custom metric for custom objective
+#     gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric='mape',
+#                             **params).fit(eval_metric=constant_metric, **params_fit)
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'mape' in gbm.evals_result_['training']
+#     assert 'error' in gbm.evals_result_['training']
 
-    # multiple regression metrics with custom metric for custom objective
-    gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric=['l2', 'mape'],
-                            **params).fit(eval_metric=constant_metric, **params_fit)
-    assert len(gbm.evals_result_['training']) == 3
-    assert 'l2' in gbm.evals_result_['training']
-    assert 'mape' in gbm.evals_result_['training']
-    assert 'error' in gbm.evals_result_['training']
+#     # multiple regression metrics with custom metric for custom objective
+#     gbm = lgb.LGBMRegressor(objective=custom_dummy_obj, metric=['l2', 'mape'],
+#                             **params).fit(eval_metric=constant_metric, **params_fit)
+#     assert len(gbm.evals_result_['training']) == 3
+#     assert 'l2' in gbm.evals_result_['training']
+#     assert 'mape' in gbm.evals_result_['training']
+#     assert 'error' in gbm.evals_result_['training']
 
-    X, y = load_digits(n_class=3, return_X_y=True)
-    params_fit = {'X': X, 'y': y, 'eval_set': (X, y), 'verbose': False}
+#     X, y = load_digits(n_class=3, return_X_y=True)
+#     params_fit = {'X': X, 'y': y, 'eval_set': (X, y), 'verbose': False}
 
-    # default metric and invalid binary metric is replaced with multiclass alternative
-    gbm = lgb.LGBMClassifier(**params).fit(eval_metric='binary_error', **params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'multi_logloss' in gbm.evals_result_['training']
-    assert 'multi_error' in gbm.evals_result_['training']
+#     # default metric and invalid binary metric is replaced with multiclass alternative
+#     gbm = lgb.LGBMClassifier(**params).fit(eval_metric='binary_error', **params_fit)
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'multi_logloss' in gbm.evals_result_['training']
+#     assert 'multi_error' in gbm.evals_result_['training']
 
-    # invalid objective is replaced with default multiclass one
-    # and invalid binary metric is replaced with multiclass alternative
-    gbm = lgb.LGBMClassifier(objective='invalid_obj',
-                             **params).fit(eval_metric='binary_error', **params_fit)
-    assert gbm.objective_ == 'multiclass'
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'multi_logloss' in gbm.evals_result_['training']
-    assert 'multi_error' in gbm.evals_result_['training']
+#     # invalid objective is replaced with default multiclass one
+#     # and invalid binary metric is replaced with multiclass alternative
+#     gbm = lgb.LGBMClassifier(objective='invalid_obj',
+#                              **params).fit(eval_metric='binary_error', **params_fit)
+#     assert gbm.objective_ == 'multiclass'
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'multi_logloss' in gbm.evals_result_['training']
+#     assert 'multi_error' in gbm.evals_result_['training']
 
-    # default metric for non-default multiclass objective
-    # and invalid binary metric is replaced with multiclass alternative
-    gbm = lgb.LGBMClassifier(objective='ovr',
-                             **params).fit(eval_metric='binary_error', **params_fit)
-    assert gbm.objective_ == 'ovr'
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'multi_logloss' in gbm.evals_result_['training']
-    assert 'multi_error' in gbm.evals_result_['training']
+#     # default metric for non-default multiclass objective
+#     # and invalid binary metric is replaced with multiclass alternative
+#     gbm = lgb.LGBMClassifier(objective='ovr',
+#                              **params).fit(eval_metric='binary_error', **params_fit)
+#     assert gbm.objective_ == 'ovr'
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'multi_logloss' in gbm.evals_result_['training']
+#     assert 'multi_error' in gbm.evals_result_['training']
 
-    X, y = load_digits(n_class=2, return_X_y=True)
-    params_fit = {'X': X, 'y': y, 'eval_set': (X, y), 'verbose': False}
+#     X, y = load_digits(n_class=2, return_X_y=True)
+#     params_fit = {'X': X, 'y': y, 'eval_set': (X, y), 'verbose': False}
 
-    # default metric and invalid multiclass metric is replaced with binary alternative
-    gbm = lgb.LGBMClassifier(**params).fit(eval_metric='multi_error', **params_fit)
-    assert len(gbm.evals_result_['training']) == 2
-    assert 'binary_logloss' in gbm.evals_result_['training']
-    assert 'binary_error' in gbm.evals_result_['training']
+#     # default metric and invalid multiclass metric is replaced with binary alternative
+#     gbm = lgb.LGBMClassifier(**params).fit(eval_metric='multi_error', **params_fit)
+#     assert len(gbm.evals_result_['training']) == 2
+#     assert 'binary_logloss' in gbm.evals_result_['training']
+#     assert 'binary_error' in gbm.evals_result_['training']
 
-    # invalid multiclass metric is replaced with binary alternative for custom objective
-    gbm = lgb.LGBMClassifier(objective=custom_dummy_obj,
-                             **params).fit(eval_metric='multi_logloss', **params_fit)
-    assert len(gbm.evals_result_['training']) == 1
-    assert 'binary_logloss' in gbm.evals_result_['training']
+#     # invalid multiclass metric is replaced with binary alternative for custom objective
+#     gbm = lgb.LGBMClassifier(objective=custom_dummy_obj,
+#                              **params).fit(eval_metric='multi_logloss', **params_fit)
+#     assert len(gbm.evals_result_['training']) == 1
+#     assert 'binary_logloss' in gbm.evals_result_['training']
 
 
-def test_multiple_eval_metrics():
+# def test_multiple_eval_metrics():
 
-    X, y = load_breast_cancer(return_X_y=True)
+#     X, y = load_breast_cancer(return_X_y=True)
 
-    params = {'n_estimators': 2, 'verbose': -1, 'objective': 'binary', 'metric': 'binary_logloss'}
-    params_fit = {'X': X, 'y': y, 'eval_set': (X, y), 'verbose': False}
+#     params = {'n_estimators': 2, 'verbose': -1, 'objective': 'binary', 'metric': 'binary_logloss'}
+#     params_fit = {'X': X, 'y': y, 'eval_set': (X, y), 'verbose': False}
 
-    # Verify that can receive a list of metrics, only callable
-    gbm = lgb.LGBMClassifier(**params).fit(eval_metric=[constant_metric, decreasing_metric], **params_fit)
-    assert len(gbm.evals_result_['training']) == 3
-    assert 'error' in gbm.evals_result_['training']
-    assert 'decreasing_metric' in gbm.evals_result_['training']
-    assert 'binary_logloss' in gbm.evals_result_['training']
+#     # Verify that can receive a list of metrics, only callable
+#     gbm = lgb.LGBMClassifier(**params).fit(eval_metric=[constant_metric, decreasing_metric], **params_fit)
+#     assert len(gbm.evals_result_['training']) == 3
+#     assert 'error' in gbm.evals_result_['training']
+#     assert 'decreasing_metric' in gbm.evals_result_['training']
+#     assert 'binary_logloss' in gbm.evals_result_['training']
 
-    # Verify that can receive a list of custom and built-in metrics
-    gbm = lgb.LGBMClassifier(**params).fit(eval_metric=[constant_metric, decreasing_metric, 'fair'], **params_fit)
-    assert len(gbm.evals_result_['training']) == 4
-    assert 'error' in gbm.evals_result_['training']
-    assert 'decreasing_metric' in gbm.evals_result_['training']
-    assert 'binary_logloss' in gbm.evals_result_['training']
-    assert 'fair' in gbm.evals_result_['training']
+#     # Verify that can receive a list of custom and built-in metrics
+#     gbm = lgb.LGBMClassifier(**params).fit(eval_metric=[constant_metric, decreasing_metric, 'fair'], **params_fit)
+#     assert len(gbm.evals_result_['training']) == 4
+#     assert 'error' in gbm.evals_result_['training']
+#     assert 'decreasing_metric' in gbm.evals_result_['training']
+#     assert 'binary_logloss' in gbm.evals_result_['training']
+#     assert 'fair' in gbm.evals_result_['training']
 
-    # Verify that works as expected when eval_metric is empty
-    gbm = lgb.LGBMClassifier(**params).fit(eval_metric=[], **params_fit)
-    assert len(gbm.evals_result_['training']) == 1
-    assert 'binary_logloss' in gbm.evals_result_['training']
+#     # Verify that works as expected when eval_metric is empty
+#     gbm = lgb.LGBMClassifier(**params).fit(eval_metric=[], **params_fit)
+#     assert len(gbm.evals_result_['training']) == 1
+#     assert 'binary_logloss' in gbm.evals_result_['training']
 
-    # Verify that can receive a list of metrics, only built-in
-    gbm = lgb.LGBMClassifier(**params).fit(eval_metric=['fair', 'error'], **params_fit)
-    assert len(gbm.evals_result_['training']) == 3
-    assert 'binary_logloss' in gbm.evals_result_['training']
+#     # Verify that can receive a list of metrics, only built-in
+#     gbm = lgb.LGBMClassifier(**params).fit(eval_metric=['fair', 'error'], **params_fit)
+#     assert len(gbm.evals_result_['training']) == 3
+#     assert 'binary_logloss' in gbm.evals_result_['training']
 
-    # Verify that eval_metric is robust to receiving a list with None
-    gbm = lgb.LGBMClassifier(**params).fit(eval_metric=['fair', 'error', None], **params_fit)
-    assert len(gbm.evals_result_['training']) == 3
-    assert 'binary_logloss' in gbm.evals_result_['training']
+#     # Verify that eval_metric is robust to receiving a list with None
+#     gbm = lgb.LGBMClassifier(**params).fit(eval_metric=['fair', 'error', None], **params_fit)
+#     assert len(gbm.evals_result_['training']) == 3
+#     assert 'binary_logloss' in gbm.evals_result_['training']
 
 
 def test_inf_handle():

@@ -332,9 +332,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger('LightGBM')
 
-    setup(name='lightgbm',      # TODO: https://github.com/feedzai/fairgbm/issues/13
+    setup(name='fairgbm',      # TODO: https://github.com/feedzai/fairgbm/issues/13
           version=version,
-          description='LightGBM Python Package',
+          description='FairGBM Python Package',
           long_description=readme,
           install_requires=[
               'wheel',
@@ -350,8 +350,8 @@ if __name__ == "__main__":
                   'pandas',
               ],
           },
-          maintainer='Guolin Ke',
-          maintainer_email='guolin.ke@microsoft.com',
+          #maintainer='Guolin Ke',
+          #maintainer_email='guolin.ke@microsoft.com',
           zip_safe=False,
           cmdclass={
               'install': CustomInstall,
@@ -362,7 +362,7 @@ if __name__ == "__main__":
           packages=find_packages(),
           include_package_data=True,
           license='The MIT License (Microsoft)',
-          url='https://github.com/microsoft/LightGBM',
+          url='https://github.com/feedzai/fairgbm',
           classifiers=['Development Status :: 5 - Production/Stable',
                        'Intended Audience :: Science/Research',
                        'License :: OSI Approved :: MIT License',

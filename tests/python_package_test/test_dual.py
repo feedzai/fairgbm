@@ -6,7 +6,7 @@ import os
 import pytest
 from sklearn.metrics import log_loss
 
-import lightgbm as lgb
+import fairgbm as lgb
 
 from .utils import load_breast_cancer
 

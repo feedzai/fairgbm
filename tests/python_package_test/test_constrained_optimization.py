@@ -4,7 +4,7 @@ import logging
 
 import pytest
 
-import lightgbm as lgb
+import fairgbm as lgb
 
 from .utils import load_baf_base, binarize_predictions, evaluate_recall, evaluate_fairness
 

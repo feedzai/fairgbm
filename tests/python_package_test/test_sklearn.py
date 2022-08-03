@@ -16,7 +16,7 @@ from sklearn.multioutput import ClassifierChain, MultiOutputClassifier, MultiOut
 from sklearn.utils.estimator_checks import check_parameters_default_constructible
 from sklearn.utils.validation import check_is_fitted
 
-import lightgbm as lgb
+import fairgbm as lgb
 
 from .utils import load_boston, load_breast_cancer, load_digits, load_iris, load_linnerud, make_ranking
 

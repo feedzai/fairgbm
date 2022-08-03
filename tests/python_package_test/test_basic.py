@@ -7,8 +7,8 @@ from scipy import sparse
 from sklearn.datasets import dump_svmlight_file, load_svmlight_file
 from sklearn.model_selection import train_test_split
 
-import lightgbm as lgb
-from lightgbm.compat import PANDAS_INSTALLED, pd_Series
+import fairgbm as lgb
+from fairgbm.compat import PANDAS_INSTALLED, pd_Series
 
 from .utils import load_breast_cancer
 

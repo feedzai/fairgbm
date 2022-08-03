@@ -1,7 +1,7 @@
 # coding: utf-8
-"""LightGBM, Light Gradient Boosting Machine.
+"""FairGBM, Gradient Boosting models that are both high-performance *and* Fair!
 
-Contributors: https://github.com/microsoft/LightGBM/graphs/contributors.
+Contributors: https://github.com/feedzai/fairgbm/graphs/contributors.
 """
 import os
 

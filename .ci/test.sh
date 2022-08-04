@@ -114,18 +114,18 @@ fi
 
 if [[ $TASK == "sdist" ]]; then
     cd $BUILD_DIRECTORY/python-package && python setup.py sdist || exit -1
-    pip install --user $BUILD_DIRECTORY/python-package/dist/lightgbm-$LGB_VER.tar.gz -v || exit -1
+    pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz -v || exit -1
     if [[ $PRODUCES_ARTIFACTS == "true" ]]; then
-        cp $BUILD_DIRECTORY/python-package/dist/lightgbm-$LGB_VER.tar.gz $BUILD_ARTIFACTSTAGINGDIRECTORY
+        cp $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz $BUILD_ARTIFACTSTAGINGDIRECTORY
     fi
     pytest $BUILD_DIRECTORY/tests/python_package_test || exit -1
     exit 0
 elif [[ $TASK == "bdist" ]]; then
     if [[ $OS_NAME == "macos" ]]; then
         cd $BUILD_DIRECTORY/python-package && python setup.py bdist_wheel --plat-name=macosx --python-tag py3 || exit -1
-        mv dist/lightgbm-$LGB_VER-py3-none-macosx.whl dist/lightgbm-$LGB_VER-py3-none-macosx_10_14_x86_64.macosx_10_15_x86_64.macosx_11_0_x86_64.whl
+        mv dist/fairgbm-$LGB_VER-py3-none-macosx.whl dist/fairgbm-$LGB_VER-py3-none-macosx_10_14_x86_64.macosx_10_15_x86_64.macosx_11_0_x86_64.whl
         if [[ $PRODUCES_ARTIFACTS == "true" ]]; then
-            cp dist/lightgbm-$LGB_VER-py3-none-macosx*.whl $BUILD_ARTIFACTSTAGINGDIRECTORY
+            cp dist/fairgbm-$LGB_VER-py3-none-macosx*.whl $BUILD_ARTIFACTSTAGINGDIRECTORY
         fi
     else
         ARCH=$(uname -m)
@@ -136,7 +136,7 @@ elif [[ $TASK == "bdist" ]]; then
         fi
         cd $BUILD_DIRECTORY/python-package && python setup.py bdist_wheel --plat-name=$PLATFORM --python-tag py3 || exit -1
         if [[ $PRODUCES_ARTIFACTS == "true" ]]; then
-            cp dist/lightgbm-$LGB_VER-py3-none-$PLATFORM.whl $BUILD_ARTIFACTSTAGINGDIRECTORY
+            cp dist/fairgbm-$LGB_VER-py3-none-$PLATFORM.whl $BUILD_ARTIFACTSTAGINGDIRECTORY
         fi
     fi
     pip install --user $BUILD_DIRECTORY/python-package/dist/*.whl || exit -1
@@ -151,12 +151,12 @@ if [[ $TASK == "gpu" ]]; then
     grep -q 'std::string device_type = "gpu"' $BUILD_DIRECTORY/include/LightGBM/config.h || exit -1  # make sure that changes were really done
     if [[ $METHOD == "pip" ]]; then
         cd $BUILD_DIRECTORY/python-package && python setup.py sdist || exit -1
-        pip install --user $BUILD_DIRECTORY/python-package/dist/lightgbm-$LGB_VER.tar.gz -v --install-option=--gpu --install-option="--opencl-include-dir=$AMDAPPSDK_PATH/include/" || exit -1
+        pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz -v --install-option=--gpu --install-option="--opencl-include-dir=$AMDAPPSDK_PATH/include/" || exit -1
         pytest $BUILD_DIRECTORY/tests/python_package_test || exit -1
         exit 0
     elif [[ $METHOD == "wheel" ]]; then
         cd $BUILD_DIRECTORY/python-package && python setup.py bdist_wheel --gpu --opencl-include-dir="$AMDAPPSDK_PATH/include/" || exit -1
-        pip install --user $BUILD_DIRECTORY/python-package/dist/lightgbm-$LGB_VER*.whl -v || exit -1
+        pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER*.whl -v || exit -1
         pytest $BUILD_DIRECTORY/tests || exit -1
         exit 0
     elif [[ $METHOD == "source" ]]; then
@@ -167,12 +167,12 @@ elif [[ $TASK == "cuda" ]]; then
     grep -q 'std::string device_type = "cuda"' $BUILD_DIRECTORY/include/LightGBM/config.h || exit -1  # make sure that changes were really done
     if [[ $METHOD == "pip" ]]; then
         cd $BUILD_DIRECTORY/python-package && python setup.py sdist || exit -1
-        pip install --user $BUILD_DIRECTORY/python-package/dist/lightgbm-$LGB_VER.tar.gz -v --install-option=--cuda || exit -1
+        pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz -v --install-option=--cuda || exit -1
         pytest $BUILD_DIRECTORY/tests/python_package_test || exit -1
         exit 0
     elif [[ $METHOD == "wheel" ]]; then
         cd $BUILD_DIRECTORY/python-package && python setup.py bdist_wheel --cuda || exit -1
-        pip install --user $BUILD_DIRECTORY/python-package/dist/lightgbm-$LGB_VER*.whl -v || exit -1
+        pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER*.whl -v || exit -1
         pytest $BUILD_DIRECTORY/tests || exit -1
         exit 0
     elif [[ $METHOD == "source" ]]; then
@@ -181,12 +181,12 @@ elif [[ $TASK == "cuda" ]]; then
 elif [[ $TASK == "mpi" ]]; then
     if [[ $METHOD == "pip" ]]; then
         cd $BUILD_DIRECTORY/python-package && python setup.py sdist || exit -1
-        pip install --user $BUILD_DIRECTORY/python-package/dist/lightgbm-$LGB_VER.tar.gz -v --install-option=--mpi || exit -1
+        pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz -v --install-option=--mpi || exit -1
         pytest $BUILD_DIRECTORY/tests/python_package_test || exit -1
         exit 0
     elif [[ $METHOD == "wheel" ]]; then
         cd $BUILD_DIRECTORY/python-package && python setup.py bdist_wheel --mpi || exit -1
-        pip install --user $BUILD_DIRECTORY/python-package/dist/lightgbm-$LGB_VER*.whl -v || exit -1
+        pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER*.whl -v || exit -1
         pytest $BUILD_DIRECTORY/tests || exit -1
         exit 0
     elif [[ $METHOD == "source" ]]; then
@@ -214,7 +214,7 @@ if [[ $TASK == "regular" ]]; then
         fi
     fi
     cd $BUILD_DIRECTORY/examples/python-guide
-    sed -i'.bak' '/import lightgbm as lgb/a\
+    sed -i'.bak' '/import fairgbm as lgb/a\
 import matplotlib\
 matplotlib.use\(\"Agg\"\)\
 ' plot_example.py  # prevent interactive window mode

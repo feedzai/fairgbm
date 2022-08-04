@@ -362,8 +362,8 @@ public:
       const auto group = group_[i];
 
       // Constraint index
-      u_short number_of_groups = group_values_.size();
-      u_short multipliers_base_index = 0;
+      unsigned short number_of_groups = group_values_.size();
+      unsigned short multipliers_base_index = 0;
 
       // -------------------------------------------------------------------
       // Skip FPR propagation if label positive, since LPs do not count for FPR constraints

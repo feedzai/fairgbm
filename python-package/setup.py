@@ -332,7 +332,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger('FairGBM')
 
-    setup(name='fairgbm',      # TODO: https://github.com/feedzai/fairgbm/issues/13
+    setup(name='fairgbm',
           version=version,
           description='FairGBM Python Package',
           long_description=readme,

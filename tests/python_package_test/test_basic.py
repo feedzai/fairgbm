@@ -83,7 +83,6 @@ def test_basic(tmp_path):
     np.testing.assert_raises_regex(lgb.basic.LightGBMError, bad_shape_error_msg,
                                    bst.predict, tname)
 
-
 def test_chunked_dataset():
     X_train, X_test, y_train, y_test = train_test_split(*load_breast_cancer(return_X_y=True), test_size=0.1,
                                                         random_state=2)

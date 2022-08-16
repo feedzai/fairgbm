@@ -1209,40 +1209,161 @@ class FairGBMModel(LGBMModel):
                  subsample=1., subsample_freq=0, colsample_bytree=1.,
                  reg_alpha=0., reg_lambda=0., random_state=None,
                  n_jobs=-1, silent=True, importance_type='split', **kwargs):
-        
-        super().__init__(boosting_type, 
-                         num_leaves, 
-                         max_depth,
-                         learning_rate, 
-                         n_estimators,
-                         subsample_for_bin, 
-                         class_weight,
-                         min_split_gain, 
-                         min_child_weight, 
-                         min_child_samples,
-                         subsample, 
-                         subsample_freq, 
-                         colsample_bytree,
-                         reg_alpha, 
-                         reg_lambda, 
-                         random_state,
-                         n_jobs, 
-                         silent,
-                         importance_type,
-                         objective="constrained_cross_entropy", 
-                         **kwargs)
-    
+
+            r"""Construct a gradient boosting model.
+
+            Parameters
+            ----------
+            boosting_type : string, optional (default='gbdt')
+                'gbdt', traditional Gradient Boosting Decision Tree.
+                'dart', Dropouts meet Multiple Additive Regression Trees.
+                'goss', Gradient-based One-Side Sampling.
+                'rf', Random Forest.
+            num_leaves : int, optional (default=31)
+                Maximum tree leaves for base learners.
+            max_depth : int, optional (default=-1)
+                Maximum tree depth for base learners, <=0 means no limit.
+            learning_rate : float, optional (default=0.1)
+                Boosting learning rate.
+                You can use ``callbacks`` parameter of ``fit`` method to shrink/adapt learning rate
+                in training using ``reset_parameter`` callback.
+                Note, that this will ignore the ``learning_rate`` argument in training.
+            n_estimators : int, optional (default=100)
+                Number of boosted trees to fit.
+            subsample_for_bin : int, optional (default=200000)
+                Number of samples for constructing bins.
+            objective : string, callable or None, optional (default=None)
+                Specify the learning task and the corresponding learning objective or
+                a custom objective function to be used (see note below).
+                Default: 'regression' for LGBMRegressor, 'binary' or 'multiclass' for LGBMClassifier, 'lambdarank' for LGBMRanker.
+            class_weight : dict, 'balanced' or None, optional (default=None)
+                Weights associated with classes in the form ``{class_label: weight}``.
+                Use this parameter only for multi-class classification task;
+                for binary classification task you may use ``is_unbalance`` or ``scale_pos_weight`` parameters.
+                Note, that the usage of all these parameters will result in poor estimates of the individual class probabilities.
+                You may want to consider performing probability calibration
+                (https://scikit-learn.org/stable/modules/calibration.html) of your model.
+                The 'balanced' mode uses the values of y to automatically adjust weights
+                inversely proportional to class frequencies in the input data as ``n_samples / (n_classes * np.bincount(y))``.
+                If None, all classes are supposed to have weight one.
+                Note, that these weights will be multiplied with ``sample_weight`` (passed through the ``fit`` method)
+                if ``sample_weight`` is specified.
+            min_split_gain : float, optional (default=0.)
+                Minimum loss reduction required to make a further partition on a leaf node of the tree.
+            min_child_weight : float, optional (default=1e-3)
+                Minimum sum of instance weight (hessian) needed in a child (leaf).
+            min_child_samples : int, optional (default=20)
+                Minimum number of data needed in a child (leaf).
+            subsample : float, optional (default=1.)
+                Subsample ratio of the training instance.
+            subsample_freq : int, optional (default=0)
+                Frequency of subsample, <=0 means no enable.
+            colsample_bytree : float, optional (default=1.)
+                Subsample ratio of columns when constructing each tree.
+            reg_alpha : float, optional (default=0.)
+                L1 regularization term on weights.
+            reg_lambda : float, optional (default=0.)
+                L2 regularization term on weights.
+            random_state : int, RandomState object or None, optional (default=None)
+                Random number seed.
+                If int, this number is used to seed the C++ code.
+                If RandomState object (numpy), a random integer is picked based on its state to seed the C++ code.
+                If None, default seeds in C++ code are used.
+            n_jobs : int, optional (default=-1)
+                Number of parallel threads.
+            silent : bool, optional (default=True)
+                Whether to print messages while running boosting.
+            importance_type : string, optional (default='split')
+                The type of feature importance to be filled into ``feature_importances_``.
+                If 'split', result contains numbers of times the feature is used in a model.
+                If 'gain', result contains total gains of splits which use the feature.
+            **kwargs
+                Other parameters for the model.
+                Check http://lightgbm.readthedocs.io/en/latest/Parameters.html for more parameters.
+
+                .. warning::
+
+                    \*\*kwargs is not supported in sklearn, it may cause unexpected issues.
+
+            Note
+            ----
+            A custom objective function can be provided for the ``objective`` parameter.
+            In this case, it should have the signature
+            ``objective(y_true, y_pred) -> grad, hess`` or
+            ``objective(y_true, y_pred, group) -> grad, hess``:
+
+                y_true : array-like of shape = [n_samples]
+                    The target values.
+                y_pred : array-like of shape = [n_samples] or shape = [n_samples * n_classes] (for multi-class task)
+                    The predicted values.
+                    Predicted values are returned before any transformation,
+                    e.g. they are raw margin instead of probability of positive class for binary task.
+                group : array-like
+                    Group/query data.
+                    Only used in the learning-to-rank task.
+                    sum(group) = n_samples.
+                    For example, if you have a 100-document dataset with ``group = [10, 20, 40, 10, 10, 10]``, that means that you have 6 groups,
+                    where the first 10 records are in the first group, records 11-30 are in the second group, records 31-70 are in the third group, etc.
+                grad : array-like of shape = [n_samples] or shape = [n_samples * n_classes] (for multi-class task)
+                    The value of the first order derivative (gradient) of the loss
+                    with respect to the elements of y_pred for each sample point.
+                hess : array-like of shape = [n_samples] or shape = [n_samples * n_classes] (for multi-class task)
+                    The value of the second order derivative (Hessian) of the loss
+                    with respect to the elements of y_pred for each sample point.
+
+            For multi-class task, the y_pred is group by class_id first, then group by row_id.
+            If you want to get i-th row y_pred in j-th class, the access way is y_pred[j * num_data + i]
+            and you should group grad and hess in this way as well.
+            """
+            if not SKLEARN_INSTALLED:
+                raise LightGBMError('scikit-learn is required for lightgbm.sklearn')
+
+            self.boosting_type = boosting_type
+            self.objective = "constrained_cross_entropy"
+            self.num_leaves = num_leaves
+            self.max_depth = max_depth
+            self.learning_rate = learning_rate
+            self.n_estimators = n_estimators
+            self.subsample_for_bin = subsample_for_bin
+            self.min_split_gain = min_split_gain
+            self.min_child_weight = min_child_weight
+            self.min_child_samples = min_child_samples
+            self.subsample = subsample
+            self.subsample_freq = subsample_freq
+            self.colsample_bytree = colsample_bytree
+            self.reg_alpha = reg_alpha
+            self.reg_lambda = reg_lambda
+            self.random_state = random_state
+            self.n_jobs = n_jobs
+            self.silent = silent
+            self.importance_type = importance_type
+            self._Booster = None
+            self._evals_result = None
+            self._best_score = None
+            self._best_iteration = None
+            self._other_params = {}
+            self._objective = "constrained_cross_entropy"
+            self.class_weight = class_weight
+            self._class_weight = None
+            self._class_map = None
+            self._n_features = None
+            self._n_features_in = None
+            self._classes = None
+            self._n_classes = None
+            self.set_params(**kwargs)
+
     def _more_tags(self):
-        
-        super()._more_tags(self)
-    
+
+        return super()._more_tags()
+
     def get_params(self, deep=True):
 
-        super().get_params(self, deep)
-    
+        return super().get_params(deep)
+
     def set_params(self, **params):
 
-        super().set_params(self, **params)
+        super().set_params(**params)
+        return self
 
     def fit(self, X, y,
             constraint_group=None, sample_weight=None, init_score=None,
@@ -1255,7 +1376,7 @@ class FairGBMModel(LGBMModel):
 
         if self._objective is None:
             if isinstance(self, FairGBMClassifier):
-                self._objective = "binary"
+                self._objective = "constrained_cross_entropy"
             else:
                 raise ValueError("Unknown FairGBM Model type.")
         if callable(self._objective):
@@ -1407,7 +1528,7 @@ class FairGBMModel(LGBMModel):
         self._Booster.free_dataset()
         del train_set, valid_sets
         return self
-    
+
     fit.__doc__ = _fairgbmmodel_doc_fit.format(
         X_shape="array-like or sparse matrix of shape = [n_samples, n_features]",
         y_shape="array-like of shape = [n_samples]",
@@ -1419,8 +1540,8 @@ class FairGBMModel(LGBMModel):
 
     def predict(self, X, raw_score=False, start_iteration=0, num_iteration=None,
                 pred_leaf=False, pred_contrib=False, **kwargs):
-        
-        super().predict(X, raw_score, start_iteration, num_iteration, 
+
+        super().predict(X, raw_score, start_iteration, num_iteration,
                         pred_leaf, pred_contrib, **kwargs)
 
     predict.__doc__ = _fairgbmmodel_doc_predict.format(
@@ -1525,12 +1646,6 @@ class FairGBMClassifier(_LGBMClassifierBase, FairGBMModel):
         self._classes = self._le.classes_
         self._n_classes = len(self._classes)
 
-        if self._n_classes > 2:
-            # Switch to using a multiclass objective in the underlying LGBM instance
-            ova_aliases = {"multiclassova", "multiclass_ova", "ova", "ovr"}
-            if self._objective not in ova_aliases and not callable(self._objective):
-                self._objective = "multiclass"
-
         if not callable(eval_metric):
             if isinstance(eval_metric, (str, type(None))):
                 eval_metric = [eval_metric]
@@ -1568,7 +1683,7 @@ class FairGBMClassifier(_LGBMClassifierBase, FairGBMModel):
                     verbose=verbose, feature_name=feature_name, categorical_feature=categorical_feature,
                     callbacks=callbacks, init_model=init_model)
         return self
-    
+
     _base_doc = FairGBMModel.fit.__doc__
     _base_doc = (_base_doc[:_base_doc.find('group :')]  # type: ignore
                  + _base_doc[_base_doc.find('eval_set :'):])  # type: ignore

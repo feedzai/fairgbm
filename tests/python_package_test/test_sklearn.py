@@ -79,6 +79,14 @@ def multi_error(y_true, y_pred):
 def multi_logloss(y_true, y_pred):
     return np.mean([-math.log(y_pred[i][y]) for i, y in enumerate(y_true)])
 
+def test_binary_fairgbm():
+    X, y = load_breast_cancer(return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+    gbm = lgb.FairGBMClassifier(n_estimators=50, silent=True)
+    gbm.fit(X_train, y_train, eval_set=[(X_test, y_test)], early_stopping_rounds=5, verbose=True)
+    ret = log_loss(y_test, gbm.predict_proba(X_test))
+    assert ret < 0.12
+    assert gbm.evals_result_['valid_0']['binary_logloss'][gbm.best_iteration_ - 1] == pytest.approx(ret)
 
 def test_binary():
     X, y = load_breast_cancer(return_X_y=True)

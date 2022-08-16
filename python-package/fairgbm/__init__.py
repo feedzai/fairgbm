@@ -10,7 +10,7 @@ from .callback import early_stopping, print_evaluation, record_evaluation, reset
 from .engine import CVBooster, cv, train
 
 try:
-    from .sklearn import LGBMClassifier, LGBMModel, LGBMRanker, LGBMRegressor
+    from .sklearn import LGBMClassifier, LGBMModel, LGBMRanker, LGBMRegressor, FairGBMModel, FairGBMClassifier
 except ImportError:
     pass
 try:
@@ -33,6 +33,7 @@ __all__ = ['Dataset', 'Booster', 'CVBooster',
            'register_logger',
            'train', 'cv',
            'LGBMModel', 'LGBMRegressor', 'LGBMClassifier', 'LGBMRanker',
+           'FairGBMModel' 'FairGBMClassifier'
            'DaskLGBMRegressor', 'DaskLGBMClassifier', 'DaskLGBMRanker',
            'print_evaluation', 'record_evaluation', 'reset_parameter', 'early_stopping',
            'plot_importance', 'plot_split_value_histogram', 'plot_metric', 'plot_tree', 'create_tree_digraph']

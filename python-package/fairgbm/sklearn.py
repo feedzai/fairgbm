@@ -1220,9 +1220,9 @@ class FairGBMClassifier(LGBMClassifier):
                          min_child_weight, min_child_samples, subsample, 
                          subsample_freq, colsample_bytree, reg_alpha, 
                          reg_lambda, random_state, n_jobs, 
-                         silent, importance_type, multipler_learning_rate,
-                         constraint_type, global_constraint_type,
-                         global_target_fpr, global_target_fnr)
+                         silent, importance_type, multipler_learning_rate=multipler_learning_rate,
+                         constraint_type=constraint_type, global_constraint_type=global_constraint_type,
+                         global_target_fpr=global_target_fpr, global_target_fnr=global_target_fnr)
 
     def fit(self, X, y,
             constraint_group,

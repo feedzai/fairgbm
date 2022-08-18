@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Setup lightgbm package."""
+"""Setup fairgbm package."""
 import logging
 import os
 import struct
@@ -15,7 +15,7 @@ from setuptools.command.install_lib import install_lib
 from setuptools.command.sdist import sdist
 from wheel.bdist_wheel import bdist_wheel
 
-LIGHTGBM_OPTIONS = [
+FAIRGBM_OPTIONS = [
     ('mingw', 'm', 'Compile with MinGW'),
     ('integrated-opencl', None, 'Compile integrated OpenCL version'),
     ('gpu', 'g', 'Compile GPU version'),
@@ -35,12 +35,12 @@ LIGHTGBM_OPTIONS = [
 
 
 def find_lib():
-    libpath_py = os.path.join(CURRENT_DIR, 'lightgbm', 'libpath.py')
+    libpath_py = os.path.join(CURRENT_DIR, 'fairgbm', 'libpath.py')
     libpath = {'__file__': libpath_py}
     exec(compile(open(libpath_py, "rb").read(), libpath_py, 'exec'), libpath, libpath)
 
     LIB_PATH = [os.path.relpath(path, CURRENT_DIR) for path in libpath['find_lib_path']()]
-    logger.info(f"Installing lib_lightgbm from: {LIB_PATH}")
+    logger.info(f"Installing lib_fairgbm from: {LIB_PATH}")
     return LIB_PATH
 
 
@@ -207,7 +207,7 @@ class CustomInstallLib(install_lib):
     def install(self):
         outfiles = install_lib.install(self)
         src = find_lib()[0]
-        dst = os.path.join(self.install_dir, 'lightgbm')
+        dst = os.path.join(self.install_dir, 'fairgbm')
         dst, _ = self.copy_file(src, dst)
         outfiles.append(dst)
         return outfiles
@@ -215,7 +215,7 @@ class CustomInstallLib(install_lib):
 
 class CustomInstall(install):
 
-    user_options = install.user_options + LIGHTGBM_OPTIONS
+    user_options = install.user_options + FAIRGBM_OPTIONS
 
     def initialize_options(self):
         install.initialize_options(self)
@@ -241,7 +241,7 @@ class CustomInstall(install):
                 logger.warning("You're installing 32-bit version. "
                                "This version is slow and untested, so use it on your own risk.")
             else:
-                raise Exception("Cannot install LightGBM in 32-bit Python, "
+                raise Exception("Cannot install FairGBM in 32-bit Python, "
                                 "please use 64-bit Python instead.")
         open(LOG_PATH, 'wb').close()
         if not self.precompile:
@@ -258,7 +258,7 @@ class CustomInstall(install):
 
 class CustomBdistWheel(bdist_wheel):
 
-    user_options = bdist_wheel.user_options + LIGHTGBM_OPTIONS
+    user_options = bdist_wheel.user_options + FAIRGBM_OPTIONS
 
     def initialize_options(self):
         bdist_wheel.initialize_options(self)
@@ -305,12 +305,12 @@ class CustomSdist(sdist):
     def run(self):
         copy_files(integrated_opencl=True, use_gpu=True)
         open(os.path.join(CURRENT_DIR, '_IS_SOURCE_PACKAGE.txt'), 'w').close()
-        if os.path.exists(os.path.join(CURRENT_DIR, 'lightgbm', 'Release')):
-            remove_tree(os.path.join(CURRENT_DIR, 'lightgbm', 'Release'))
-        if os.path.exists(os.path.join(CURRENT_DIR, 'lightgbm', 'windows', 'x64')):
-            remove_tree(os.path.join(CURRENT_DIR, 'lightgbm', 'windows', 'x64'))
-        if os.path.isfile(os.path.join(CURRENT_DIR, 'lightgbm', 'lib_lightgbm.so')):
-            os.remove(os.path.join(CURRENT_DIR, 'lightgbm', 'lib_lightgbm.so'))
+        if os.path.exists(os.path.join(CURRENT_DIR, 'fairgbm', 'Release')):
+            remove_tree(os.path.join(CURRENT_DIR, 'fairgbm', 'Release'))
+        if os.path.exists(os.path.join(CURRENT_DIR, 'fairgbm', 'windows', 'x64')):
+            remove_tree(os.path.join(CURRENT_DIR, 'fairgbm', 'windows', 'x64'))
+        if os.path.isfile(os.path.join(CURRENT_DIR, 'fairgbm', 'lib_lightgbm.so')):
+            os.remove(os.path.join(CURRENT_DIR, 'fairgbm', 'lib_lightgbm.so'))
         sdist.run(self)
         if os.path.isfile(os.path.join(CURRENT_DIR, '_IS_SOURCE_PACKAGE.txt')):
             os.remove(os.path.join(CURRENT_DIR, '_IS_SOURCE_PACKAGE.txt'))
@@ -318,23 +318,23 @@ class CustomSdist(sdist):
 
 if __name__ == "__main__":
     CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
-    LOG_PATH = os.path.join(os.path.expanduser('~'), 'LightGBM_compilation.log')
+    LOG_PATH = os.path.join(os.path.expanduser('~'), 'FairGBM_compilation.log')
     LOG_NOTICE = f"The full version of error log was saved into {LOG_PATH}"
     if os.path.isfile(os.path.join(CURRENT_DIR, os.path.pardir, 'VERSION.txt')):
         copy_file(os.path.join(CURRENT_DIR, os.path.pardir, 'VERSION.txt'),
-                  os.path.join(CURRENT_DIR, 'lightgbm', 'VERSION.txt'),
+                  os.path.join(CURRENT_DIR, 'fairgbm', 'VERSION.txt'),
                   verbose=0)  # type:ignore
-    version = open(os.path.join(CURRENT_DIR, 'lightgbm', 'VERSION.txt'), encoding='utf-8').read().strip()
+    version = open(os.path.join(CURRENT_DIR, 'fairgbm', 'VERSION.txt'), encoding='utf-8').read().strip()
     readme = open(os.path.join(CURRENT_DIR, 'README.rst'), encoding='utf-8').read()
 
     sys.path.insert(0, CURRENT_DIR)
 
     logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger('LightGBM')
+    logger = logging.getLogger('FairGBM')
 
-    setup(name='lightgbm',      # TODO: https://github.com/feedzai/fairgbm/issues/13
+    setup(name='fairgbm',
           version=version,
-          description='LightGBM Python Package',
+          description='FairGBM Python Package',
           long_description=readme,
           install_requires=[
               'wheel',
@@ -350,8 +350,8 @@ if __name__ == "__main__":
                   'pandas',
               ],
           },
-          maintainer='Guolin Ke',
-          maintainer_email='guolin.ke@microsoft.com',
+          #maintainer='Guolin Ke',
+          #maintainer_email='guolin.ke@microsoft.com',
           zip_safe=False,
           cmdclass={
               'install': CustomInstall,
@@ -362,7 +362,7 @@ if __name__ == "__main__":
           packages=find_packages(),
           include_package_data=True,
           license='The MIT License (Microsoft)',
-          url='https://github.com/microsoft/LightGBM',
+          url='https://github.com/feedzai/fairgbm',
           classifiers=['Development Status :: 5 - Production/Stable',
                        'Intended Audience :: Science/Research',
                        'License :: OSI Approved :: MIT License',

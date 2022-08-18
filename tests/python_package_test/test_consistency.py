@@ -4,7 +4,7 @@ import os
 import numpy as np
 from sklearn.datasets import load_svmlight_file
 
-import lightgbm as lgb
+import fairgbm as lgb
 
 
 class FileLoader:

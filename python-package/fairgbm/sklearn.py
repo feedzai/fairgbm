@@ -1224,7 +1224,7 @@ class FairGBMClassifier(LGBMClassifier):
                          constraint_type=constraint_type, global_constraint_type=global_constraint_type,
                          global_target_fpr=global_target_fpr, global_target_fnr=global_target_fnr)
 
-    def fit(self, X, y,
+    def fit(self, X, y, *,
             constraint_group,
             sample_weight=None, init_score=None,
             eval_set=None, eval_names=None, eval_sample_weight=None,

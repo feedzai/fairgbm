@@ -566,6 +566,10 @@ public:
         // Update index of multipliers to be used for next constraints
         multipliers_base_index += 1;
       }
+
+      gradients[i] *= num_data_;
+
+
     }
   }
 

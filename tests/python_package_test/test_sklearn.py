@@ -88,6 +88,14 @@ def test_binary_fairgbm():
     ret = log_loss(Y_test, gbm.predict_proba(X_test))
     assert ret < 0.12
 
+def test_binary_fairgbm_no_constraint_group():
+    data = load_baf_base()
+    X_train, Y_train, S_train = data["train"]
+    gbm = lgb.FairGBMClassifier(n_estimators=50)
+    with pytest.raises(TypeError) as error_info:
+        gbm.fit(X_train, Y_train)
+    assert error_info.type is TypeError
+
 def test_binary():
     X, y = load_breast_cancer(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)

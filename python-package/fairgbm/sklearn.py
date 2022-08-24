@@ -1213,8 +1213,8 @@ class FairGBMClassifier(LGBMClassifier):
                  subsample=1, subsample_freq=0, colsample_bytree=1, 
                  reg_alpha=0, reg_lambda=0, random_state=None, 
                  n_jobs=-1, silent=True, importance_type='split',
-                 multipler_learning_rate=50_000, constraint_type="FPR", 
-                 global_constraint_type="FPR, FNR", global_target_fpr=0.05, 
+                 multiplier_learning_rate=50_000, constraint_type="FPR",
+                 global_constraint_type="FPR,FNR", global_target_fpr=0.05,
                  global_target_fnr=0.50, **kwargs):
 
         super().__init__(boosting_type=boosting_type, num_leaves=num_leaves,
@@ -1225,7 +1225,7 @@ class FairGBMClassifier(LGBMClassifier):
                          subsample_freq=subsample_freq, colsample_bytree=colsample_bytree, reg_alpha=reg_alpha,
                          reg_lambda=reg_lambda, random_state=random_state, n_jobs=n_jobs,
                          silent=silent, importance_type=importance_type,
-                         multipler_learning_rate=multipler_learning_rate,
+                         multiplier_learning_rate=multiplier_learning_rate,
                          constraint_type=constraint_type, global_constraint_type=global_constraint_type,
                          global_target_fpr=global_target_fpr, global_target_fnr=global_target_fnr,
                          **kwargs)
@@ -1233,17 +1233,19 @@ class FairGBMClassifier(LGBMClassifier):
     def fit(self, X, y, *,
             constraint_group,
             sample_weight=None, init_score=None,
-            eval_set=None, eval_names=None, eval_sample_weight=None,
-            eval_class_weight=None, eval_init_score=None, eval_metric=None,
+            eval_set=None, eval_names=None,
+            eval_sample_weight=None, eval_class_weight=None,
+            eval_init_score=None, eval_metric=None,
             early_stopping_rounds=None, verbose=True,
             feature_name='auto', categorical_feature='auto',
             callbacks=None, init_model=None):
 
-        super().fit(X, y,
-                    constraint_group=constraint_group,
-                    sample_weight=sample_weight, init_score=init_score,
-                    eval_set=eval_set, eval_names=eval_names, eval_sample_weight=eval_sample_weight,
-                    eval_class_weight=eval_class_weight, eval_init_score=eval_init_score, eval_metric=eval_metric,
-                    early_stopping_rounds=early_stopping_rounds, verbose=verbose,
-                    feature_name=feature_name, categorical_feature=categorical_feature,
-                    callbacks=callbacks, init_model=init_model)
+        return super().fit(X, y,
+                           constraint_group=constraint_group,
+                           sample_weight=sample_weight, init_score=init_score,
+                           eval_set=eval_set, eval_names=eval_names,
+                           eval_sample_weight=eval_sample_weight, eval_class_weight=eval_class_weight,
+                           eval_init_score=eval_init_score, eval_metric=eval_metric,
+                           early_stopping_rounds=early_stopping_rounds, verbose=verbose,
+                           feature_name=feature_name, categorical_feature=categorical_feature,
+                           callbacks=callbacks, init_model=init_model)

@@ -347,6 +347,170 @@ _lgbmmodel_doc_predict = (
     """
 )
 
+_fairgbmmodel_doc_fit = (
+    """
+    Build a gradient boosting model from the training set (X, y).
+
+    Parameters
+    ----------
+    X : {X_shape}
+        Input feature matrix.
+    y : {y_shape}
+        The target values (class labels in classification, real numbers in regression).
+    constraint_group : {constraint_group_shape}
+        The constraint group of each instance (for enforcing fairness constraints).
+        Only used for constrained optimization.
+    sample_weight : {sample_weight_shape}
+        Weights of training data.
+    init_score : {init_score_shape}
+        Init score of training data.
+    group : {group_shape}
+        Group/query data.
+        Only used in the learning-to-rank task.
+        sum(group) = n_samples.
+        For example, if you have a 100-document dataset with ``group = [10, 20, 40, 10, 10, 10]``, that means that you have 6 groups,
+        where the first 10 records are in the first group, records 11-30 are in the second group, records 31-70 are in the third group, etc.
+    eval_set : list or None, optional (default=None)
+        A list of (X, y) tuple pairs to use as validation sets.
+    eval_names : list of strings or None, optional (default=None)
+        Names of eval_set.
+    eval_sample_weight : list of arrays or None, optional (default=None)
+        Weights of eval data.
+    eval_class_weight : list or None, optional (default=None)
+        Class weights of eval data.
+    eval_init_score : list of arrays or None, optional (default=None)
+        Init score of eval data.
+    eval_group : list of arrays or None, optional (default=None)
+        Group data of eval data.
+    eval_metric : string, callable, list or None, optional (default=None)
+        If string, it should be a built-in evaluation metric to use.
+        If callable, it should be a custom evaluation metric, see note below for more details.
+        If list, it can be a list of built-in metrics, a list of custom evaluation metrics, or a mix of both.
+        In either case, the ``metric`` from the model parameters will be evaluated and used as well.
+        Default: 'l2' for FairGBMRegressor
+    early_stopping_rounds : int or None, optional (default=None)
+        Activates early stopping. The model will train until the validation score stops improving.
+        Validation score needs to improve at least every ``early_stopping_rounds`` round(s)
+        to continue training.
+        Requires at least one validation data and one metric.
+        If there's more than one, will check all of them. But the training data is ignored anyway.
+        To check only the first metric, set the ``first_metric_only`` parameter to ``True``
+        in additional parameters ``**kwargs`` of the model constructor.
+    verbose : bool or int, optional (default=True)
+        Requires at least one evaluation data.
+        If True, the eval metric on the eval set is printed at each boosting stage.
+        If int, the eval metric on the eval set is printed at every ``verbose`` boosting stage.
+        The last boosting stage or the boosting stage found by using ``early_stopping_rounds`` is also printed.
+
+        .. rubric:: Example
+
+        With ``verbose`` = 4 and at least one item in ``eval_set``,
+        an evaluation metric is printed every 4 (instead of 1) boosting stages.
+
+    feature_name : list of strings or 'auto', optional (default='auto')
+        Feature names.
+        If 'auto' and data is pandas DataFrame, data columns names are used.
+    categorical_feature : list of strings or int, or 'auto', optional (default='auto')
+        Categorical features.
+        If list of int, interpreted as indices.
+        If list of strings, interpreted as feature names (need to specify ``feature_name`` as well).
+        If 'auto' and data is pandas DataFrame, pandas unordered categorical columns are used.
+        All values in categorical features should be less than int32 max value (2147483647).
+        Large values could be memory consuming. Consider using consecutive integers starting from zero.
+        All negative values in categorical features will be treated as missing values.
+        The output cannot be monotonically constrained with respect to a categorical feature.
+    callbacks : list of callback functions or None, optional (default=None)
+        List of callback functions that are applied at each iteration.
+        See Callbacks in Python API for more information.
+    init_model : string, Booster, FairGBMModel or None, optional (default=None)
+        Filename of FairGBM model, Booster instance or FairGBM instance used for continue training.
+
+    Returns
+    -------
+    self : object
+        Returns self.
+    """
+)
+
+_fairgbmmodel_doc_custom_eval_note = """
+    Note
+    ----
+    Custom eval function expects a callable with following signatures:
+    ``func(y_true, y_pred)``, ``func(y_true, y_pred, weight)`` or
+    ``func(y_true, y_pred, weight, group)``
+    and returns (eval_name, eval_result, is_higher_better) or
+    list of (eval_name, eval_result, is_higher_better):
+
+        y_true : array-like of shape = [n_samples]
+            The target values.
+        y_pred : array-like of shape = [n_samples] or shape = [n_samples * n_classes] (for multi-class task)
+            The predicted values.
+            In case of custom ``objective``, predicted values are returned before any transformation,
+            e.g. they are raw margin instead of probability of positive class for binary task in this case.
+        weight : array-like of shape = [n_samples]
+            The weight of samples.
+        group : array-like
+            Group/query data.
+            Only used in the learning-to-rank task.
+            sum(group) = n_samples.
+            For example, if you have a 100-document dataset with ``group = [10, 20, 40, 10, 10, 10]``, that means that you have 6 groups,
+            where the first 10 records are in the first group, records 11-30 are in the second group, records 31-70 are in the third group, etc.
+        eval_name : string
+            The name of evaluation function (without whitespace).
+        eval_result : float
+            The eval result.
+        is_higher_better : bool
+            Is eval result higher better, e.g. AUC is ``is_higher_better``.
+
+    For multi-class task, the y_pred is group by class_id first, then group by row_id.
+    If you want to get i-th row y_pred in j-th class, the access way is y_pred[j * num_data + i].
+"""
+
+_fairgbmmodel_doc_predict = (
+    """
+    {description}
+
+    Parameters
+    ----------
+    X : {X_shape}
+        Input features matrix.
+    raw_score : bool, optional (default=False)
+        Whether to predict raw scores.
+    start_iteration : int, optional (default=0)
+        Start index of the iteration to predict.
+        If <= 0, starts from the first iteration.
+    num_iteration : int or None, optional (default=None)
+        Total number of iterations used in the prediction.
+        If None, if the best iteration exists and start_iteration <= 0, the best iteration is used;
+        otherwise, all iterations from ``start_iteration`` are used (no limits).
+        If <= 0, all iterations from ``start_iteration`` are used (no limits).
+    pred_leaf : bool, optional (default=False)
+        Whether to predict leaf index.
+    pred_contrib : bool, optional (default=False)
+        Whether to predict feature contributions.
+
+        .. note::
+
+            If you want to get more explanations for your model's predictions using SHAP values,
+            like SHAP interaction values,
+            you can install the shap package (https://github.com/slundberg/shap).
+            Note that unlike the shap package, with ``pred_contrib`` we return a matrix with an extra
+            column, where the last column is the expected value.
+
+    **kwargs
+        Other parameters for the prediction.
+
+    Returns
+    -------
+    {output_name} : {predicted_result_shape}
+        The predicted values.
+    X_leaves : {X_leaves_shape}
+        If ``pred_leaf=True``, the predicted leaf of every tree for each sample.
+    X_SHAP_values : {X_SHAP_values_shape}
+        If ``pred_contrib=True``, the feature contributions for each sample.
+    """
+)
+
 
 class LGBMModel(_LGBMModelBase):
     """Implementation of the scikit-learn API for LightGBM."""
@@ -506,9 +670,9 @@ class LGBMModel(_LGBMModelBase):
             'X_types': ['2darray', 'sparse', '1dlabels'],
             '_xfail_checks': {
                 'check_no_attributes_set_in_init':
-                'scikit-learn incorrectly asserts that private attributes '
-                'cannot be set in __init__: '
-                '(see https://github.com/microsoft/LightGBM/issues/2628)'
+                    'scikit-learn incorrectly asserts that private attributes '
+                    'cannot be set in __init__: '
+                    '(see https://github.com/microsoft/LightGBM/issues/2628)'
             }
         }
 
@@ -561,7 +725,9 @@ class LGBMModel(_LGBMModelBase):
             callbacks=None, init_model=None):
         """Docstring is set after definition, using a template."""
         if self._objective is None:
-            if isinstance(self, LGBMRegressor):
+            if isinstance(self, FairGBMClassifier):
+                self._objective = "constrained_cross_entropy"
+            elif isinstance(self, LGBMRegressor):
                 self._objective = "regression"
             elif isinstance(self, LGBMClassifier):
                 self._objective = "binary"
@@ -1033,3 +1199,53 @@ class LGBMRanker(LGBMModel):
                    "eval_at : iterable of int, optional (default=(1, 2, 3, 4, 5))\n"
                    f"{' ':12}The evaluation positions of the specified metric.\n"
                    f"{' ':8}{_early_stop}{_after_early_stop}")
+
+
+class FairGBMClassifier(LGBMClassifier):
+    """Helper wrapper to use FairGBM with an sklearn-like API."""
+
+    FAIRGBM_OBJECTIVE = "constrained_cross_entropy"
+
+    def __init__(self, boosting_type='gbdt', num_leaves=31, 
+                 max_depth=-1, learning_rate=0.1, n_estimators=100, 
+                 subsample_for_bin=200000, class_weight=None, 
+                 min_split_gain=0, min_child_weight=0.001, min_child_samples=20, 
+                 subsample=1, subsample_freq=0, colsample_bytree=1, 
+                 reg_alpha=0, reg_lambda=0, random_state=None, 
+                 n_jobs=-1, silent=True, importance_type='split',
+                 multiplier_learning_rate=50_000, constraint_type="FPR",
+                 global_constraint_type="FPR,FNR", global_target_fpr=0.05,
+                 global_target_fnr=0.50, **kwargs):
+
+        super().__init__(boosting_type=boosting_type, num_leaves=num_leaves,
+                         max_depth=max_depth, learning_rate=learning_rate, n_estimators=n_estimators,
+                         subsample_for_bin=subsample_for_bin, objective=self.FAIRGBM_OBJECTIVE,
+                         class_weight=class_weight, min_split_gain=min_split_gain,
+                         min_child_weight=min_child_weight, min_child_samples=min_child_samples, subsample=subsample,
+                         subsample_freq=subsample_freq, colsample_bytree=colsample_bytree, reg_alpha=reg_alpha,
+                         reg_lambda=reg_lambda, random_state=random_state, n_jobs=n_jobs,
+                         silent=silent, importance_type=importance_type,
+                         multiplier_learning_rate=multiplier_learning_rate,
+                         constraint_type=constraint_type, global_constraint_type=global_constraint_type,
+                         global_target_fpr=global_target_fpr, global_target_fnr=global_target_fnr,
+                         **kwargs)
+
+    def fit(self, X, y, *,
+            constraint_group,
+            sample_weight=None, init_score=None,
+            eval_set=None, eval_names=None,
+            eval_sample_weight=None, eval_class_weight=None,
+            eval_init_score=None, eval_metric=None,
+            early_stopping_rounds=None, verbose=True,
+            feature_name='auto', categorical_feature='auto',
+            callbacks=None, init_model=None):
+
+        return super().fit(X, y,
+                           constraint_group=constraint_group,
+                           sample_weight=sample_weight, init_score=init_score,
+                           eval_set=eval_set, eval_names=eval_names,
+                           eval_sample_weight=eval_sample_weight, eval_class_weight=eval_class_weight,
+                           eval_init_score=eval_init_score, eval_metric=eval_metric,
+                           early_stopping_rounds=early_stopping_rounds, verbose=verbose,
+                           feature_name=feature_name, categorical_feature=categorical_feature,
+                           callbacks=callbacks, init_model=init_model)

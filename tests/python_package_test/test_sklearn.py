@@ -18,7 +18,7 @@ from sklearn.utils.validation import check_is_fitted
 
 import fairgbm as lgb
 
-from .utils import load_boston, load_breast_cancer, load_digits, load_iris, load_linnerud, make_ranking
+from .utils import load_boston, load_breast_cancer, load_digits, load_iris, load_linnerud, make_ranking, load_baf_base
 
 sk_version = parse_version(sk_version)
 if sk_version < parse_version("0.23"):
@@ -78,6 +78,34 @@ def multi_error(y_true, y_pred):
 
 def multi_logloss(y_true, y_pred):
     return np.mean([-math.log(y_pred[i][y]) for i, y in enumerate(y_true)])
+
+
+def test_binary_fairgbm():
+    data = load_baf_base()
+    X_train, Y_train, S_train = data["train"]
+    X_test, Y_test, S_test = data["test"]
+    gbm = lgb.FairGBMClassifier(n_estimators=50, multiplier_learning_rate=10_000)
+    gbm.fit(X_train, Y_train, constraint_group=S_train)
+    ret = log_loss(Y_test, gbm.predict_proba(X_test))
+    assert ret < 0.2
+
+
+def test_binary_fairgbm_no_constraint_group():
+    data = load_baf_base()
+    X_train, Y_train, S_train = data["train"]
+    gbm = lgb.FairGBMClassifier(n_estimators=50)
+    with pytest.raises(TypeError) as error_info:
+        gbm.fit(X_train, Y_train)
+    assert error_info.type is TypeError
+
+
+def test_binary_fairgbm_no_constraint_group_as_positional_argument():
+    data = load_baf_base()
+    X_train, Y_train, S_train = data["train"]
+    gbm = lgb.FairGBMClassifier(n_estimators=50)
+    with pytest.raises(TypeError) as error_info:
+        gbm.fit(X_train, Y_train, S_train)
+    assert error_info.type is TypeError
 
 
 def test_binary():

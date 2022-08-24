@@ -1232,7 +1232,7 @@ class FairGBMClassifier(LGBMClassifier):
             early_stopping_rounds=None, verbose=True,
             feature_name='auto', categorical_feature='auto',
             callbacks=None, init_model=None):
-            
+
         super().fit(X, y,
                     constraint_group,
                     sample_weight, init_score,

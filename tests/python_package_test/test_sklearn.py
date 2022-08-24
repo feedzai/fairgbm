@@ -79,6 +79,7 @@ def multi_error(y_true, y_pred):
 def multi_logloss(y_true, y_pred):
     return np.mean([-math.log(y_pred[i][y]) for i, y in enumerate(y_true)])
 
+
 def test_binary_fairgbm():
     data = load_baf_base()
     X_train, Y_train, S_train = data["train"]
@@ -88,6 +89,7 @@ def test_binary_fairgbm():
     ret = log_loss(Y_test, gbm.predict_proba(X_test))
     assert ret < 0.12
 
+
 def test_binary_fairgbm_no_constraint_group():
     data = load_baf_base()
     X_train, Y_train, S_train = data["train"]
@@ -95,6 +97,16 @@ def test_binary_fairgbm_no_constraint_group():
     with pytest.raises(TypeError) as error_info:
         gbm.fit(X_train, Y_train)
     assert error_info.type is TypeError
+
+
+def test_binary_fairgbm_no_constraint_group_as_positional_argument():
+    data = load_baf_base()
+    X_train, Y_train, S_train = data["train"]
+    gbm = lgb.FairGBMClassifier(n_estimators=50)
+    with pytest.raises(TypeError) as error_info:
+        gbm.fit(X_train, Y_train, S_train)
+    assert error_info.type is TypeError
+
 
 def test_binary():
     X, y = load_breast_cancer(return_X_y=True)

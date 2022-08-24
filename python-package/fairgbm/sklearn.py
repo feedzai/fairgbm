@@ -1202,6 +1202,9 @@ class LGBMRanker(LGBMModel):
 
 
 class FairGBMClassifier(LGBMClassifier):
+    """Helper wrapper to use FairGBM with an sklearn-like API."""
+
+    FAIRGBM_OBJECTIVE = "constrained_cross_entropy"
 
     def __init__(self, boosting_type='gbdt', num_leaves=31, 
                  max_depth=-1, learning_rate=0.1, n_estimators=100, 
@@ -1212,17 +1215,20 @@ class FairGBMClassifier(LGBMClassifier):
                  n_jobs=-1, silent=True, importance_type='split',
                  multipler_learning_rate=50_000, constraint_type="FPR", 
                  global_constraint_type="FPR, FNR", global_target_fpr=0.05, 
-                 global_target_fnr=0.40, **kwargs):
+                 global_target_fnr=0.50, **kwargs):
 
-        super().__init__(boosting_type, num_leaves, max_depth, 
-                         learning_rate, n_estimators, subsample_for_bin, 
-                         "constrained_cross_entropy", class_weight, min_split_gain, 
-                         min_child_weight, min_child_samples, subsample, 
-                         subsample_freq, colsample_bytree, reg_alpha, 
-                         reg_lambda, random_state, n_jobs, 
-                         silent, importance_type, multipler_learning_rate=multipler_learning_rate,
+        super().__init__(boosting_type=boosting_type, num_leaves=num_leaves,
+                         max_depth=max_depth, learning_rate=learning_rate, n_estimators=n_estimators,
+                         subsample_for_bin=subsample_for_bin, objective=self.FAIRGBM_OBJECTIVE,
+                         class_weight=class_weight, min_split_gain=min_split_gain,
+                         min_child_weight=min_child_weight, min_child_samples=min_child_samples, subsample=subsample,
+                         subsample_freq=subsample_freq, colsample_bytree=colsample_bytree, reg_alpha=reg_alpha,
+                         reg_lambda=reg_lambda, random_state=random_state, n_jobs=n_jobs,
+                         silent=silent, importance_type=importance_type,
+                         multipler_learning_rate=multipler_learning_rate,
                          constraint_type=constraint_type, global_constraint_type=global_constraint_type,
-                         global_target_fpr=global_target_fpr, global_target_fnr=global_target_fnr)
+                         global_target_fpr=global_target_fpr, global_target_fnr=global_target_fnr,
+                         **kwargs)
 
     def fit(self, X, y, *,
             constraint_group,
@@ -1234,10 +1240,10 @@ class FairGBMClassifier(LGBMClassifier):
             callbacks=None, init_model=None):
 
         super().fit(X, y,
-                    constraint_group,
-                    sample_weight, init_score,
-                    eval_set, eval_names, eval_sample_weight,
-                    eval_class_weight, eval_init_score, eval_metric,
-                    early_stopping_rounds, verbose,
-                    feature_name, categorical_feature,
-                    callbacks, init_model)
+                    constraint_group=constraint_group,
+                    sample_weight=sample_weight, init_score=init_score,
+                    eval_set=eval_set, eval_names=eval_names, eval_sample_weight=eval_sample_weight,
+                    eval_class_weight=eval_class_weight, eval_init_score=eval_init_score, eval_metric=eval_metric,
+                    early_stopping_rounds=early_stopping_rounds, verbose=verbose,
+                    feature_name=feature_name, categorical_feature=categorical_feature,
+                    callbacks=callbacks, init_model=init_model)

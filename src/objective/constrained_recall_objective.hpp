@@ -17,7 +17,6 @@
 #define LIGHTGBM_CONSTRAINED_RECALL_OBJECTIVE_HPP
 
 #include <LightGBM/meta.h>
-#include <LightGBM/objective_function.h>
 #include <LightGBM/utils/common.h>
 #include <LightGBM/utils/constrained.hpp>
 #include "../metric/xentropy_metric.hpp"

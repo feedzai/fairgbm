@@ -95,6 +95,7 @@ class ObjectiveFunction {
   LIGHTGBM_EXPORT static ObjectiveFunction* CreateObjectiveFunction(const std::string& str);
 };
 
+
 class ConstrainedObjectiveFunction : public ObjectiveFunction
 {
 public:
@@ -1094,6 +1095,7 @@ protected:
   /*! \brief Where to save debug files to */
   std::string debugging_output_dir_;
 };
+
 } // namespace LightGBM
 
 #endif   // LightGBM_OBJECTIVE_FUNCTION_H_

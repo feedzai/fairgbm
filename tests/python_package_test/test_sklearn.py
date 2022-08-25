@@ -84,7 +84,7 @@ def test_binary_fairgbm():
     data = load_baf_base()
     X_train, Y_train, S_train = data["train"]
     X_test, Y_test, S_test = data["test"]
-    gbm = lgb.FairGBMClassifier(n_estimators=50, multiplier_learning_rate=10_000)
+    gbm = lgb.FairGBMClassifier(n_estimators=50, multiplier_learning_rate=10_000/len(X_train.index))
     gbm.fit(X_train, Y_train, constraint_group=S_train)
     ret = log_loss(Y_test, gbm.predict_proba(X_test))
     assert ret < 0.2

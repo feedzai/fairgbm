@@ -419,7 +419,7 @@ public:
                 lag_multipliers += lagrangian_multipliers[multipliers_base_index + other_group];
             }
 
-            gradients[i] += static_cast<score_t>(fpr_constraints_gradient_wrt_pred * lag_multipliers);
+            gradients[i] += static_cast<score_t>(fpr_constraints_gradient_wrt_pred * lag_multipliers * num_data_);
             // hessians[i] += ...
           }
           else
@@ -427,7 +427,7 @@ public:
             // ----------------------------------------------------------------------
             // Derivative (3) because instance belongs to group with non-maximal FPR
             // ----------------------------------------------------------------------
-            gradients[i] += static_cast<score_t>(-1. * fpr_constraints_gradient_wrt_pred * lagrangian_multipliers[multipliers_base_index + group]);
+            gradients[i] += static_cast<score_t>(-1. * fpr_constraints_gradient_wrt_pred * lagrangian_multipliers[multipliers_base_index + group] * num_data_);
             // hessians[i] += ...
           }
         }
@@ -481,7 +481,7 @@ public:
                 lag_multipliers += lagrangian_multipliers[multipliers_base_index + other_group];
             }
 
-            gradients[i] += static_cast<score_t>(fnr_constraints_gradient_wrt_pred * lag_multipliers);
+            gradients[i] += static_cast<score_t>(fnr_constraints_gradient_wrt_pred * lag_multipliers * num_data_);
             // hessians[i] += ...
           }
           else
@@ -489,7 +489,7 @@ public:
             // ----------------------------------------------------------------------
             // Derivative (3) because instance belongs to group with non-maximal FNR
             // ----------------------------------------------------------------------
-            gradients[i] += static_cast<score_t>(-1. * fnr_constraints_gradient_wrt_pred * lagrangian_multipliers[multipliers_base_index + group]);
+            gradients[i] += static_cast<score_t>(-1. * fnr_constraints_gradient_wrt_pred * lagrangian_multipliers[multipliers_base_index + group] * num_data_);
             // hessians[i] += ...
           }
         }
@@ -524,7 +524,7 @@ public:
             throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
 
           // Update instance gradient and hessian
-          gradients[i] += (score_t)(lagrangian_multipliers[multipliers_base_index] * global_fpr_constraint_gradient_wrt_pred);
+          gradients[i] += (score_t)(lagrangian_multipliers[multipliers_base_index] * global_fpr_constraint_gradient_wrt_pred * num_data_);
           //          hessians[i] += ...
         }
 
@@ -560,7 +560,8 @@ public:
 
           // Update instance gradient and hessian
           gradients[i] += (score_t)(lagrangian_multipliers[multipliers_base_index] *
-                                    global_fnr_constraint_gradient_wrt_pred);
+                                    global_fnr_constraint_gradient_wrt_pred *
+                                    num_data_);
           //            hessians[i] += ...
         }
 
@@ -568,7 +569,7 @@ public:
         multipliers_base_index += 1;
       }
 
-      gradients[i] *= num_data_;
+      //gradients[i] *= num_data_;
 
 
     }

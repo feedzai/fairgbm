@@ -569,9 +569,6 @@ public:
         multipliers_base_index += 1;
       }
 
-      //gradients[i] *= num_data_;
-
-
     }
   }
 

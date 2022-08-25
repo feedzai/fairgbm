@@ -1213,7 +1213,7 @@ class FairGBMClassifier(LGBMClassifier):
                  subsample=1, subsample_freq=0, colsample_bytree=1, 
                  reg_alpha=0, reg_lambda=0, random_state=None, 
                  n_jobs=-1, silent=True, importance_type='split',
-                 multiplier_learning_rate=50_000, constraint_type="FPR",
+                 multiplier_learning_rate=0.1, constraint_type="FPR",
                  global_constraint_type="FPR,FNR", global_target_fpr=0.05,
                  global_target_fnr=0.50, **kwargs):
 

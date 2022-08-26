@@ -12,6 +12,10 @@
 #include "constrained_xentropy_objective.hpp"
 #include "constrained_recall_objective.hpp"
 
+#include "proxy-loss-types/constrained_recall_objective_quadratic.hpp"
+#include "proxy-loss-types/constrained_recall_objective_cross_entropy.hpp"
+#include "proxy-loss-types/constrained_recall_objective_hinge.hpp"
+
 
 namespace LightGBM {
 
@@ -43,6 +47,15 @@ ObjectiveFunction* ObjectiveFunction::CreateObjectiveFunction(const std::string&
   } else if (type == std::string("constrained_cross_entropy")) {      // Entry-point for FairGBM code!
     return new ConstrainedCrossEntropy(config);
   } else if (type == std::string("constrained_recall_objective")) {   // Entry-point for FairGBM code!
+    if(config.objective_stepwise_proxy == "quadratic") {
+      return new ConstrainedRecallObjectiveQuadratic(config);
+    }
+    else if(config.objective_stepwise_proxy == "cross_entropy") {
+      return new ConstrainedRecallObjectiveCrossEntropy(config);
+    }
+    else if(config.objective_stepwise_proxy == "hinge") {
+      return new ConstrainedRecallObjectiveHinge(config);
+    }
     return new ConstrainedRecallObjective(config);
   } else if (type == std::string("cross_entropy_lambda")) {
     return new CrossEntropyLambda(config);
@@ -89,7 +102,7 @@ ObjectiveFunction* ObjectiveFunction::CreateObjectiveFunction(const std::string&
   } else if (type == std::string("constrained_cross_entropy")) {
     return new ConstrainedCrossEntropy(strs);
   } else if (type == std::string("constrained_recall_objective")) {
-    return new ConstrainedRecallObjective(strs);
+    return new ConstrainedRecallObjective(strs); //should never be called. only here for consistency with other objective functions
   } else if (type == std::string("cross_entropy_lambda")) {
     return new CrossEntropyLambda(strs);
   } else if (type == std::string("mape")) {

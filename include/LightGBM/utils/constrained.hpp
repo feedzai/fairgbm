@@ -71,8 +71,8 @@ void write_values(const std::string& dir, const std::string& filename,
   outfile << LightGBM::Common::Join(values, ",") << std::endl;
 
   outfile.close();
-}
+};
 }
 }
 
-#endif //LIGHTGBM_CONSTRAINED_HPP
+#endif // LIGHTGBM_CONSTRAINED_HPP

@@ -9,6 +9,10 @@
 #include <LightGBM/dataset.h>
 #include <LightGBM/meta.h>
 #include <LightGBM/utils/constrained.hpp>
+#include <LightGBM/proxy-loss-types/proxy_loss_base.hpp>
+#include <LightGBM/proxy-loss-types/hinge_proxy_loss.cpp>
+#include <LightGBM/proxy-loss-types/cross_entropy_proxy_loss.cpp>
+#include <LightGBM/proxy-loss-types/quadratic_proxy_loss.cpp>
 
 #include <string>
 #include <functional>
@@ -175,6 +179,8 @@ public:
         Log::Fatal("[%s]: sum of weights is zero", GetName());
       }
     }
+
+    constraint_proxy_object = ObtainProxyFunctionObject(constraint_stepwise_proxy, proxy_margin_, );
   }
 
   /**
@@ -1031,6 +1037,34 @@ protected:
     return func_name;
   }
 
+  static LightGBM::Constrained::ProxyLoss* ObtainProxyFunctionObject(
+      std::string func_name,
+      score_t proxy_margin,
+      data_size_t num_data,
+      label_t *label, 
+      label_t *weights,
+      const constraint_group_t *group,
+      std::vector<constraint_group_t> group_values,
+      std::unordered_map<constraint_group_t, int> group_label_positives,
+      std::unordered_map<constraint_group_t, int> group_label_negatives,
+      int total_label_negatives,
+      int total_label_positives
+    )
+  {
+    if (func_name == "hinge")
+    {
+      return LightGBM::Constrained::HingeProxyLoss(proxy_margin, num_data, *label, *weights, *group, group_values, group_label_positives, group_label_negatives, total_label_negatives, total_label_positives);
+    }
+    else if (func_name == "cross_entropy")
+    {
+      return LightGBM::Constrained::CrossEntropyProxyLoss(proxy_margin, num_data, *label, *weights, *group, group_values, group_label_positives, group_label_negatives, total_label_negatives, total_label_positives);
+    }
+    else if (func_name == "quadratic")
+    {
+      return LightGBM::Constrained::QuadraticProxyLoss(proxy_margin, num_data, *label, *weights, *group, group_values, group_label_positives, group_label_negatives, total_label_negatives, total_label_positives);
+    }
+  }
+
   /*! \brief Number of data points */
   data_size_t num_data_;
   /*! \brief Pointer for label */
@@ -1059,6 +1093,9 @@ protected:
 
   /*! \brief Function to use as a proxy for the step-wise function in CONSTRAINTS. */
   std::string constraint_stepwise_proxy;
+
+  /*! \brief Object to use as proxy for the ste-wise function in CONSTRAINTS. */
+  LightGBM::Constrained::ProxyLoss* constraint_proxy_object;
 
   /*! \brief Function to use as a proxy for the step-wise function in the OBJECTIVE. */
   std::string objective_stepwise_proxy;

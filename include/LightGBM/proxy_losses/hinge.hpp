@@ -7,7 +7,10 @@
  * (c) 2022 Feedzai, Strictly Confidential
  */
 
-#include "proxy_loss_base.hpp"
+#ifndef LIGHTGBM_PROXY_LOSSES_HINGE_HPP_
+#define LIGHTGBM_PROXY_LOSSES_HINGE_HPP_
+
+#include "base.hpp"
 #include <LightGBM/dataset.h>
 
 #include <string>
@@ -133,3 +136,5 @@ public:
 
 }
 }
+
+#endif  // LIGHTGBM_PROXY_LOSSES_HINGE_HPP_

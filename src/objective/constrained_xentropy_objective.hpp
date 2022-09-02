@@ -18,7 +18,7 @@
 #define LIGHTGBM_OBJECTIVE_CONSTRAINED_XENTROPY_OBJECTIVE_HPP_
 
 #include <LightGBM/meta.h>
-#include <LightGBM/objective_function.h>
+#include <LightGBM/constrained_objective_function.h>
 #include <LightGBM/utils/common.h>
 #include <LightGBM/utils/constrained.hpp>
 #include "../metric/xentropy_metric.hpp"
@@ -30,6 +30,7 @@
 #include <vector>
 
 namespace LightGBM {
+namespace Constrained {
 
 /**
  * Objective function for constrained optimization.
@@ -149,8 +150,8 @@ private:
   const bool deterministic_;
 
 };
-
-}  // end namespace LightGBM
+} // namespace Constrained
+} // namespace LightGBM
 
 #endif   // end #ifndef LIGHTGBM_OBJECTIVE_CONSTRAINED_XENTROPY_OBJECTIVE_HPP_
 

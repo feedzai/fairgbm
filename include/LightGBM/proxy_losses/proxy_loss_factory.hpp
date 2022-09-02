@@ -2,13 +2,13 @@
 // Created by andre.cruz on 02/09/22.
 //
 
-#ifndef LIGHTGBM_PROXY_LOSS_FACTORY_HPP
-#define LIGHTGBM_PROXY_LOSS_FACTORY_HPP
+#ifndef LIGHTGBM_PROXY_LOSSES_PROXY_LOSS_FACTORY_HPP_
+#define LIGHTGBM_PROXY_LOSSES_PROXY_LOSS_FACTORY_HPP_
 
-#include "proxy_loss_base.hpp"
-#include "hinge_proxy_loss.hpp"
-#include "cross_entropy_proxy_loss.hpp"
-#include "quadratic_proxy_loss.hpp"
+#include "base.hpp"
+#include "hinge.hpp"
+#include "xentropy.hpp"
+#include "quadratic.hpp"
 
 #include <string>
 
@@ -35,4 +35,4 @@ namespace Constrained {
 }
 }
 
-#endif //LIGHTGBM_PROXY_LOSS_FACTORY_HPP
+#endif  // LIGHTGBM_PROXY_LOSSES_PROXY_LOSS_FACTORY_HPP_

@@ -7,8 +7,8 @@
  * (c) 2022 Feedzai, Strictly Confidential
  */
 
-#ifndef PROXY_LOSS_BASE_HPP
-#define PROXY_LOSS_BASE_HPP
+#ifndef LIGHTGBM_PROXY_LOSSES_BASE_HPP_
+#define LIGHTGBM_PROXY_LOSSES_BASE_HPP_
 
 #include <LightGBM/dataset.h>
 
@@ -62,4 +62,4 @@ public:
 }
 }
 
-#endif // PROXY_LOSS_BASE_HPP
+#endif  // LIGHTGBM_PROXY_LOSSES_BASE_HPP_

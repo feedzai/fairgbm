@@ -13,11 +13,11 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "openmp-use-default-none"
 
-#ifndef LIGHTGBM_CONSTRAINED_RECALL_OBJECTIVE_HPP
-#define LIGHTGBM_CONSTRAINED_RECALL_OBJECTIVE_HPP
+#ifndef LIGHTGBM_OBJECTIVE_CONSTRAINED_RECALL_OBJECTIVE_HPP_
+#define LIGHTGBM_OBJECTIVE_CONSTRAINED_RECALL_OBJECTIVE_HPP_
 
 #include <LightGBM/meta.h>
-#include <LightGBM/objective_function.h>
+#include <LightGBM/constrained_objective_function.h>
 #include <LightGBM/utils/common.h>
 #include <LightGBM/utils/constrained.hpp>
 #include "../metric/xentropy_metric.hpp"
@@ -34,6 +34,7 @@
  */
 
 namespace LightGBM {
+namespace Constrained {
 
 class ConstrainedRecallObjective : public ConstrainedObjectiveFunction {
 public:
@@ -205,8 +206,7 @@ private:
     const bool deterministic_;
 
 };
+}   // namespace Constrained
+}   // namespace LightGBM
 
-
-}
-
-#endif //LIGHTGBM_CONSTRAINED_RECALL_OBJECTIVE_HPP
+#endif  // LIGHTGBM_OBJECTIVE_CONSTRAINED_RECALL_OBJECTIVE_HPP_

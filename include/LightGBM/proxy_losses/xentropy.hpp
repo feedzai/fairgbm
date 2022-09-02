@@ -7,7 +7,10 @@
  * (c) 2022 Feedzai, Strictly Confidential
  */
 
-#include "proxy_loss_base.hpp"
+#ifndef LIGHTGBM_PROXY_LOSSES_XENTROPY_HPP_
+#define LIGHTGBM_PROXY_LOSSES_XENTROPY_HPP_
+
+#include "base.hpp"
 #include <LightGBM/dataset.h>
 #include <LightGBM/utils/constrained.hpp>
 
@@ -38,3 +41,5 @@ private:
 
 }
 }
+
+#endif  // LIGHTGBM_PROXY_LOSSES_XENTROPY_HPP_

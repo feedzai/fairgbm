@@ -7,7 +7,10 @@
  * (c) 2022 Feedzai, Strictly Confidential
  */
 
-#include "proxy_loss_base.hpp"
+#ifndef LIGHTGBM_PROXY_LOSSES_QUADRATIC_HPP_
+#define LIGHTGBM_PROXY_LOSSES_QUADRATIC_HPP_
+
+#include "base.hpp"
 #include <LightGBM/dataset.h>
 
 #include <string>
@@ -32,3 +35,5 @@ class QuadraticProxyLoss : public ProxyLoss
 
 }
 }
+
+#endif  // LIGHTGBM_PROXY_LOSSES_QUADRATIC_HPP_

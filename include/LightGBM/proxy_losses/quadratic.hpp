@@ -22,6 +22,8 @@ namespace Constrained {
 
 class QuadraticProxyLoss : public ProxyLoss
 {
+public:
+
     using ProxyLoss::ProxyLoss;
 
     /*! \brief virtual destructor */
@@ -29,7 +31,35 @@ class QuadraticProxyLoss : public ProxyLoss
         std::cout << "DESTRUCTING QuadraticProxyLoss OBJECT !!" << std::endl; // TODO: delete this line, just for testing
     }
 
-    // TODO the rest
+    void ComputeGroupwiseFPR(const double *score, std::unordered_map<constraint_group_t, double> &group_fpr,
+                             data_size_t num_data, const label_t *label, const label_t *weights,
+                             const constraint_group_t *group,
+                             const std::vector<constraint_group_t> &group_values) const override {
+
+    }
+
+    void ComputeGroupwiseFNR(const double *score, std::unordered_map<constraint_group_t, double> &group_fnr,
+                             data_size_t num_data, const label_t *label, const label_t *weights,
+                             const constraint_group_t *group,
+                             const std::vector<constraint_group_t> &group_values) const override {
+
+    }
+
+    double ComputeInstancewiseFPR(double score) const override {
+      return 0;
+    }
+
+    double ComputeInstancewiseFNR(double score) const override {
+      return 0;
+    }
+
+    double ComputeInstancewiseFPRGradient(double score) const override {
+      return 0;
+    }
+
+    double ComputeInstancewiseFNRGradient(double score) const override {
+      return 0;
+    }
 };
 
 }   // Constrained

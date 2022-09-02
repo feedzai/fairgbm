@@ -10,9 +10,10 @@
 #include <LightGBM/meta.h>
 #include <LightGBM/utils/constrained.hpp>
 #include <LightGBM/proxy-loss-types/proxy_loss_base.hpp>
-#include <LightGBM/proxy-loss-types/hinge_proxy_loss.cpp>
-#include <LightGBM/proxy-loss-types/cross_entropy_proxy_loss.cpp>
-#include <LightGBM/proxy-loss-types/quadratic_proxy_loss.cpp>
+#include <LightGBM/proxy-loss-types/hinge_proxy_loss.hpp>
+#include <LightGBM/proxy-loss-types/cross_entropy_proxy_loss.hpp>
+#include <LightGBM/proxy-loss-types/quadratic_proxy_loss.hpp>
+#include <LightGBM/proxy-loss-types/proxy_loss_factory.hpp>
 
 #include <string>
 #include <functional>
@@ -24,7 +25,7 @@ namespace LightGBM {
 class ObjectiveFunction {
  public:
   /*! \brief virtual destructor */
-  virtual ~ObjectiveFunction() {}
+  virtual ~ObjectiveFunction() = default;
 
   /*!
   * \brief Initialize
@@ -99,11 +100,13 @@ class ObjectiveFunction {
   LIGHTGBM_EXPORT static ObjectiveFunction* CreateObjectiveFunction(const std::string& str);
 };
 
+namespace Constrained {
+
 class ConstrainedObjectiveFunction : public ObjectiveFunction
 {
 public:
   /*! \brief virtual destructor */
-  virtual ~ConstrainedObjectiveFunction() {}
+  ~ConstrainedObjectiveFunction() override = default;
 
   void SetUpFromConfig(const Config &config)
   {
@@ -114,10 +117,10 @@ public:
     if (constraint_type == "FNR,FPR")
       constraint_type = "FPR,FNR";
 
-    fpr_threshold_ = (score_t)config.constraint_fpr_threshold;
-    fnr_threshold_ = (score_t)config.constraint_fnr_threshold;
-    score_threshold_ = (score_t)config.score_threshold;
-    proxy_margin_ = (score_t)config.stepwise_proxy_margin;
+    fpr_threshold_ = (score_t) config.constraint_fpr_threshold;
+    fnr_threshold_ = (score_t) config.constraint_fnr_threshold;
+    score_threshold_ = (score_t) config.score_threshold;
+    proxy_margin_ = (score_t) config.stepwise_proxy_margin;
 
     /** Global constraint parameters **/
     global_constraint_type = config.global_constraint_type;
@@ -127,9 +130,9 @@ public:
     if (global_constraint_type == "FNR,FPR")
       global_constraint_type = "FPR,FNR";
 
-    global_target_fpr_ = (score_t)config.global_target_fpr;
-    global_target_fnr_ = (score_t)config.global_target_fnr;
-    global_score_threshold_ = (score_t)config.global_score_threshold;
+    global_target_fpr_ = (score_t) config.global_target_fpr;
+    global_target_fnr_ = (score_t) config.global_target_fnr;
+    global_score_threshold_ = (score_t) config.global_score_threshold;
 
     // Function used as a PROXY for step-wise in the CONSTRAINTS
     constraint_stepwise_proxy = ValidateProxyFunctionName(config.constraint_stepwise_proxy, false);
@@ -139,6 +142,9 @@ public:
 
     // Debug configs
     debugging_output_dir_ = config.debugging_output_dir;
+
+    // Construct ProxyLoss object for constraint functions
+    constraint_proxy_object = ConstructProxyLoss(config);
   }
 
   /*!
@@ -179,8 +185,6 @@ public:
         Log::Fatal("[%s]: sum of weights is zero", GetName());
       }
     }
-
-    constraint_proxy_object = ObtainProxyFunctionObject(constraint_stepwise_proxy, proxy_margin_, );
   }
 
   /**
@@ -328,29 +332,15 @@ public:
      * */
     if (IsFPRConstrained())
     {
-      if (constraint_stepwise_proxy == "hinge")
-        ComputeHingeFPR(score, group_fpr);
-      else if (constraint_stepwise_proxy == "quadratic")
-        ComputeQuadraticLossFPR(score, group_fpr);
-      else if (constraint_stepwise_proxy == "cross_entropy")
-        ComputeXEntropyLossFPR(score, group_fpr);
-      else
-        throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
-
-      max_proxy_fpr = Constrained::findMaxValuePair<constraint_group_t, double>(group_fpr);
+        constraint_proxy_object->ComputeGroupwiseFPR(
+                score, group_fpr, num_data_, label_, weights_, group_, group_values_);
+        max_proxy_fpr = Constrained::findMaxValuePair<constraint_group_t, double>(group_fpr);
     }
     if (IsFNRConstrained())
     {
-      if (constraint_stepwise_proxy == "hinge")
-        ComputeHingeLossFNR(score, group_fnr);
-      else if (constraint_stepwise_proxy == "quadratic")
-        ComputeQuadraticLossFNR(score, group_fnr);
-      else if (constraint_stepwise_proxy == "cross_entropy")
-        ComputeXEntropyLossFNR(score, group_fnr);
-      else
-        throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
-
-      max_proxy_fnr = Constrained::findMaxValuePair<constraint_group_t, double>(group_fnr);
+        constraint_proxy_object->ComputeGroupwiseFNR(
+                score, group_fnr, num_data_, label_, weights_, group_, group_values_);
+        max_proxy_fnr = Constrained::findMaxValuePair<constraint_group_t, double>(group_fnr);
     }
 
     /** ---------------------------------------------------------------- *
@@ -383,28 +373,27 @@ public:
       {
         if (label_[i] == 0)
         {
-          const int group_ln = group_label_negatives_.at(group);
+          double fpr_constraints_gradient_wrt_pred = (
+                  constraint_proxy_object->ComputeInstancewiseFPRGradient(score[i]) /
+                  group_label_negatives_.at(group)
+          );
 
-          double fpr_constraints_gradient_wrt_pred;
-          // TODO: https://github.com/feedzai/fairgbm/issues/7
+//          // Derivative for hinge-based proxy FPR
+//          if (constraint_stepwise_proxy == "hinge")
+//            fpr_constraints_gradient_wrt_pred = score[i] <= -proxy_margin_ ? 0. : 1. / group_ln;
+//
+//          // Derivative for BCE-based proxy FPR
+//          else if (constraint_stepwise_proxy == "cross_entropy") {
+//            fpr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i] + xent_horizontal_shift)) / group_ln;
+////            fpr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / group_ln;   // without margin
+//          }
+//
+//          // Loss-function implicitly defined as having a hinge-based derivative (quadratic loss)
+//          else if (constraint_stepwise_proxy == "quadratic") {
+//            fpr_constraints_gradient_wrt_pred = std::max(0., score[i] + proxy_margin_) / group_ln;
+//          }
 
-          // Derivative for hinge-based proxy FPR
-          if (constraint_stepwise_proxy == "hinge")
-            fpr_constraints_gradient_wrt_pred = score[i] <= -proxy_margin_ ? 0. : 1. / group_ln;
-
-          // Derivative for BCE-based proxy FPR
-          else if (constraint_stepwise_proxy == "cross_entropy") {
-            fpr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i] + xent_horizontal_shift)) / group_ln;
-//            fpr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / group_ln;   // without margin
-          }
-
-          // Loss-function implicitly defined as having a hinge-based derivative (quadratic loss)
-          else if (constraint_stepwise_proxy == "quadratic") {
-            fpr_constraints_gradient_wrt_pred = std::max(0., score[i] + proxy_margin_) / group_ln;
-          }
-
-          else
-            throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
+            // TODO: https://github.com/feedzai/fairgbm/issues/7
 
           // -------------------------------------------------------------------
           // Derivative (2) because instance belongs to group with maximal FPR
@@ -508,28 +497,29 @@ public:
       {
         if (label_[i] == 0)
         { // Condition for non-zero gradient
-          double global_fpr_constraint_gradient_wrt_pred;
-          // Gradient for hinge proxy FPR
-          if (constraint_stepwise_proxy == "hinge") {
-            global_fpr_constraint_gradient_wrt_pred = score[i] >= -proxy_margin_ ? 1. / total_label_negatives_ : 0.;
-          }
+          double global_fpr_constraint_gradient_wrt_pred = (
+                  constraint_proxy_object->ComputeInstancewiseFPRGradient(score[i]) /
+                          total_label_negatives_
+          );
 
-          // Gradient for BCE proxy FPR
-          else if (constraint_stepwise_proxy == "cross_entropy") {
-            global_fpr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i] + xent_horizontal_shift)) / total_label_negatives_;
-//            global_fpr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / total_label_negatives_;   // without margin
-          }
-
-          // Hinge-based gradient (for quadratic proxy FPR)
-          else if (constraint_stepwise_proxy == "quadratic") {
-            global_fpr_constraint_gradient_wrt_pred = std::max(0., score[i] + proxy_margin_) / total_label_negatives_;
-          }
-
-          else
-            throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
+//          // Gradient for hinge proxy FPR
+//          if (constraint_stepwise_proxy == "hinge") {
+//            global_fpr_constraint_gradient_wrt_pred = score[i] >= -proxy_margin_ ? 1. / total_label_negatives_ : 0.;
+//          }
+//
+//          // Gradient for BCE proxy FPR
+//          else if (constraint_stepwise_proxy == "cross_entropy") {
+//            global_fpr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i] + xent_horizontal_shift)) / total_label_negatives_;
+////            global_fpr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / total_label_negatives_;   // without margin
+//          }
+//
+//          // Hinge-based gradient (for quadratic proxy FPR)
+//          else if (constraint_stepwise_proxy == "quadratic") {
+//            global_fpr_constraint_gradient_wrt_pred = std::max(0., score[i] + proxy_margin_) / total_label_negatives_;
+//          }
 
           // Update instance gradient and hessian
-          gradients[i] += (score_t)(lagrangian_multipliers[multipliers_base_index] * global_fpr_constraint_gradient_wrt_pred);
+          gradients[i] += (score_t) (lagrangian_multipliers[multipliers_base_index] * global_fpr_constraint_gradient_wrt_pred);
           //          hessians[i] += ...
         }
 
@@ -541,27 +531,26 @@ public:
       {
         if (label_[i] == 1)
         { // Condition for non-zero gradient
-          double global_fnr_constraint_gradient_wrt_pred;
+          double global_fnr_constraint_gradient_wrt_pred = (
+                  constraint_proxy_object->ComputeInstancewiseFNRGradient(score[i]) /
+                  total_label_positives_
+          );
 
-          // Gradient for hinge proxy FNR
-          if (constraint_stepwise_proxy == "hinge") {
-            global_fnr_constraint_gradient_wrt_pred = score[i] >= proxy_margin_ ? 0. : -1. / total_label_positives_;
-          }
-
-          // Gradient for BCE proxy FNR
-          else if (constraint_stepwise_proxy == "cross_entropy") {
-            global_fnr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i] - xent_horizontal_shift) - 1) / total_label_positives_;
-//            global_fnr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / total_label_positives_;   // without margin
-          }
-
-          // Hinge-based gradient (for quadratic proxy FNR)
-          else if (constraint_stepwise_proxy == "quadratic") {
-            global_fnr_constraint_gradient_wrt_pred = std::min(0., score[i] - proxy_margin_) / total_label_positives_;
-          }
-
-          else {
-            throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
-          }
+//          // Gradient for hinge proxy FNR
+//          if (constraint_stepwise_proxy == "hinge") {
+//            global_fnr_constraint_gradient_wrt_pred = score[i] >= proxy_margin_ ? 0. : -1. / total_label_positives_;
+//          }
+//
+//          // Gradient for BCE proxy FNR
+//          else if (constraint_stepwise_proxy == "cross_entropy") {
+//            global_fnr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i] - xent_horizontal_shift) - 1) / total_label_positives_;
+////            global_fnr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / total_label_positives_;   // without margin
+//          }
+//
+//          // Hinge-based gradient (for quadratic proxy FNR)
+//          else if (constraint_stepwise_proxy == "quadratic") {
+//            global_fnr_constraint_gradient_wrt_pred = std::min(0., score[i] - proxy_margin_) / total_label_positives_;
+//          }
 
           // Update instance gradient and hessian
           gradients[i] += (score_t)(lagrangian_multipliers[multipliers_base_index] *
@@ -1037,34 +1026,6 @@ protected:
     return func_name;
   }
 
-  static LightGBM::Constrained::ProxyLoss* ObtainProxyFunctionObject(
-      std::string func_name,
-      score_t proxy_margin,
-      data_size_t num_data,
-      label_t *label, 
-      label_t *weights,
-      const constraint_group_t *group,
-      std::vector<constraint_group_t> group_values,
-      std::unordered_map<constraint_group_t, int> group_label_positives,
-      std::unordered_map<constraint_group_t, int> group_label_negatives,
-      int total_label_negatives,
-      int total_label_positives
-    )
-  {
-    if (func_name == "hinge")
-    {
-      return LightGBM::Constrained::HingeProxyLoss(proxy_margin, num_data, *label, *weights, *group, group_values, group_label_positives, group_label_negatives, total_label_negatives, total_label_positives);
-    }
-    else if (func_name == "cross_entropy")
-    {
-      return LightGBM::Constrained::CrossEntropyProxyLoss(proxy_margin, num_data, *label, *weights, *group, group_values, group_label_positives, group_label_negatives, total_label_negatives, total_label_positives);
-    }
-    else if (func_name == "quadratic")
-    {
-      return LightGBM::Constrained::QuadraticProxyLoss(proxy_margin, num_data, *label, *weights, *group, group_values, group_label_positives, group_label_negatives, total_label_negatives, total_label_positives);
-    }
-  }
-
   /*! \brief Number of data points */
   data_size_t num_data_;
   /*! \brief Pointer for label */
@@ -1095,7 +1056,7 @@ protected:
   std::string constraint_stepwise_proxy;
 
   /*! \brief Object to use as proxy for the ste-wise function in CONSTRAINTS. */
-  LightGBM::Constrained::ProxyLoss* constraint_proxy_object;
+  std::unique_ptr<ProxyLoss> constraint_proxy_object;
 
   /*! \brief Function to use as a proxy for the step-wise function in the OBJECTIVE. */
   std::string objective_stepwise_proxy;
@@ -1127,6 +1088,7 @@ protected:
   /*! \brief Where to save debug files to */
   std::string debugging_output_dir_;
 };
-} // namespace LightGBM
+}   // namespace Constrained
+}   // namespace LightGBM
 
 #endif   // LightGBM_OBJECTIVE_FUNCTION_H_

@@ -18,7 +18,6 @@
 #include <unordered_map>
 
 namespace LightGBM {
-
 namespace Constrained {
 
 class QuadraticProxyLoss : public ProxyLoss
@@ -33,7 +32,7 @@ class QuadraticProxyLoss : public ProxyLoss
     // TODO the rest
 };
 
-}
-}
+}   // Constrained
+}   // LightGBM
 
 #endif  // LIGHTGBM_PROXY_LOSSES_QUADRATIC_HPP_

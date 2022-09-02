@@ -19,7 +19,6 @@
 #include <unordered_map>
 
 namespace LightGBM {
-
 namespace Constrained {
 
 class CrossEntropyProxyLoss : public ProxyLoss
@@ -39,7 +38,7 @@ private:
     // TODO the rest
 };
 
-}
-}
+}   // Constrained
+}   // LightGBM
 
 #endif  // LIGHTGBM_PROXY_LOSSES_XENTROPY_HPP_

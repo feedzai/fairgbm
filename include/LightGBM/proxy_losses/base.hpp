@@ -59,7 +59,7 @@ public:
 
     virtual double ComputeInstancewiseFNRGradient(double score) const = 0;
 };
-}
-}
+}   // Constrained
+}   // LightGBM
 
 #endif  // LIGHTGBM_PROXY_LOSSES_BASE_HPP_

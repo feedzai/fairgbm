@@ -18,7 +18,6 @@
 #include <unordered_map>
 
 namespace LightGBM {
-
 namespace Constrained {
 
 class HingeProxyLoss : public ProxyLoss
@@ -134,7 +133,7 @@ public:
     }
 };
 
-}
-}
+}   // Constrained
+}   // LightGBM
 
 #endif  // LIGHTGBM_PROXY_LOSSES_HINGE_HPP_

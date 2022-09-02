@@ -360,27 +360,25 @@ public:
         {
           if (label_[i] == 1)
           {
-            const int group_lp = group_label_positives_.at(group);
+            double fnr_constraints_gradient_wrt_pred = (
+                    constraint_proxy_object->ComputeInstancewiseFNRGradient(score[i]) /
+                    group_label_positives_.at(group)
+            );
 
-            double fnr_constraints_gradient_wrt_pred;
-
-            // Derivative for hinge-based proxy FNR
-            if (constraint_stepwise_proxy == "hinge")
-              fnr_constraints_gradient_wrt_pred = score[i] >= proxy_margin_ ? 0. : -1. / group_lp;
-
-              // Derivative for BCE-based proxy FNR
-            else if (constraint_stepwise_proxy == "cross_entropy") {
-              fnr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i] - xent_horizontal_shift) - 1) / group_lp;
-//            fnr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / group_lp;   // without margin
-            }
-
-              // Loss-function implicitly defined as having a hinge-based derivative (quadratic loss)
-            else if (constraint_stepwise_proxy == "quadratic") {
-              fnr_constraints_gradient_wrt_pred = std::min(0., score[i] - proxy_margin_) / group_lp;
-            }
-
-            else
-              throw std::invalid_argument("constraint_stepwise_proxy=" + constraint_stepwise_proxy + " not implemented!");
+//            // Derivative for hinge-based proxy FNR
+//            if (constraint_stepwise_proxy == "hinge")
+//              fnr_constraints_gradient_wrt_pred = score[i] >= proxy_margin_ ? 0. : -1. / group_lp;
+//
+//              // Derivative for BCE-based proxy FNR
+//            else if (constraint_stepwise_proxy == "cross_entropy") {
+//              fnr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i] - xent_horizontal_shift) - 1) / group_lp;
+////            fnr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / group_lp;   // without margin
+//            }
+//
+//              // Loss-function implicitly defined as having a hinge-based derivative (quadratic loss)
+//            else if (constraint_stepwise_proxy == "quadratic") {
+//              fnr_constraints_gradient_wrt_pred = std::min(0., score[i] - proxy_margin_) / group_lp;
+//            }
 
             // -------------------------------------------------------------------
             // Derivative (2) because instance belongs to group with max FNR

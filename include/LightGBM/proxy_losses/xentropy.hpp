@@ -49,7 +49,6 @@ public:
     {
         std::unordered_map<constraint_group_t, double> false_positives; // map of group index to the respective proxy FPs
         std::unordered_map<constraint_group_t, int> label_negatives;    // map of group index to the respective number of LNs
-        double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
 
         // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
         for (data_size_t i = 0; i < num_data; ++i)
@@ -62,7 +61,7 @@ public:
                 label_negatives[curr_group] += 1;
 
                 // proxy_margin_ corresponds to the vertical margin at x=0; l(0) = proxy_margin_
-                const double xent_score = log(1 + exp(score[i] + xent_horizontal_shift));
+                const double xent_score = log(1 + exp(score[i] + xent_horizontal_shift_));
                 assert(xent_score >= 0.);
                 false_positives[curr_group] += xent_score;
             }
@@ -91,7 +90,6 @@ public:
     {
         std::unordered_map<constraint_group_t, double> false_negatives; // map of group index to the respective proxy FPs
         std::unordered_map<constraint_group_t, int> label_positives;    // map of group index to the respective number of LNs
-        double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
 
         // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
         for (data_size_t i = 0; i < num_data; ++i)
@@ -104,7 +102,7 @@ public:
                 label_positives[curr_group] += 1;
 
                 // proxy_margin_ corresponds to the vertical margin at x=0; l(0) = proxy_margin_
-                const double xent_score = log(1 + exp(xent_horizontal_shift - score[i]));
+                const double xent_score = log(1 + exp(xent_horizontal_shift_ - score[i]));
                 assert(xent_score >= 0.);
                 false_negatives[curr_group] += xent_score;
             }
@@ -125,13 +123,13 @@ public:
     inline double ComputeInstancewiseFPR(double score) const override
     {
         // LABEL is assumed to be NEGATIVE (0)
-        return Constrained::sigmoid(score + xent_horizontal_shift_);
+        return log(1 + exp(score + xent_horizontal_shift_));
     }
 
     inline double ComputeInstancewiseFNR(double score) const override
     {
         // LABEL is assumed to be POSITIVE (1)
-        return Constrained::sigmoid(score - xent_horizontal_shift_) - 1;
+        return log(1 + exp(xent_horizontal_shift_ - score));
     }
 
     inline double ComputeInstancewiseFPRGradient(double score) const override

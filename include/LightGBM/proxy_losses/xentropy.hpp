@@ -123,13 +123,13 @@ public:
     inline double ComputeInstancewiseFPR(double score) const override
     {
         // LABEL is assumed to be NEGATIVE (0)
-        return log(1 + exp(score + xent_horizontal_shift_));
+//        return log(1 + exp(score + xent_horizontal_shift_));
     }
 
     inline double ComputeInstancewiseFNR(double score) const override
     {
         // LABEL is assumed to be POSITIVE (1)
-        return log(1 + exp(xent_horizontal_shift_ - score));
+//        return log(1 + exp(xent_horizontal_shift_ - score));
     }
 
     inline double ComputeInstancewiseFPRGradient(double score) const override

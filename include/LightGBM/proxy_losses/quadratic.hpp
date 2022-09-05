@@ -116,13 +116,13 @@ public:
     inline double ComputeInstancewiseFPR(double score) const override
     {
         // LABEL is assumed to be NEGATIVE (0)
-        return (1. / 2.) * std::pow(score + proxy_margin_, 2);
+//        return (1. / 2.) * std::pow(score + proxy_margin_, 2);
     }
 
     inline double ComputeInstancewiseFNR(double score) const override
     {
         // LABEL is assumed to be POSITIVE (1)
-        return (1. / 2.) * std::pow(score - proxy_margin_, 2);
+//        return (1. / 2.) * std::pow(score - proxy_margin_, 2);
     }
 
     inline double ComputeInstancewiseFPRGradient(double score) const override

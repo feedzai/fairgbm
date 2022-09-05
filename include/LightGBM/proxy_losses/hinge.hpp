@@ -52,10 +52,7 @@ public:
             if (label[i] == 0)
             {
                 label_negatives[curr_group] += 1;
-
-                // proxy_margin_ is the line intercept value
-                const double hinge_score = proxy_margin_ + score[i];
-                false_positives[curr_group] += std::max(0.0, hinge_score);
+                false_positives[curr_group] += this->ComputeInstancewiseFPR(score[i]);
             }
         }
 
@@ -86,25 +83,23 @@ public:
         // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
         for (data_size_t i = 0; i < num_data; ++i)
         {
-        constraint_group_t curr_group = group[i];
+            constraint_group_t curr_group = group[i];
 
-        if (label[i] == 1)
-        {
-            label_positives[curr_group] += 1;
-
-            const double hinge_score = proxy_margin_ - score[i];
-            false_negatives[curr_group] += std::max(0.0, hinge_score);
-        }
+            if (label[i] == 1)
+            {
+                label_positives[curr_group] += 1;
+                false_negatives[curr_group] += this->ComputeInstancewiseFNR(score[i]);
+            }
         }
 
         for (auto group_id : group_values)
         {
-        double fnr;
-        if (label_positives[group_id] == 0)
-            fnr = 0;
-        else
-            fnr = false_negatives[group_id] / label_positives[group_id];
-        group_fnr[group_id] = fnr;
+            double fnr;
+            if (label_positives[group_id] == 0)
+                fnr = 0;
+            else
+                fnr = false_negatives[group_id] / label_positives[group_id];
+            group_fnr[group_id] = fnr;
         }
     }
 

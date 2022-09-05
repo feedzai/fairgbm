@@ -145,7 +145,7 @@ public:
       //  - 4th: global FNR constraint      (a single multiplier)
 
       // Multiplier corresponding to group-wise FPR constraints
-      if (IsFPRConstrained())
+      if (IsGroupFPRConstrained())
       {
         ComputeFPR(score, score_threshold_, group_fpr);
         double max_fpr = Constrained::findMaxValuePair<constraint_group_t, double>(group_fpr).second;
@@ -165,7 +165,7 @@ public:
       }
 
       // Multiplier corresponding to group-wise FNR constraints
-      if (IsFNRConstrained())
+      if (IsGroupFNRConstrained())
       {
         ComputeFNR(score, score_threshold_, group_fnr);
         double max_fnr = Constrained::findMaxValuePair<constraint_group_t, double>(group_fnr).second;
@@ -255,13 +255,13 @@ public:
        *  3. Compute derivative w.r.t. all groups except max(FPR)
        *  ---------------------------------------------------------------- *
        * */
-      if (IsFPRConstrained())
+      if (IsGroupFPRConstrained())
       {
         constraint_proxy_object->ComputeGroupwiseFPR(
                 score, group_fpr, num_data_, label_, weights_, group_, group_values_);
         max_proxy_fpr = Constrained::findMaxValuePair<constraint_group_t, double>(group_fpr);
       }
-      if (IsFNRConstrained())
+      if (IsGroupFNRConstrained())
       {
         constraint_proxy_object->ComputeGroupwiseFNR(
                 score, group_fnr, num_data_, label_, weights_, group_, group_values_);
@@ -294,31 +294,15 @@ public:
         // (2) (m-1) / |LN_group_j| * (margin+score) * sum(lag multipliers except group j), if i belongs to group j whose FPR is maximal
         // (3) -lambda_k * (margin+score) / |LN_group_k| if the instance belongs to group k != j (where j has maximal FPR)
         // -------------------------------------------------------------------
-        if (IsFPRConstrained())
+        if (IsGroupFPRConstrained())
         {
           if (label_[i] == 0)
           {
+            // TODO: https://github.com/feedzai/fairgbm/issues/7
             double fpr_constraints_gradient_wrt_pred = (
                     constraint_proxy_object->ComputeInstancewiseFPRGradient(score[i]) /
                     group_label_negatives_.at(group)
             );
-
-//          // Derivative for hinge-based proxy FPR
-//          if (constraint_stepwise_proxy == "hinge")
-//            fpr_constraints_gradient_wrt_pred = score[i] <= -proxy_margin_ ? 0. : 1. / group_ln;
-//
-//          // Derivative for BCE-based proxy FPR
-//          else if (constraint_stepwise_proxy == "cross_entropy") {
-//            fpr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i] + xent_horizontal_shift)) / group_ln;
-////            fpr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / group_ln;   // without margin
-//          }
-//
-//          // Loss-function implicitly defined as having a hinge-based derivative (quadratic loss)
-//          else if (constraint_stepwise_proxy == "quadratic") {
-//            fpr_constraints_gradient_wrt_pred = std::max(0., score[i] + proxy_margin_) / group_ln;
-//          }
-
-            // TODO: https://github.com/feedzai/fairgbm/issues/7
 
             // -------------------------------------------------------------------
             // Derivative (2) because instance belongs to group with maximal FPR
@@ -335,17 +319,18 @@ public:
                 if (other_group == max_proxy_fpr.first)
                   continue;
                 else
-                  lag_multipliers += lagrangian_multipliers[multipliers_base_index + other_group];
+                  lag_multipliers += lagrangian_multipliers[multipliers_base_index + other_group];  // NOTE: assumes group values start at zero (0)
               }
 
               gradients[i] += static_cast<score_t>(fpr_constraints_gradient_wrt_pred * lag_multipliers);
               // hessians[i] += ...
             }
+
+            // ----------------------------------------------------------------------
+            // Derivative (3) because instance belongs to group with non-maximal FPR
+            // ----------------------------------------------------------------------
             else
             {
-              // ----------------------------------------------------------------------
-              // Derivative (3) because instance belongs to group with non-maximal FPR
-              // ----------------------------------------------------------------------
               gradients[i] += static_cast<score_t>(-1. * fpr_constraints_gradient_wrt_pred * lagrangian_multipliers[multipliers_base_index + group]);
               // hessians[i] += ...
             }
@@ -356,29 +341,15 @@ public:
         }
 
         // Skip FNR propagation if label negative, since LNs do not count for FNR constraints
-        if (IsFNRConstrained())
+        if (IsGroupFNRConstrained())
         {
           if (label_[i] == 1)
           {
+            // TODO: https://github.com/feedzai/fairgbm/issues/7
             double fnr_constraints_gradient_wrt_pred = (
                     constraint_proxy_object->ComputeInstancewiseFNRGradient(score[i]) /
                     group_label_positives_.at(group)
             );
-
-//            // Derivative for hinge-based proxy FNR
-//            if (constraint_stepwise_proxy == "hinge")
-//              fnr_constraints_gradient_wrt_pred = score[i] >= proxy_margin_ ? 0. : -1. / group_lp;
-//
-//              // Derivative for BCE-based proxy FNR
-//            else if (constraint_stepwise_proxy == "cross_entropy") {
-//              fnr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i] - xent_horizontal_shift) - 1) / group_lp;
-////            fnr_constraints_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / group_lp;   // without margin
-//            }
-//
-//              // Loss-function implicitly defined as having a hinge-based derivative (quadratic loss)
-//            else if (constraint_stepwise_proxy == "quadratic") {
-//              fnr_constraints_gradient_wrt_pred = std::min(0., score[i] - proxy_margin_) / group_lp;
-//            }
 
             // -------------------------------------------------------------------
             // Derivative (2) because instance belongs to group with max FNR
@@ -401,11 +372,12 @@ public:
               gradients[i] += static_cast<score_t>(fnr_constraints_gradient_wrt_pred * lag_multipliers);
               // hessians[i] += ...
             }
+
+            // ----------------------------------------------------------------------
+            // Derivative (3) because instance belongs to group with non-maximal FNR
+            // ----------------------------------------------------------------------
             else
             {
-              // ----------------------------------------------------------------------
-              // Derivative (3) because instance belongs to group with non-maximal FNR
-              // ----------------------------------------------------------------------
               gradients[i] += static_cast<score_t>(-1. * fnr_constraints_gradient_wrt_pred * lagrangian_multipliers[multipliers_base_index + group]);
               // hessians[i] += ...
             }
@@ -495,13 +467,13 @@ public:
       *output = 1.0f / (1.0f + std::exp(-(*input)));
     }
 
-    bool IsFPRConstrained() const
+    bool IsGroupFPRConstrained() const
     {
-      return (constraint_type == "FPR" || constraint_type == "FPR,FNR");
       // NOTE: Order of constraints in config file doesn't matter, it's sorted beforehand
+      return (constraint_type == "FPR" || constraint_type == "FPR,FNR");
     }
 
-    bool IsFNRConstrained() const
+    bool IsGroupFNRConstrained() const
     {
       return (constraint_type == "FNR" || constraint_type == "FPR,FNR");
     }
@@ -521,9 +493,9 @@ public:
       int group_size = (int)group_values_.size();
       int num_constraints = 0;
 
-      if (IsFPRConstrained())
+      if (IsGroupFPRConstrained())
         num_constraints += group_size;
-      if (IsFNRConstrained())
+      if (IsGroupFNRConstrained())
         num_constraints += group_size;
       if (IsGlobalFPRConstrained())
         num_constraints += 1;

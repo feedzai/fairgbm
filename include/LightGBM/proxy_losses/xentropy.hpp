@@ -38,34 +38,112 @@ public:
         std::cout << "DESTRUCTING CrossEntropyProxyLoss OBJECT !!" << std::endl; // TODO: delete this line, just for testing
     }
 
-    void ComputeGroupwiseFPR(const double *score, std::unordered_map<constraint_group_t, double> &group_fpr,
-                             data_size_t num_data, const label_t *label, const label_t *weights,
-                             const constraint_group_t *group,
-                             const std::vector<constraint_group_t> &group_values) const override {
+    void ComputeGroupwiseFPR(        
+            const double *score,
+            std::unordered_map<constraint_group_t, double> &group_fpr,
+            data_size_t num_data,
+            const label_t *label,
+            const label_t * /* weights */,
+            const constraint_group_t *group,
+            const std::vector<constraint_group_t> &group_values) const override
+    {
+        std::unordered_map<constraint_group_t, double> false_positives; // map of group index to the respective proxy FPs
+        std::unordered_map<constraint_group_t, int> label_negatives;    // map of group index to the respective number of LNs
+        double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
 
+        // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+        for (data_size_t i = 0; i < num_data; ++i)
+        {
+            constraint_group_t curr_group = group[i];
+
+            // FPR uses only label NEGATIVES
+            if (label[i] == 0)
+            {
+                label_negatives[curr_group] += 1;
+
+                // proxy_margin_ corresponds to the vertical margin at x=0; l(0) = proxy_margin_
+                const double xent_score = log(1 + exp(score[i] + xent_horizontal_shift));
+                assert(xent_score >= 0.);
+                false_positives[curr_group] += xent_score;
+            }
+        }
+
+        for (auto group_id : group_values)
+        {
+            double fpr;
+            if (label_negatives[group_id] == 0)
+                fpr = 0;
+            else
+                fpr = false_positives[group_id] / label_negatives[group_id];
+
+            group_fpr[group_id] = fpr;
+        }
     }
 
-    void ComputeGroupwiseFNR(const double *score, std::unordered_map<constraint_group_t, double> &group_fnr,
-                             data_size_t num_data, const label_t *label, const label_t *weights,
-                             const constraint_group_t *group,
-                             const std::vector<constraint_group_t> &group_values) const override {
+    void ComputeGroupwiseFNR(
+            const double *score,
+            std::unordered_map<constraint_group_t, double> &group_fnr,
+            data_size_t num_data,
+            const label_t *label,
+            const label_t * /* weights */,
+            const constraint_group_t *group,
+            const std::vector<constraint_group_t> &group_values) const override
+    {
+        std::unordered_map<constraint_group_t, double> false_negatives; // map of group index to the respective proxy FPs
+        std::unordered_map<constraint_group_t, int> label_positives;    // map of group index to the respective number of LNs
+        double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
 
+        // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
+        for (data_size_t i = 0; i < num_data; ++i)
+        {
+            constraint_group_t curr_group = group[i];
+
+            // FNR uses only label POSITIVES
+            if (label[i] == 1)
+            {
+                label_positives[curr_group] += 1;
+
+                // proxy_margin_ corresponds to the vertical margin at x=0; l(0) = proxy_margin_
+                const double xent_score = log(1 + exp(xent_horizontal_shift - score[i]));
+                assert(xent_score >= 0.);
+                false_negatives[curr_group] += xent_score;
+            }
+        }
+
+        for (auto group_id : group_values)
+        {
+            double fnr;
+            if (label_positives[group_id] == 0)
+                fnr = 0;
+            else
+                fnr = false_negatives[group_id] / label_positives[group_id];
+
+            group_fnr[group_id] = fnr;
+        }
     }
 
-    double ComputeInstancewiseFPR(double score) const override {
-      return 0;
+    inline double ComputeInstancewiseFPR(double score) const override
+    {
+        // LABEL is assumed to be NEGATIVE (0)
+        return Constrained::sigmoid(score + xent_horizontal_shift_);
     }
 
-    double ComputeInstancewiseFNR(double score) const override {
-      return 0;
+    inline double ComputeInstancewiseFNR(double score) const override
+    {
+        // LABEL is assumed to be POSITIVE (1)
+        return Constrained::sigmoid(score - xent_horizontal_shift_) - 1;
     }
 
-    double ComputeInstancewiseFPRGradient(double score) const override {
-      return 0;
+    inline double ComputeInstancewiseFPRGradient(double score) const override
+    {
+        // LABEL is assumed to be NEGATIVE (0)
+        return Constrained::sigmoid(score + xent_horizontal_shift_);
     }
 
-    double ComputeInstancewiseFNRGradient(double score) const override {
-      return 0;
+    inline double ComputeInstancewiseFNRGradient(double score) const override
+    {
+        // LABEL is assumed to be POSITIVE (1)
+        return Constrained::sigmoid(score - xent_horizontal_shift_) - 1;
     }
 };
 

@@ -46,17 +46,17 @@ public:
         // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
         for (data_size_t i = 0; i < num_data; ++i)
         {
-        constraint_group_t curr_group = group[i];
+            constraint_group_t curr_group = group[i];
 
-        // HingeFPR uses only label negatives
-        if (label[i] == 0)
-        {
-            label_negatives[curr_group] += 1;
+            // HingeFPR uses only label negatives
+            if (label[i] == 0)
+            {
+                label_negatives[curr_group] += 1;
 
-            // proxy_margin_ is the line intercept value
-            const double hinge_score = proxy_margin_ + score[i];
-            false_positives[curr_group] += std::max(0.0, hinge_score);
-        }
+                // proxy_margin_ is the line intercept value
+                const double hinge_score = proxy_margin_ + score[i];
+                false_positives[curr_group] += std::max(0.0, hinge_score);
+            }
         }
 
         for (auto group_id : group_values)

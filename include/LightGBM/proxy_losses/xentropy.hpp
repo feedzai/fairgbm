@@ -25,13 +25,11 @@ class CrossEntropyProxyLoss : public ProxyLoss
 {
 private:
     /*! \brief Helper constant for BCE-based proxies */
-    double xent_horizontal_shift_;
+    const double xent_horizontal_shift_;
 
 public:
 
-    explicit CrossEntropyProxyLoss(score_t proxy_margin) : ProxyLoss(proxy_margin) {
-      xent_horizontal_shift_ = log(exp(proxy_margin) - 1);
-    };
+    explicit CrossEntropyProxyLoss(score_t proxy_margin) : ProxyLoss(proxy_margin), xent_horizontal_shift_(log(exp(proxy_margin) - 1)) {};
 
     /*! \brief virtual destructor */
     ~CrossEntropyProxyLoss() override {
@@ -61,9 +59,7 @@ public:
                 label_negatives[curr_group] += 1;
 
                 // proxy_margin_ corresponds to the vertical margin at x=0; l(0) = proxy_margin_
-                const double xent_score = log(1 + exp(score[i] + xent_horizontal_shift_));
-                assert(xent_score >= 0.);
-                false_positives[curr_group] += xent_score;
+                false_positives[curr_group] += this->ComputeInstancewiseFPR(score[i]);
             }
         }
 
@@ -102,9 +98,7 @@ public:
                 label_positives[curr_group] += 1;
 
                 // proxy_margin_ corresponds to the vertical margin at x=0; l(0) = proxy_margin_
-                const double xent_score = log(1 + exp(xent_horizontal_shift_ - score[i]));
-                assert(xent_score >= 0.);
-                false_negatives[curr_group] += xent_score;
+                false_negatives[curr_group] += this->ComputeInstancewiseFNR(score[i]);
             }
         }
 
@@ -123,13 +117,13 @@ public:
     inline double ComputeInstancewiseFPR(double score) const override
     {
         // LABEL is assumed to be NEGATIVE (0)
-//        return log(1 + exp(score + xent_horizontal_shift_));
+        return log(1 + exp(score + xent_horizontal_shift_));
     }
 
     inline double ComputeInstancewiseFNR(double score) const override
     {
         // LABEL is assumed to be POSITIVE (1)
-//        return log(1 + exp(xent_horizontal_shift_ - score));
+        return log(1 + exp(xent_horizontal_shift_ - score));
     }
 
     inline double ComputeInstancewiseFPRGradient(double score) const override

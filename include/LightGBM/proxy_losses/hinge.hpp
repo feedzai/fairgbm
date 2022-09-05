@@ -106,13 +106,15 @@ public:
     inline double ComputeInstancewiseFPR(double score) const override
     {
         // LABEL is assumed to be NEGATIVE (0)
-        return score <= -proxy_margin_ ? 0. : score + proxy_margin_;
+        return std::max(0., score + proxy_margin_);
+//        return score >= -proxy_margin_ ? score + proxy_margin_ : 0.;  // NOTE: equivalent notation
     }
 
     inline double ComputeInstancewiseFNR(double score) const override
     {
         // LABEL is assumed to be POSITIVE (1)
-        return score >= proxy_margin_ ? 0. : -score + proxy_margin_;
+        return std::max(0., -score + proxy_margin_);
+//        return score <= proxy_margin_ ? -score + proxy_margin_ : 0.;  // NOTE: equivalent notation
     }
 
     inline double ComputeInstancewiseFPRGradient(double score) const override
@@ -124,7 +126,7 @@ public:
     inline double ComputeInstancewiseFNRGradient(double score) const override
     {
         // LABEL is assumed to be POSITIVE (1)
-        return score >= proxy_margin_ ? 0. : -1.;
+        return score <= proxy_margin_ ? -1. : 0.;
     }
 };
 

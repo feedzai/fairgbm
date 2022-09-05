@@ -49,14 +49,12 @@ public:
             constraint_group_t curr_group = group[i];
 
             // FPR uses only label NEGATIVES
-            if (label[i] == 0 and score[i] > -proxy_margin_)
+            if (label[i] == 0 and score[i] >= -proxy_margin_)
             { // Conditions for non-zero proxy-FPR value
                 label_negatives[curr_group] += 1;
 
                 // proxy_margin_ corresponds to the symmetric of the function's zero point; f(-proxy_margin_)=0
-                const double quadratic_score = (1. / 2.) * std::pow(score[i] + proxy_margin_, 2);
-                assert(quadratic_score >= 0.);
-                false_positives[curr_group] += quadratic_score;
+                false_positives[curr_group] += this->ComputeInstancewiseFPR(score[i]);
             }
         }
 
@@ -90,14 +88,12 @@ public:
             constraint_group_t curr_group = group[i];
 
             // FNR uses only label POSITIVES
-            if (label[i] == 1 and score[i] < proxy_margin_)
+            if (label[i] == 1 and score[i] <= proxy_margin_)
             { // Conditions for non-zero proxy-FNR value
                 label_positives[curr_group] += 1;
 
                 // proxy_margin_ corresponds to the function's zero point; f(proxy_margin_)=0
-                const double quadratic_score = (1. / 2.) * std::pow(score[i] - proxy_margin_, 2);
-                assert(quadratic_score >= 0.);
-                false_negatives[curr_group] += quadratic_score;
+                false_negatives[curr_group] += this->ComputeInstancewiseFNR(score[i]);
             }
         }
 

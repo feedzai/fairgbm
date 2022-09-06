@@ -450,33 +450,33 @@ public:
       }
     }
 
-    bool IsConstrained() const override { return true; }
+    inline bool IsConstrained() const override { return true; }
 
     // convert score to a probability
-    void ConvertOutput(const double *input, double *output) const override
+    inline void ConvertOutput(const double *input, double *output) const override
     {
       *output = 1.0f / (1.0f + std::exp(-(*input)));
     }
 
-    bool IsGroupFPRConstrained() const
+    inline bool IsGroupFPRConstrained() const
     {
       assert(group_constraint != UNSET);
       return group_constraint == FPR or group_constraint == FPR_AND_FNR;
     }
 
-    bool IsGroupFNRConstrained() const
+    inline bool IsGroupFNRConstrained() const
     {
       assert(group_constraint != UNSET);
       return group_constraint == FNR or group_constraint == FPR_AND_FNR;
     }
 
-    bool IsGlobalFPRConstrained() const
+    inline bool IsGlobalFPRConstrained() const
     {
       assert(global_constraint != UNSET);
       return global_constraint == FPR or global_constraint == FPR_AND_FNR;
     }
 
-    bool IsGlobalFNRConstrained() const
+    inline bool IsGlobalFNRConstrained() const
     {
       assert(global_constraint != UNSET);
       return global_constraint == FNR or global_constraint == FPR_AND_FNR;

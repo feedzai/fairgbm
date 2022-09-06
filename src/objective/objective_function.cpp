@@ -41,9 +41,9 @@ ObjectiveFunction* ObjectiveFunction::CreateObjectiveFunction(const std::string&
   } else if (type == std::string("cross_entropy")) {
     return new CrossEntropy(config);
   } else if (type == std::string("constrained_cross_entropy")) {      // Entry-point for FairGBM code!
-    return new ConstrainedCrossEntropy(config);
+    return new Constrained::ConstrainedCrossEntropy(config);
   } else if (type == std::string("constrained_recall_objective")) {   // Entry-point for FairGBM code!
-    return new ConstrainedRecallObjective(config);
+    return new Constrained::ConstrainedRecallObjective(config);
   } else if (type == std::string("cross_entropy_lambda")) {
     return new CrossEntropyLambda(config);
   } else if (type == std::string("mape")) {
@@ -87,9 +87,9 @@ ObjectiveFunction* ObjectiveFunction::CreateObjectiveFunction(const std::string&
   } else if (type == std::string("cross_entropy")) {
     return new CrossEntropy(strs);
   } else if (type == std::string("constrained_cross_entropy")) {
-    return new ConstrainedCrossEntropy(strs);
+    return new Constrained::ConstrainedCrossEntropy(strs);
   } else if (type == std::string("constrained_recall_objective")) {
-    return new ConstrainedRecallObjective(strs);
+    return new Constrained::ConstrainedRecallObjective(strs);
   } else if (type == std::string("cross_entropy_lambda")) {
     return new CrossEntropyLambda(strs);
   } else if (type == std::string("mape")) {

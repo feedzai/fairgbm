@@ -7,6 +7,7 @@
 #include <LightGBM/metric.h>
 #include <LightGBM/network.h>
 #include <LightGBM/objective_function.h>
+#include <LightGBM/constrained_objective_function.h>
 #include <LightGBM/prediction_early_stop.h>
 #include <LightGBM/utils/common.h>
 #include <LightGBM/utils/openmp_wrapper.h>
@@ -209,7 +210,7 @@ void GBDT::Boosting() {
   // ^ a.k.a. GetPredictiveLossGradientsWRTModelOutput
 
   if (is_constrained_) {
-    auto constrained_objective_function = dynamic_cast<const ConstrainedObjectiveFunction *>(objective_function_);
+    auto constrained_objective_function = dynamic_cast<const Constrained::ConstrainedObjectiveFunction *>(objective_function_);
 
     // Compute the contribution of the constraints for the Lagrangian!
     // (as we're in the descent step, this may use the proxy constraints)
@@ -573,7 +574,7 @@ bool GBDT::TrainOneIter(const score_t* gradients, const score_t* hessians) {
 * \return True if cannot train anymore (or training has ended due to early stopping)
 */
 bool GBDT::TrainLagrangianOneIter(const score_t* /* gradients */, const score_t* /* hessians */) {
-  auto constrained_objective_function = dynamic_cast<const ConstrainedObjectiveFunction *>(objective_function_);
+  auto constrained_objective_function = dynamic_cast<const Constrained::ConstrainedObjectiveFunction *>(objective_function_);
 
   int64_t num_score = 0;
   // Get Lagrangian gradients w.r.t. multipliers

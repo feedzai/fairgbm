@@ -18,7 +18,7 @@
 #define LIGHTGBM_OBJECTIVE_CONSTRAINED_XENTROPY_OBJECTIVE_HPP_
 
 #include <LightGBM/meta.h>
-#include <LightGBM/objective_function.h>
+#include <LightGBM/constrained_objective_function.h>
 #include <LightGBM/utils/common.h>
 #include <LightGBM/utils/constrained.hpp>
 #include "../metric/xentropy_metric.hpp"
@@ -30,6 +30,7 @@
 #include <vector>
 
 namespace LightGBM {
+namespace Constrained {
 
 /**
  * Objective function for constrained optimization.
@@ -106,15 +107,15 @@ public:
   std::string ToString() const override {
     std::stringstream str_buf;
     str_buf << GetName();
-    /* str_buf << "_->constraint_type->" << constraint_type;
-    str_buf << "_->groups(";
-    for (auto &group: group_values_)
-      str_buf << group << ",";
-    str_buf << ")";
-
-    str_buf << "_score_threshold->" << score_threshold_;
-    str_buf << "_fpr_threshold->" << fpr_threshold_;
-    str_buf << "_fnr_threshold->" << fnr_threshold_; */
+//    str_buf << "_->constraint_type->" << constraint_type_str;
+//    str_buf << "_->groups(";
+//    for (auto &group: group_values_)
+//      str_buf << group << ",";
+//    str_buf << ")";
+//
+//    str_buf << "_score_threshold->" << score_threshold_;
+//    str_buf << "_fpr_threshold->" << fpr_threshold_;
+//    str_buf << "_fnr_threshold->" << fnr_threshold_;
     return str_buf.str();
   }
 
@@ -149,8 +150,8 @@ private:
   const bool deterministic_;
 
 };
-
-}  // end namespace LightGBM
+} // namespace Constrained
+} // namespace LightGBM
 
 #endif   // end #ifndef LIGHTGBM_OBJECTIVE_CONSTRAINED_XENTROPY_OBJECTIVE_HPP_
 

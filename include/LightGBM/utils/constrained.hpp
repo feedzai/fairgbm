@@ -7,8 +7,8 @@
  * (c) 2021 Feedzai, Strictly Confidential
  */
 
-#ifndef LIGHTGBM_CONSTRAINED_HPP
-#define LIGHTGBM_CONSTRAINED_HPP
+#ifndef LIGHTGBM_UTILS_CONSTRAINED_HPP_
+#define LIGHTGBM_UTILS_CONSTRAINED_HPP_
 
 #include <algorithm>
 #include <cmath>
@@ -71,8 +71,8 @@ void write_values(const std::string& dir, const std::string& filename,
   outfile << LightGBM::Common::Join(values, ",") << std::endl;
 
   outfile.close();
-}
+};
 }
 }
 
-#endif //LIGHTGBM_CONSTRAINED_HPP
+#endif  // LIGHTGBM_UTILS_CONSTRAINED_HPP_

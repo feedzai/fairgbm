@@ -338,6 +338,7 @@ file(GLOB SOURCES
     src/objective/*.cpp
     src/network/*.cpp
     src/treelearner/*.cpp
+    src/proxy_losses/*.cpp
 if(USE_CUDA)
     src/treelearner/*.cu
 endif(USE_CUDA)

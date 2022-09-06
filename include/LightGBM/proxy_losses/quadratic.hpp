@@ -27,9 +27,8 @@ public:
     using ProxyLoss::ProxyLoss;
 
     /*! \brief virtual destructor */
-    ~QuadraticProxyLoss() override {
-        std::cout << "DESTRUCTING QuadraticProxyLoss OBJECT !!" << std::endl; // TODO: delete this line, just for testing
-    }
+    ~QuadraticProxyLoss() override = default;
+
 
     void ComputeGroupwiseFPR(
             const double *score,
@@ -109,12 +108,28 @@ public:
         }
     }
 
+    /**
+     * Compute quadratic-proxy FPR (with a given margin).
+     *
+     * Proxy FPR: (1/2) * (H_i + margin)^2 * I[H_i >= -margin and y_i == 0]
+     *
+     * @param score array of scores
+     * @param group_fpr hash-map of group to proxy-FPR
+     */
     inline double ComputeInstancewiseFPR(double score) const override
     {
         // LABEL is assumed to be NEGATIVE (0)
         return score >= -proxy_margin_ ? (1. / 2.) * std::pow(score + proxy_margin_, 2) : 0.;
     }
 
+    /**
+     * Compute quadratic-proxy FNR (with a given margin).
+     *
+     * Proxy FNR: (1/2) * (H_i - margin)^2 * I[H_i <= margin and y_i == 1]
+     *
+     * @param score array of scores
+     * @param group_fnr hash-map of group to proxy-FNR
+     */
     inline double ComputeInstancewiseFNR(double score) const override
     {
         // LABEL is assumed to be POSITIVE (1)

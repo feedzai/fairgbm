@@ -30,17 +30,20 @@ namespace Constrained {
 class ConstrainedObjectiveFunction : public ObjectiveFunction
 {
 public:
+
+    enum constraint_type_t { FPR, FNR, FPR_AND_FNR, NONE, UNSET };
+
     /*! \brief virtual destructor */
     ~ConstrainedObjectiveFunction() override = default;
 
     void SetUpFromConfig(const Config &config)
     {
-      constraint_type = config.constraint_type;
+      constraint_type_str = config.constraint_type;
 
       // Normalize constraint type
-      std::transform(constraint_type.begin(), constraint_type.end(), constraint_type.begin(), ::toupper);
-      if (constraint_type == "FNR,FPR")
-        constraint_type = "FPR,FNR";
+      std::transform(constraint_type_str.begin(), constraint_type_str.end(), constraint_type_str.begin(), ::toupper);
+      if (constraint_type_str == "FNR,FPR")
+        constraint_type_str = "FPR,FNR";
 
       fpr_threshold_ = (score_t) config.constraint_fpr_threshold;
       fnr_threshold_ = (score_t) config.constraint_fnr_threshold;
@@ -48,12 +51,12 @@ public:
       proxy_margin_ = (score_t) config.stepwise_proxy_margin;
 
       /** Global constraint parameters **/
-      global_constraint_type = config.global_constraint_type;
+      global_constraint_type_str = config.global_constraint_type;
 
       // Normalize global constraint type
-      std::transform(global_constraint_type.begin(), global_constraint_type.end(), global_constraint_type.begin(), ::toupper);
-      if (global_constraint_type == "FNR,FPR")
-        global_constraint_type = "FPR,FNR";
+      std::transform(global_constraint_type_str.begin(), global_constraint_type_str.end(), global_constraint_type_str.begin(), ::toupper);
+      if (global_constraint_type_str == "FNR,FPR")
+        global_constraint_type_str = "FPR,FNR";
 
       global_target_fpr_ = (score_t) config.global_target_fpr;
       global_target_fnr_ = (score_t) config.global_target_fnr;
@@ -70,6 +73,29 @@ public:
 
       // Construct ProxyLoss object for constraint functions
       constraint_proxy_object = ConstructProxyLoss(config);
+
+      // Set type of GROUP constraints
+      // (enums are much faster to compare than strings)
+      if (constraint_type_str == "FPR") {
+        group_constraint = FPR;
+      } else if (constraint_type_str == "FNR") {
+        group_constraint = FNR;
+      } else if (constraint_type_str == "FPR,FNR") {
+        group_constraint = FPR_AND_FNR;
+      } else {
+        group_constraint = NONE;
+      }
+
+      // Set type of GLOBAL constraints
+      if (global_constraint_type_str == "FPR") {
+        global_constraint = FPR;
+      } else if (global_constraint_type_str == "FNR") {
+        global_constraint = FNR;
+      } else if (global_constraint_type_str == "FPR,FNR") {
+        global_constraint = FPR_AND_FNR;
+      } else {
+        global_constraint = NONE;
+      }
     }
 
     /*!
@@ -236,9 +262,6 @@ public:
       std::unordered_map<constraint_group_t, double> group_fpr, group_fnr;
       std::pair<constraint_group_t, double> max_proxy_fpr, max_proxy_fnr;
 
-      // Helper constant for BCE-based proxies
-      double xent_horizontal_shift = log(exp(proxy_margin_) - 1); // here, proxy_margin_ is the VERTICAL margin
-
       /** ---------------------------------------------------------------- *
        *                        FPR (Proxy) Constraint
        *  ---------------------------------------------------------------- *
@@ -397,22 +420,6 @@ public:
                     total_label_negatives_
             );
 
-//          // Gradient for hinge proxy FPR
-//          if (constraint_stepwise_proxy == "hinge") {
-//            global_fpr_constraint_gradient_wrt_pred = score[i] >= -proxy_margin_ ? 1. / total_label_negatives_ : 0.;
-//          }
-//
-//          // Gradient for BCE proxy FPR
-//          else if (constraint_stepwise_proxy == "cross_entropy") {
-//            global_fpr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i] + xent_horizontal_shift)) / total_label_negatives_;
-////            global_fpr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / total_label_negatives_;   // without margin
-//          }
-//
-//          // Hinge-based gradient (for quadratic proxy FPR)
-//          else if (constraint_stepwise_proxy == "quadratic") {
-//            global_fpr_constraint_gradient_wrt_pred = std::max(0., score[i] + proxy_margin_) / total_label_negatives_;
-//          }
-
             // Update instance gradient and hessian
             gradients[i] += (score_t) (lagrangian_multipliers[multipliers_base_index] * global_fpr_constraint_gradient_wrt_pred);
             //          hessians[i] += ...
@@ -430,22 +437,6 @@ public:
                     constraint_proxy_object->ComputeInstancewiseFNRGradient(score[i]) /
                     total_label_positives_
             );
-
-//          // Gradient for hinge proxy FNR
-//          if (constraint_stepwise_proxy == "hinge") {
-//            global_fnr_constraint_gradient_wrt_pred = score[i] >= proxy_margin_ ? 0. : -1. / total_label_positives_;
-//          }
-//
-//          // Gradient for BCE proxy FNR
-//          else if (constraint_stepwise_proxy == "cross_entropy") {
-//            global_fnr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i] - xent_horizontal_shift) - 1) / total_label_positives_;
-////            global_fnr_constraint_gradient_wrt_pred = (Constrained::sigmoid(score[i]) - label_[i]) / total_label_positives_;   // without margin
-//          }
-//
-//          // Hinge-based gradient (for quadratic proxy FNR)
-//          else if (constraint_stepwise_proxy == "quadratic") {
-//            global_fnr_constraint_gradient_wrt_pred = std::min(0., score[i] - proxy_margin_) / total_label_positives_;
-//          }
 
             // Update instance gradient and hessian
             gradients[i] += (score_t)(lagrangian_multipliers[multipliers_base_index] *
@@ -469,28 +460,31 @@ public:
 
     bool IsGroupFPRConstrained() const
     {
-      // NOTE: Order of constraints in config file doesn't matter, it's sorted beforehand
-      return (constraint_type == "FPR" || constraint_type == "FPR,FNR");
+      assert(group_constraint != UNSET);
+      return group_constraint == FPR or group_constraint == FPR_AND_FNR;
     }
 
     bool IsGroupFNRConstrained() const
     {
-      return (constraint_type == "FNR" || constraint_type == "FPR,FNR");
+      assert(group_constraint != UNSET);
+      return group_constraint == FNR or group_constraint == FPR_AND_FNR;
     }
 
     bool IsGlobalFPRConstrained() const
     {
-      return (global_constraint_type == "FPR" || global_constraint_type == "FPR,FNR");
+      assert(global_constraint != UNSET);
+      return global_constraint == FPR or global_constraint == FPR_AND_FNR;
     }
 
     bool IsGlobalFNRConstrained() const
     {
-      return (global_constraint_type == "FNR" || global_constraint_type == "FPR,FNR");
+      assert(global_constraint != UNSET);
+      return global_constraint == FNR or global_constraint == FPR_AND_FNR;
     }
 
     int NumConstraints() const override
     {
-      int group_size = (int)group_values_.size();
+      int group_size = (int) group_values_.size();
       int num_constraints = 0;
 
       if (IsGroupFPRConstrained())
@@ -570,130 +564,6 @@ public:
     }
 
     /*!
-      * \brief Get hinge-proxy false positive rate w.r.t. a given margin
-      * \param array of scores -> prediction score in this round
-      * \param margin to consider for computing the Hinge approximation of FPR
-      * \group_fpr Output the proxy FPR per group
-      */
-    void ComputeHingeFPR(const double *score, std::unordered_map<constraint_group_t, double> &group_fpr) const
-    {
-      std::unordered_map<constraint_group_t, double> false_positives; // map of group index to the respective hinge-proxy FPs
-      std::unordered_map<constraint_group_t, int> label_negatives;    // map of group index to the respective number of LNs
-
-      // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
-      for (data_size_t i = 0; i < num_data_; ++i)
-      {
-        constraint_group_t group = group_[i];
-
-        // HingeFPR uses only label negatives
-        if (label_[i] == 0)
-        {
-          label_negatives[group] += 1;
-
-          // proxy_margin_ is the line intercept value
-          const double hinge_score = proxy_margin_ + score[i];
-          false_positives[group] += std::max(0.0, hinge_score);
-        }
-      }
-
-      for (auto group_id : group_values_)
-      {
-        double fpr;
-        if (label_negatives[group_id] == 0)
-          fpr = 0;
-        else
-          fpr = false_positives[group_id] / label_negatives[group_id];
-
-        group_fpr[group_id] = fpr;
-      }
-    }
-
-    /**
-     * Compute quadratic-proxy FPR (with a given margin).
-     *
-     * Proxy FPR: (1/2) * (H_i + margin)^2 * I[H_i > -margin and y_i == 0]
-     *
-     * @param score array of scores
-     * @param group_fpr hash-map of group to proxy-FPR
-     */
-    void ComputeQuadraticLossFPR(const double *score, std::unordered_map<constraint_group_t, double> &group_fpr) const
-    {
-      std::unordered_map<constraint_group_t, double> false_positives; // map of group index to the respective proxy FPs
-      std::unordered_map<constraint_group_t, int> label_negatives;    // map of group index to the respective number of LNs
-
-      // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
-      for (data_size_t i = 0; i < num_data_; ++i)
-      {
-        constraint_group_t group = group_[i];
-
-        // FPR uses only label NEGATIVES
-        if (label_[i] == 0 and score[i] > -proxy_margin_)
-        { // Conditions for non-zero proxy-FPR value
-          label_negatives[group] += 1;
-
-          // proxy_margin_ corresponds to the symmetric of the function's zero point; f(-proxy_margin_)=0
-          const double quadratic_score = (1. / 2.) * std::pow(score[i] + proxy_margin_, 2);
-          assert(quadratic_score >= 0.);
-          false_positives[group] += quadratic_score;
-        }
-      }
-
-      for (auto group_id : group_values_)
-      {
-        double fpr;
-        if (label_negatives[group_id] == 0)
-          fpr = 0;
-        else
-          fpr = false_positives[group_id] / label_negatives[group_id];
-
-        group_fpr[group_id] = fpr;
-      }
-    }
-
-    /**
-     * Compute cross-entropy-proxy FPR.
-     * Function:
-     *      l(a) = log(1 + exp( a + log(exp(b) - 1) )),      where b = proxy_margin_ = l(0)
-     *
-     * @param score array of scores
-     * @param group_fpr hash-map of group to proxy-FPR
-     */
-    void ComputeXEntropyLossFPR(const double *score, std::unordered_map<constraint_group_t, double> &group_fpr) const
-    {
-      std::unordered_map<constraint_group_t, double> false_positives; // map of group index to the respective proxy FPs
-      std::unordered_map<constraint_group_t, int> label_negatives;    // map of group index to the respective number of LNs
-      double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
-
-      // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
-      for (data_size_t i = 0; i < num_data_; ++i)
-      {
-        constraint_group_t group = group_[i];
-
-        // FPR uses only label NEGATIVES
-        if (label_[i] == 0)
-        {
-          label_negatives[group] += 1;
-
-          // proxy_margin_ corresponds to the vertical margin at x=0; l(0) = proxy_margin_
-          const double xent_score = log(1 + exp(score[i] + xent_horizontal_shift));
-          assert(xent_score >= 0.);
-          false_positives[group] += xent_score;
-        }
-      }
-
-      for (auto group_id : group_values_)
-      {
-        double fpr;
-        if (label_negatives[group_id] == 0)
-          fpr = 0;
-        else
-          fpr = false_positives[group_id] / label_negatives[group_id];
-
-        group_fpr[group_id] = fpr;
-      }
-    }
-
-    /*!
       * \brief Computes group-wise false negative rate w.r.t. a given probabilities_threshold.
       * \param score prediction score in this round (log-odds)
       * \param probabilities_threshold to consider for computing the FNR
@@ -754,127 +624,6 @@ public:
       }
 
       return (double)false_negatives / (double)label_positives;
-    }
-
-    /*!
-      * \brief Get hinge-proxy FNR w.r.t. a given margin.
-      * \param score prediction score in this round
-      * \param margin to consider for computing the FNR
-      * \group_fnr Output the proxy FNR per group
-      */
-    void ComputeHingeLossFNR(const double *score, std::unordered_map<constraint_group_t, double> &group_fnr) const
-    {
-      std::unordered_map<constraint_group_t, double> false_negatives; // map of group index to the respective hinge-proxy FNs
-      std::unordered_map<constraint_group_t, int> label_positives;
-
-      // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
-      for (data_size_t i = 0; i < num_data_; ++i)
-      {
-        constraint_group_t group = group_[i];
-
-        if (label_[i] == 1)
-        {
-          label_positives[group] += 1;
-
-          const double hinge_score = proxy_margin_ - score[i];
-          false_negatives[group] += std::max(0.0, hinge_score);
-        }
-      }
-
-      for (auto group_id : group_values_)
-      {
-        double fnr;
-        if (label_positives[group_id] == 0)
-          fnr = 0;
-        else
-          fnr = false_negatives[group_id] / label_positives[group_id];
-        group_fnr[group_id] = fnr;
-      }
-    };
-
-    /**
-     * Compute quadratic-proxy FNR (with a given margin).
-     *
-     * Proxy FNR: (1/2) * (H_i - margin)^2 * I[H_i < margin and y_i == 1]
-     *
-     * @param score array of scores
-     * @param group_fnr hash-map of group to proxy-FNR
-     */
-    void ComputeQuadraticLossFNR(const double *score, std::unordered_map<constraint_group_t, double> &group_fnr) const
-    {
-      std::unordered_map<constraint_group_t, double> false_negatives; // map of group index to the respective proxy FPs
-      std::unordered_map<constraint_group_t, int> label_positives;    // map of group index to the respective number of LNs
-
-      // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
-      for (data_size_t i = 0; i < num_data_; ++i)
-      {
-        constraint_group_t group = group_[i];
-
-        // FNR uses only label POSITIVES
-        if (label_[i] == 1 and score[i] < proxy_margin_)
-        { // Conditions for non-zero proxy-FNR value
-          label_positives[group] += 1;
-
-          // proxy_margin_ corresponds to the function's zero point; f(proxy_margin_)=0
-          const double quadratic_score = (1. / 2.) * std::pow(score[i] - proxy_margin_, 2);
-          assert(quadratic_score >= 0.);
-          false_negatives[group] += quadratic_score;
-        }
-      }
-
-      for (auto group_id : group_values_)
-      {
-        double fnr;
-        if (label_positives[group_id] == 0)
-          fnr = 0;
-        else
-          fnr = false_negatives[group_id] / label_positives[group_id];
-
-        group_fnr[group_id] = fnr;
-      }
-    }
-
-    /**
-     * Compute cross-entropy-proxy FNR.
-     * Function:
-     *      l(a) = log(1 + exp( -a + log(exp(b) - 1) )),        where b = proxy_margin_ = l(0)
-     *
-     * @param score array of scores
-     * @param group_fnr hash-map of group to proxy-FNR
-     */
-    void ComputeXEntropyLossFNR(const double *score, std::unordered_map<constraint_group_t, double> &group_fnr) const
-    {
-      std::unordered_map<constraint_group_t, double> false_negatives; // map of group index to the respective proxy FPs
-      std::unordered_map<constraint_group_t, int> label_positives;    // map of group index to the respective number of LNs
-      double xent_horizontal_shift = log(exp(proxy_margin_) - 1);
-
-      // #pragma omp parallel for schedule(static)        // TODO: https://github.com/feedzai/fairgbm/issues/6
-      for (data_size_t i = 0; i < num_data_; ++i)
-      {
-        constraint_group_t group = group_[i];
-
-        // FNR uses only label POSITIVES
-        if (label_[i] == 1)
-        {
-          label_positives[group] += 1;
-
-          // proxy_margin_ corresponds to the vertical margin at x=0; l(0) = proxy_margin_
-          const double xent_score = log(1 + exp(xent_horizontal_shift - score[i]));
-          assert(xent_score >= 0.);
-          false_negatives[group] += xent_score;
-        }
-      }
-
-      for (auto group_id : group_values_)
-      {
-        double fnr;
-        if (label_positives[group_id] == 0)
-          fnr = 0;
-        else
-          fnr = false_negatives[group_id] / label_positives[group_id];
-
-        group_fnr[group_id] = fnr;
-      }
     }
 
     /*!
@@ -945,7 +694,7 @@ protected:
     int total_label_negatives_ = 0;
 
     /*! \brief Type of constraint */
-    std::string constraint_type;
+    std::string constraint_type_str;
 
     /*! \brief Function to use as a proxy for the step-wise function in CONSTRAINTS. */
     std::string constraint_stepwise_proxy;
@@ -969,7 +718,7 @@ protected:
     score_t proxy_margin_ = 1.0;
 
     /*! \brief Type of global constraint */
-    std::string global_constraint_type;
+    std::string global_constraint_type_str;
 
     /*! \brief Target value for the global FPR constraint */
     score_t global_target_fpr_;
@@ -982,6 +731,12 @@ protected:
 
     /*! \brief Where to save debug files to */
     std::string debugging_output_dir_;
+
+    /*! \brief The type of group constraints in place */
+    constraint_type_t group_constraint = UNSET;
+
+    /*! \brief The type of global constraints in place */
+    constraint_type_t global_constraint = UNSET;
 };
 }   // namespace Constrained
 }

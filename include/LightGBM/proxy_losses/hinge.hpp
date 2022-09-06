@@ -27,9 +27,7 @@ public:
     using ProxyLoss::ProxyLoss;
 
     /*! \brief virtual destructor */
-    ~HingeProxyLoss() override {
-        std::cout << "DESTRUCTING HingeProxyLoss OBJECT !!" << std::endl; // TODO: delete this line, just for testing
-    }
+    ~HingeProxyLoss() override = default;
 
     void ComputeGroupwiseFPR(
             const double *score,

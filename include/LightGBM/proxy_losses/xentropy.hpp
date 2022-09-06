@@ -32,9 +32,7 @@ public:
     explicit CrossEntropyProxyLoss(score_t proxy_margin) : ProxyLoss(proxy_margin), xent_horizontal_shift_(log(exp(proxy_margin) - 1)) {};
 
     /*! \brief virtual destructor */
-    ~CrossEntropyProxyLoss() override {
-        std::cout << "DESTRUCTING CrossEntropyProxyLoss OBJECT !!" << std::endl; // TODO: delete this line, just for testing
-    }
+    ~CrossEntropyProxyLoss() override = default;
 
     void ComputeGroupwiseFPR(        
             const double *score,
@@ -114,12 +112,28 @@ public:
         }
     }
 
+    /**
+     * Compute cross-entropy-proxy FPR.
+     * Function:
+     *      l(a) = log(1 + exp( a + log(exp(b) - 1) )),      where b = proxy_margin_ = l(0)
+     *
+     * @param score array of scores
+     * @param group_fpr hash-map of group to proxy-FPR
+     */
     inline double ComputeInstancewiseFPR(double score) const override
     {
         // LABEL is assumed to be NEGATIVE (0)
         return log(1 + exp(score + xent_horizontal_shift_));
     }
 
+    /**
+     * Compute cross-entropy-proxy FNR.
+     * Function:
+     *      l(a) = log(1 + exp( -a + log(exp(b) - 1) )),        where b = proxy_margin_ = l(0)
+     *
+     * @param score array of scores
+     * @param group_fnr hash-map of group to proxy-FNR
+     */
     inline double ComputeInstancewiseFNR(double score) const override
     {
         // LABEL is assumed to be POSITIVE (1)

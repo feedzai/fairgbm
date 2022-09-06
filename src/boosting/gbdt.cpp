@@ -564,7 +564,7 @@ bool GBDT::TrainOneIter(const score_t* gradients, const score_t* hessians) {
   return false;
 }
 
-// TODO: https://github.com/feedzai/fairgbm/issues/7
+// TODO:
 //  - implement normalization / bound on multipliers;
 //  - implement early stopping criteria (convergence fulfilled);
 /*!

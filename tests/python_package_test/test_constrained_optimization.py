@@ -38,7 +38,7 @@ def fairgbm_params(lightgbm_params, target_fpr, target_fnr, target_fairness_metr
     params = lightgbm_params.copy()
     params.update({
         "objective": "constrained_cross_entropy",
-        "multiplier_learning_rate": 10_000,
+        "multiplier_learning_rate": 0.1,
         "constraint_type": target_fairness_metric,
         "global_constraint_type": "FPR,FNR",
         "global_target_fpr": target_fpr,

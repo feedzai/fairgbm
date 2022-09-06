@@ -333,11 +333,14 @@ public:
         {
           if (label_[i] == 0)
           {
-            // TODO: https://github.com/feedzai/fairgbm/issues/7
             double fpr_constraints_gradient_wrt_pred = (
                     constraint_proxy_object->ComputeInstancewiseFPRGradient(score[i]) /
                     group_label_negatives_.at(group)
             );
+
+            // Scale by dataset size, to avoid needing to scale the multiplier_learning_rate with the dataset size
+            // See: https://github.com/feedzai/fairgbm/issues/7
+            fpr_constraints_gradient_wrt_pred *= num_data_;
 
             // -------------------------------------------------------------------
             // Derivative (2) because instance belongs to group with maximal FPR
@@ -380,11 +383,14 @@ public:
         {
           if (label_[i] == 1)
           {
-            // TODO: https://github.com/feedzai/fairgbm/issues/7
             double fnr_constraints_gradient_wrt_pred = (
                     constraint_proxy_object->ComputeInstancewiseFNRGradient(score[i]) /
                     group_label_positives_.at(group)
             );
+
+            // Scale by dataset size, to avoid needing to scale the multiplier_learning_rate with the dataset size
+            // See: https://github.com/feedzai/fairgbm/issues/7
+            fnr_constraints_gradient_wrt_pred *= num_data_;
 
             // -------------------------------------------------------------------
             // Derivative (2) because instance belongs to group with max FNR
@@ -432,6 +438,10 @@ public:
                     total_label_negatives_
             );
 
+            // Scale by dataset size, to avoid needing to scale the multiplier_learning_rate with the dataset size
+            // See: https://github.com/feedzai/fairgbm/issues/7
+            global_fpr_constraint_gradient_wrt_pred *= num_data_;
+
             // Update instance gradient and hessian
             gradients[i] += (score_t) (lagrangian_multipliers[multipliers_base_index] * global_fpr_constraint_gradient_wrt_pred);
             //          hessians[i] += ...
@@ -449,6 +459,10 @@ public:
                     constraint_proxy_object->ComputeInstancewiseFNRGradient(score[i]) /
                     total_label_positives_
             );
+
+            // Scale by dataset size, to avoid needing to scale the multiplier_learning_rate with the dataset size
+            // See: https://github.com/feedzai/fairgbm/issues/7
+            global_fnr_constraint_gradient_wrt_pred *= num_data_;
 
             // Update instance gradient and hessian
             gradients[i] += (score_t)(lagrangian_multipliers[multipliers_base_index] *

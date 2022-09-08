@@ -26,6 +26,7 @@ pip install fairgbm/python-package
 %% TODO: short code snippets, plus enumerate and link to `examples` folder,
 and code-up new python notebooks (current examples are mostly in C++ configs)
 
+A more in-depth explanation and other usage examples can be found in the [examples folder](/examples).
 
 ## Technical Details
 

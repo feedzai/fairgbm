@@ -1,3 +1,3 @@
 # FairGBM
 
-_Under construction; will be released on the **1st of September**._
+_Under construction; will be released in mid September._

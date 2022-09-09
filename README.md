@@ -56,6 +56,24 @@ constraints** (_e.g._, equal opportunity).
 Namely, you can target equality of performance metrics (FPR, FNR, or both) across instances from different protected groups (see [fairness constraints](#fairness-constraints) section).
 Simultaneously (and optionally), you can add global constraints on specific metrics (see [global constraints](#global-constraints) section).
 
+### Parameter list
+
+List of FairGBM-specific parameters:
+**TODO**: enumerate parameters and document each one;
+
+| _Name_ | _Description_ | _Default_ |
+|:------:|---------------|:---------:|
+| `groupwise_constraint_type` | The type of fairness (group-wise equality) constraint to use (if any). | `FPR,FNR` |
+| `global_constraint_type` | The type of global equality constraint to use (if any). | _None_ |
+| ... | **TODO** |
+
+Besides these FairGBM-specific parameters, you can use any core LightGBM parameter as well (_e.g._, 
+`n_estimators`). The only exception is the `objective` parameter, as FairGBM only uses 
+`objective="constrained_cross_entropy"` (a standard non-constrained objective will fallback to using standard LightGBM).
+
+Please consult [this list](https://lightgbm.readthedocs.io/en/latest/Parameters.html#core-parameters) for a detailed 
+view of all vanilla LightGBM parameters.
+
 
 ### Fairness constraints
 

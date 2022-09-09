@@ -168,6 +168,8 @@ const std::unordered_map<std::string, std::string>& Config::alias_table() {
   {"nodes", "machines"},
 
   // FairGBM parameters
+  {"groupwise_constraint_type", "constraint_type"},
+  {"fairness_constraint_type", "constraint_type"},
   {"lagrangian_learning_rate", "multiplier_learning_rate"},
   {"lagrangian_multiplier_learning_rate", "multiplier_learning_rate"},
   {"init_lagrange_multipliers", "init_lagrangian_multipliers"},

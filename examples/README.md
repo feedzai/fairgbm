@@ -116,9 +116,10 @@ Most FairGBM-specific classes are in the C++ namespace `LightGBM::Constrained`.
 ## Configuration files
 
 FairGBM's config files functionality is forked from LightGBM.
-Please consult [LightGBM's core parameters](https://lightgbm.readthedocs.io/en/latest/Parameters.html#core-parameters) to see how to set-up a config file.
+Please consult [LightGBM's core parameters](https://lightgbm.readthedocs.io/en/latest/Parameters.html#core-parameters) 
+to see how to set-up a config file.
 
 Example FairGBM config files [here](/examples/FairGBM/train.conf) or [here](/examples/FairGBM-other/train.conf).
 
-**Note**: Remember that to use the FairGBM classifier you must always set a `objective=constrained_cross_entropy`. This is not needed when using the Python `FairGBMClassifier` class as it's 
-already taken care of.
+**Note**: Remember that to use the FairGBM classifier you must always set `objective=constrained_cross_entropy`.
+This is not needed when using the Python `FairGBMClassifier` class as it's already taken care of.

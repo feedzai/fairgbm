@@ -120,6 +120,5 @@ Please consult [LightGBM's core parameters](https://lightgbm.readthedocs.io/en/l
 
 Example FairGBM config files [here](/examples/FairGBM/train.conf) or [here](/examples/FairGBM-other/train.conf).
 
-**Note**: Remember that to use the FairGBM classifier you must always set a constrained objective function, i.e., 
-`objective=constrained_cross_entropy`. This is not needed when using the Python `FairGBMClassifier` class as it's 
+**Note**: Remember that to use the FairGBM classifier you must always set a `objective=constrained_cross_entropy`. This is not needed when using the Python `FairGBMClassifier` class as it's 
 already taken care of.

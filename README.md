@@ -43,7 +43,7 @@ Y_test_pred = fairgbm_clf.predict_proba(X_test)[:, -1]  # Compute continuous cla
 # Y_test_pred = fairgbm_clf.predict(X_test)             # Or compute discrete class predictions
 ```
 
-A more in-depth explanation and other usage examples can be found in the [examples folder](/examples).
+A more in-depth explanation and other usage examples can be found in the [**_examples folder_**](/examples).
 
 
 ## Features

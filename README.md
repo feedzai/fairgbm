@@ -30,9 +30,9 @@ from fairgbm import FairGBMClassifier
 
 # Instantiate
 fairgbm_clf = FairGBMClassifier(
-    "constraint_type"="FNR",   # Constraint on equal group-wise TPR (equal opportunity)
-    "n_estimators"=200,
-    "random_state"=42,
+    "constraint_type"="FNR",    # constraint on equal group-wise TPR (equal opportunity)
+    "n_estimators"=200,         # core parameters from vanilla LightGBM
+    "random_state"=42,          # ...
 )
 
 # Train using features (X), labels (Y), and sensitive attributes (S)
@@ -40,7 +40,7 @@ fairgbm_clf.fit(X, Y, constraint_group=S)
 
 # Predict
 Y_test_pred = fairgbm_clf.predict_proba(X_test)[:, -1]  # Compute continuous class probabilities (recommended)
-# Y_test_pred = fairgbm_clf.predict(X_test)     # Or compute discrete class predictions
+# Y_test_pred = fairgbm_clf.predict(X_test)             # Or compute discrete class predictions
 ```
 
 A more in-depth explanation and other usage examples can be found in the [examples folder](/examples).

@@ -1,7 +1,7 @@
 # FairGBM Usage Examples
 
 Just as with [vanilla LightGBM](https://github.com/microsoft/LightGBM/tree/master/examples), you can use FairGBM in multiple ways:
-1. Using the Python API
+1. Using the Python API (**_recommended_**)
 1. Using the command line (and config files)
 1. Using the C API
 
@@ -14,9 +14,9 @@ from fairgbm import FairGBMClassifier
 
 # Instantiate
 fairgbm_clf = FairGBMClassifier(
-    "constraint_type"="FNR",   # Constraint on equal group-wise TPR (equal opportunity)
-    "n_estimators"=200,
-    "random_state"=42,
+    "constraint_type"="FNR",    # constraint on equal group-wise TPR (equal opportunity)
+    "n_estimators"=200,         # core parameters from vanilla LightGBM
+    "random_state"=42,          # ...
 )
 
 # Train using features (X), labels (Y), and sensitive attributes (S)
@@ -24,7 +24,7 @@ fairgbm_clf.fit(X, Y, constraint_group=S)
 
 # Predict
 Y_test_pred = fairgbm_clf.predict_proba(X_test)[:, -1]  # Compute continuous class probabilities (recommended)
-# Y_test_pred = fairgbm_clf.predict(X_test)     # Or compute discrete class predictions
+# Y_test_pred = fairgbm_clf.predict(X_test)             # Or compute discrete class predictions
 ```
 
 
@@ -77,10 +77,11 @@ For further details see LightGBM's guide on [compiling locally](https://lightgbm
 
 
 ## Using the C API
+> Using the C API is only recommended for interoperability with other languages. 
+> See [this repository](https://github.com/feedzai/feedzai-openml-java/blob/master/openml-lightgbm/lightgbm-provider/src/main/java/com/feedzai/openml/provider/lightgbm/LightGBMBinaryClassificationModelTrainer.java#L126) 
+> for an example on training FairGBM/LightGBM from a Java code-base.
 
 This is a barebones example of using FairGBM with the LightGBM C API.
-
-Most FairGBM-specific classes are in the C++ namespace `LightGBM::Constrained`.
 For further details please consult LightGBM's [C API reference](https://lightgbm.readthedocs.io/en/latest/C-API.html).
 
 ```c
@@ -107,6 +108,10 @@ int main(int argc, char** argv) {
 }
 ```
 
+If you're interested in looking under the proverbial C++ hood, you should start from the 
+[`ConstrainedObjectiveFunction`](/include/LightGBM/constrained_objective_function.h) class.
+Most FairGBM-specific classes are in the C++ namespace `LightGBM::Constrained`.
+
 
 ## Configuration files
 
@@ -114,3 +119,7 @@ FairGBM's config files functionality is forked from LightGBM.
 Please consult [LightGBM's core parameters](https://lightgbm.readthedocs.io/en/latest/Parameters.html#core-parameters) to see how to set-up a config file.
 
 Example FairGBM config files [here](/examples/FairGBM/train.conf) or [here](/examples/FairGBM-other/train.conf).
+
+**Note**: Remember that to use the FairGBM classifier you must always set a constrained objective function, i.e., 
+`objective=constrained_cross_entropy`. This is not needed when using the Python `FairGBMClassifier` class as it's 
+already taken care of.

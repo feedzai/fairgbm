@@ -57,8 +57,8 @@ public:
       if (constraint_type_str == "FNR,FPR")
         constraint_type_str = "FPR,FNR";
 
-      fpr_threshold_ = (score_t) config.constraint_fpr_threshold;
-      fnr_threshold_ = (score_t) config.constraint_fnr_threshold;
+      fpr_threshold_ = (score_t) config.constraint_fpr_tolerance;
+      fnr_threshold_ = (score_t) config.constraint_fnr_tolerance;
       score_threshold_ = (score_t) config.score_threshold;
       proxy_margin_ = (score_t) config.stepwise_proxy_margin;
 

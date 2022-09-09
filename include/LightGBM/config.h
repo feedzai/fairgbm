@@ -964,7 +964,7 @@ struct Config {
   // desc = used only for constrained optimization (ignored for standard LightGBM)
   // desc = the slack when fulfilling group-wise FPR constraints
   // desc = when using the value 0.0 this will enforce group-wise FPR to be *exactly* equal
-  double constraint_fpr_threshold = 0.0;
+  double constraint_fpr_tolerance = 0.0;
 
   // alias = constraint_fnr_slack, constraint_fnr_delta
   // check = >=0
@@ -974,7 +974,7 @@ struct Config {
   // desc = used only for constrained optimization (ignored for standard LightGBM)
   // desc = the slack when fulfilling group-wise FNR constraints
   // desc = when using the value 0.0 this will enforce group-wise FNR to be *exactly* equal
-  double constraint_fnr_threshold = 0.0;
+  double constraint_fnr_tolerance = 0.0;
 
   // check = >=0
   // check = <1.0

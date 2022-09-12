@@ -129,8 +129,7 @@ _non-differentiable_. To side-step this issue, we use a differentiable proxy of 
 The following plot shows an example of _hinge-based_ and _cross-entropy-based_ proxies for the _false positive_ value
 of a _label negative_ instance.
 
-![proxy-FPR-example](https://user-images.githubusercontent.com/13498941/189664020-70ebbae4-6b93-4f38-af7d-f870381a8a22.png | width=50)
-
+<img src="https://user-images.githubusercontent.com/13498941/189664020-70ebbae4-6b93-4f38-af7d-f870381a8a22.png" width="40%" style="margin: auto" />
 
 
 _**TODO: explain FairGBM technical details:**_

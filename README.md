@@ -3,7 +3,7 @@
 > **Under Construction**; release date: 16th of September.
 
 FairGBM is an easy-to-use and lightweight fairness-aware ML algorithm.
-Specifically, it enables **constrained optimization** with Gradient Boosting models.
+It is tailored for production environments # **TODO** embolden intro sentences!
 
 FairGBM builds upon the popular [LightGBM](https://github.com/microsoft/LightGBM) algorithm and adds customizable
 constraints for group-wise fairness (_e.g._, equal opportunity, predictive equality) and other global goals (_e.g._,
@@ -22,9 +22,10 @@ git clone --recurse-submodules https://github.com/feedzai/fairgbm.git
 pip install fairgbm/python-package
 ```
 
-## Examples
+## Getting started
 
-A short Python code snippet:
+You can get FairGBM up and running in just a few lines of Python code:
+
 ```python
 from fairgbm import FairGBMClassifier
 
@@ -58,14 +59,14 @@ Simultaneously (and optionally), you can add global constraints on specific metr
 
 ### Parameter list
 
-List of FairGBM-specific parameters:
-**TODO**: enumerate parameters and document each one;
+The following parameters can be used as key-word arguments for the `FairGBMClassifier` Python class.
 
 | _Name_ | _Description_ | _Default_ |
 |:------:|---------------|:---------:|
 | `groupwise_constraint_type` | The type of fairness (group-wise equality) constraint to use (if any). | `FPR,FNR` |
 | `global_constraint_type` | The type of global equality constraint to use (if any). | _None_ |
-| ... | **TODO** |
+| ... | **TODO** | ... |
+| ... | _Any core [`LGBMClassifier` parameter](https://lightgbm.readthedocs.io/en/latest/Parameters.html#core-parameters) can be used with FairGBM as well._ |  |
 
 Besides these FairGBM-specific parameters, you can use any core LightGBM parameter as well (_e.g._, 
 `n_estimators`). The only exception is the `objective` parameter, as FairGBM only uses 
@@ -79,11 +80,11 @@ view of all vanilla LightGBM parameters.
 
 You can use FairGBM to equalize the following metrics across protected groups:
 - Equalize FNR (equivalent to equalizing TPR or Recall)
-    - also known as _equal opportunity_ [(Hardt et al., 2016)](#external-references)
+    - also known as _equal opportunity_ [(Hardt et al., 2016)](https://arxiv.org/abs/1610.02413)
 - Equalize FPR (equivalent to equalizing TNR or Specificity)
-    - also known as _predictive equality_ [(Corbett-Davies et al., 2017)](#external-references)
+    - also known as _predictive equality_ [(Corbett-Davies et al., 2017)](https://arxiv.org/abs/1701.08230)
 - Equalize both FNR and FPR simultaneously
-    - also known as _equal odds_ [(Hardt et al., 2016)](#external-references)
+    - also known as _equal odds_ [(Hardt et al., 2016)](https://arxiv.org/abs/1610.02413)
 
 > Example for _equality of opportunity_ in college admissions:
 > your likelihood of getting admitted to a certain college (predicted positive) given that you're a qualified candidate
@@ -152,23 +153,3 @@ The paper is publicly available at this [arXiv link](https://arxiv.org/abs/2103.
   year={2022}
 }
 ```
-
-### External References
-
-[comment]: <> (FairGBM)
-_Cruz, André, Catarina Belém, João Bravo, Pedro Saleiro, and Pedro Bizarro. "FairGBM: Gradient Boosting with Fairness Constraints." 2022._
-
-[comment]: <> (Account-opening fraud dataset)
-_Jesus, Sérgio, José Pombal, Duarte Alves, André Cruz, Pedro Saleiro, Rita P. Ribeiro, João Gama, and Pedro Bizarro. "bank-account-fraud: Tabular Dataset(s) for Fraud Detection under Multiple Bias Conditions." 2022._
-
-[comment]: <> (Fairlearn)
-_Agarwal, Alekh, Alina Beygelzimer, Miroslav Dudík, John Langford, and Hanna Wallach. "A reductions approach to fair classification." ICML, 2018._
-
-[comment]: <> (TensorFlow constrained optimization)
-_Cotter, Andrew, Heinrich Jiang, Maya R. Gupta, Serena Wang, Taman Narayan, Seungil You, and Karthik Sridharan. "Optimization with Non-Differentiable Constraints with Applications to Fairness, Recall, Churn, and Other Goals." JMLR, 2019._
-
-[comment]: <> (LightGBM)
-_Ke, Guolin, Qi Meng, Thomas Finley, Taifeng Wang, Wei Chen, Weidong Ma, Qiwei Ye, and Tie-Yan Liu. "Lightgbm: A highly efficient gradient boosting decision tree." NeurIPS, 2017._
-
-[comment]: <> (Equality of opportunity)
-_Hardt, Moritz, Eric Price, and Nati Srebro. "Equality of opportunity in supervised learning." NeurIPS, 2016._

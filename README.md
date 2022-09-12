@@ -85,6 +85,10 @@ You can use FairGBM to equalize the following metrics across protected groups:
 - Equalize both FNR and FPR simultaneously
     - also known as _equal odds_ [(Hardt et al., 2016)](#external-references)
 
+> Example for _equality of opportunity_ in college admissions:
+> your likelihood of getting admitted to a certain college (predicted positive) given that you're a qualified candidate
+> (label positive) should be the same regardless of your race (sensitive attribute).
+
 <!--
 Take the following hypothetical example:
 
@@ -111,6 +115,23 @@ You can simultaneously set constraints on group-wise metrics (fairness constrain
 
 
 ## Technical Details
+
+FairGBM is a framework that enables _constrained optimization_ of Gradient Boosting Machines (GBMs).
+This way, we can train a GBM model to minimize some loss function (usually the _binary cross-entropy_) subject to a set
+of constraints that should be met in the training dataset (_e.g._, equality of opportunity).
+
+FairGBM applies the [method of Lagrange multipliers](https://en.wikipedia.org/wiki/Lagrange_multiplier), and uses 
+iterative and interleaved steps of gradient descent (on the function space, by adding new trees to the GBM model) and 
+gradient ascent (on the space of Lagrange multipliers, **Λ**).
+
+The main obstacle with enforcing fairness constraints in training is that these constraints are often 
+_non-differentiable_. To side-step this issue, we use a differentiable proxy of the step-wise function.
+The following plot shows an example of _hinge-based_ and _cross-entropy-based_ proxies for the _false positive_ value
+of a _label negative_ instance.
+
+![proxy-FPR-example](https://user-images.githubusercontent.com/13498941/189664020-70ebbae4-6b93-4f38-af7d-f870381a8a22.png | width=50)
+
+
 
 _**TODO: explain FairGBM technical details:**_
 1. Lagrange method of multipliers

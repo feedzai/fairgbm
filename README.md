@@ -66,14 +66,15 @@ The following parameters can be used as key-word arguments for the `FairGBMClass
 | `groupwise_constraint_type` | The type of fairness (group-wise equality) constraint to use (if any). | `FPR,FNR` |
 | `global_constraint_type` | The type of global equality constraint to use (if any). | _None_ |
 | ... | **TODO** | ... |
-| ... | _Any core [`LGBMClassifier` parameter](https://lightgbm.readthedocs.io/en/latest/Parameters.html#core-parameters) can be used with FairGBM as well._ |  |
+| ... | _Any core [`LGBMClassifier` parameter](https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMClassifier.html#lightgbm-lgbmclassifier) can be used with FairGBM as well._ |  |
 
-Besides these FairGBM-specific parameters, you can use any core LightGBM parameter as well (_e.g._, 
-`n_estimators`). The only exception is the `objective` parameter, as FairGBM only uses 
-`objective="constrained_cross_entropy"` (a standard non-constrained objective will fallback to using standard LightGBM).
+**Note**: the `objective` is the only core LightGBM parameter that cannot be changed when using FairGBM, as you must use
+the constrained loss function `objective="constrained_cross_entropy"` (using a standard non-constrained objective will 
+fallback to using standard LightGBM).
+
 
 Please consult [this list](https://lightgbm.readthedocs.io/en/latest/Parameters.html#core-parameters) for a detailed 
-view of all vanilla LightGBM parameters.
+view of all vanilla LightGBM parameters (_e.g._, `n_estimators`, `n_jobs`, ...).
 
 
 ### Fairness constraints

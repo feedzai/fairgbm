@@ -6,9 +6,16 @@ We welcome external contributions from the open-source community.
 
 ## Contributor List
 
-- André Cruz, @AndreFCruz
-- Sérgio Jesus, 
-- 
+- André Cruz
+- Catarina Belém
+- Sérgio Jesus
+- Gonçalo Arsénio
+- Alberto Ferreira
+- João Veiga
+- Sara Guerreiro
+- João Bravo
+- Pedro Saleiro
+- Pedro Bizarro
 
 We also thank all [LightGBM contributors](https://github.com/microsoft/LightGBM/graphs/contributors) as the FairGBM 
 project was initially built upon that code-base.

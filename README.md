@@ -129,14 +129,11 @@ _non-differentiable_. To side-step this issue, we use a differentiable proxy of 
 The following plot shows an example of _hinge-based_ and _cross-entropy-based_ proxies for the _false positive_ value
 of a _label negative_ instance.
 
-<img src="https://user-images.githubusercontent.com/13498941/189664020-70ebbae4-6b93-4f38-af7d-f870381a8a22.png" width="40%" style="margin: auto" />
-
-
-_**TODO: explain FairGBM technical details:**_
-1. Lagrange method of multipliers
-2. Gradient ascent/descent
-3. Proxy losses (w/ python plot)
-4. Re-iterate that the C++ code-base is made to have very high performance
+<img 
+    src="https://user-images.githubusercontent.com/13498941/189664020-70ebbae4-6b93-4f38-af7d-f870381a8a22.png" 
+    width="40%" 
+    style="display: block; margin: 0 auto" 
+    alt="example of proxy FPR function" />
 
 For a more in-depth explanation of FairGBM please consult [the paper](#citing-fairgbm).
 
@@ -147,9 +144,8 @@ For a more in-depth explanation of FairGBM please consult [the paper](#citing-fa
 
 
 ## Citing FairGBM
-_**TODO: update with correct link and reference**_
 
-The paper is publicly available at this [arXiv link](https://arxiv.org/abs/2103.12715).
+The paper is publicly available at this [arXiv link](https://arxiv.org/abs/2103.12715). _**TODO: update with correct link and reference**_
 
 ```
 @article{cruz2022fairgbm,

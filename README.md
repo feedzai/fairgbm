@@ -136,9 +136,8 @@ of a _label negative_ instance.
 For a more in-depth explanation of FairGBM please consult [the paper](#citing-fairgbm).
 
 
-## Results
-
-%% TODO: results and run-time comparisons against fairlearn, TFCO, and others
+[comment]: <> (## Results)
+[comment]: <> (%% TODO: results and run-time comparisons against fairlearn, TFCO, and others)
 
 
 ## Citing FairGBM

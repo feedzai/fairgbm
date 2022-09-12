@@ -86,7 +86,7 @@ You can use FairGBM to equalize the following metrics across protected groups:
 - Equalize both FNR and FPR simultaneously
     - also known as _equal odds_ [(Hardt et al., 2016)](https://arxiv.org/abs/1610.02413)
 
-> Example for _equality of opportunity_ in college admissions:
+> **Example for _equality of opportunity_** in college admissions:
 > your likelihood of getting admitted to a certain college (predicted positive) given that you're a qualified candidate
 > (label positive) should be the same regardless of your race (sensitive attribute).
 
@@ -135,6 +135,8 @@ of a _label negative_ instance.
 </p>
 
 For a more in-depth explanation of FairGBM please consult [the paper](#citing-fairgbm).
+
+[comment]: <> (### Important C++ source files **TODO**)
 
 
 [comment]: <> (## Results)

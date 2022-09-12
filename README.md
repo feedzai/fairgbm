@@ -30,9 +30,9 @@ from fairgbm import FairGBMClassifier
 
 # Instantiate
 fairgbm_clf = FairGBMClassifier(
-    "constraint_type"="FNR",    # constraint on equal group-wise TPR (equal opportunity)
-    "n_estimators"=200,         # core parameters from vanilla LightGBM
-    "random_state"=42,          # ...
+    constraint_type="FNR",    # constraint on equal group-wise TPR (equal opportunity)
+    n_estimators=200,         # core parameters from vanilla LightGBM
+    random_state=42,          # ...
 )
 
 # Train using features (X), labels (Y), and sensitive attributes (S)

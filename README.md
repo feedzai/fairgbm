@@ -68,13 +68,13 @@ The following parameters can be used as key-word arguments for the `FairGBMClass
 | ... | **TODO** | ... |
 | ... | _Any core [`LGBMClassifier` parameter](https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMClassifier.html#lightgbm-lgbmclassifier) can be used with FairGBM as well._ |  |
 
-**Note**: the `objective` is the only core LightGBM parameter that cannot be changed when using FairGBM, as you must use
-the constrained loss function `objective="constrained_cross_entropy"` (using a standard non-constrained objective will 
-fallback to using standard LightGBM).
-
-
-Please consult [this list](https://lightgbm.readthedocs.io/en/latest/Parameters.html#core-parameters) for a detailed 
+Please consult [this list](https://lightgbm.readthedocs.io/en/latest/Parameters.html#core-parameters) for a detailed
 view of all vanilla LightGBM parameters (_e.g._, `n_estimators`, `n_jobs`, ...).
+
+> **Note**: 
+> The `objective` is the only core LightGBM parameter that cannot be changed when using FairGBM, as you must use
+> the constrained loss function `objective="constrained_cross_entropy"` (using a standard non-constrained objective will 
+> fallback to using standard LightGBM).
 
 
 ### Fairness constraints

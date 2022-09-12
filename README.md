@@ -7,7 +7,7 @@ Specifically, it enables **constrained optimization** with Gradient Boosting mod
 
 FairGBM builds upon the popular [LightGBM](https://github.com/microsoft/LightGBM) algorithm and adds customizable
 constraints for group-wise fairness (_e.g._, equal opportunity, predictive equality) and other global goals (_e.g._,
-specific Recall or FPR targets).
+specific Recall or FPR prediction targets).
 
 ## Install
 

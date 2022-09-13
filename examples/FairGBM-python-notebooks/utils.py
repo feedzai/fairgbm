@@ -12,6 +12,7 @@ import pandas as pd
 
 DATA_DIR = Path(__file__).parent / "data"
 UCI_ADULT_TARGET_COL = "target"
+UCI_ADULT_SENSITIVE_COL = "sex"
 
 
 def load_uci_adult() -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -83,6 +84,11 @@ def _preprocess_uci_adult(data_path, names_path, **read_kwargs) -> pd.DataFrame:
             float if col_value == "continuous" else "category"
         ) for col_name, col_value in column_map.items()
     })
+    
+    # Strip whitespace from categorical values
+    for col in data.columns:
+        if data[col].dtype == "category":
+            data[col] = data[col].map(lambda val: val.strip())            
 
     # Convert label to numeric
     data[UCI_ADULT_TARGET_COL] = pd.Series(
@@ -94,15 +100,18 @@ def _preprocess_uci_adult(data_path, names_path, **read_kwargs) -> pd.DataFrame:
     return data
 
 
-def split_X_y_uci_adult(data) -> Tuple[pd.DataFrame, pd.Series]:
+def split_X_Y_S_uci_adult(data) -> Tuple[pd.DataFrame, pd.Series]:
     """Splits the given UCI Adult data into features and target.
     """
-    ignored_cols = [UCI_ADULT_TARGET_COL, "fnlwgt"]
+    ignored_cols = [UCI_ADULT_TARGET_COL, UCI_ADULT_SENSITIVE_COL, "fnlwgt"]
     feature_cols = [col for col in data.columns if col not in ignored_cols]
 
-    y = data[UCI_ADULT_TARGET_COL].astype(float)
     X = data[feature_cols]
-    return X, y
+    Y = data[UCI_ADULT_TARGET_COL].astype(float)
+    S = pd.Series(
+        data=[1. if val == "Male" else 0. for val in data[UCI_ADULT_SENSITIVE_COL]],
+        dtype=float,)
+    return X, Y, S
 
 
 def compute_recall_at_target(y_true, y_pred, fpr=None, fnr=None) -> float:

@@ -185,8 +185,10 @@ const std::unordered_map<std::string, std::string>& Config::alias_table() {
   {"target_global_fpr", "global_target_fpr"},
   {"global_fnr", "global_target_fnr"},
   {"target_global_fnr", "global_target_fnr"},
+  {"constraint_fpr_threshold", "constraint_fpr_tolerance"},
   {"constraint_fnr_threshold", "constraint_fnr_tolerance"},
-  {"constraint_fpr_threshold", "constraint_fpr_tolerance"}
+  {"constraint_fpr_slack", "constraint_fpr_tolerance"},
+  {"constraint_fnr_slack", "constraint_fnr_tolerance"}
   });
   return aliases;
 }

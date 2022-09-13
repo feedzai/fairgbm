@@ -11,9 +11,9 @@ about: Something isn't working as expected? Here is the right place to report.
 
 ## Environment info
 
-LightGBM version or commit hash:
+FairGBM version or commit hash:
 
-Command(s) you used to install LightGBM
+Command(s) you used to install FairGBM
 
 ```shell
 

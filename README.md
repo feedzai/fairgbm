@@ -2,12 +2,14 @@
 
 > **Under Construction**; release date: 16th of September.
 
-FairGBM is an easy-to-use and lightweight fairness-aware ML algorithm.
-It is tailored for production environments # **TODO** embolden intro sentences!
+FairGBM is an easy-to-use and lightweight fairness-aware ML algorithm with state-of-the-art performance on tabular datasets.
 
-FairGBM builds upon the popular [LightGBM](https://github.com/microsoft/LightGBM) algorithm and adds customizable
-constraints for group-wise fairness (_e.g._, equal opportunity, predictive equality) and other global goals (_e.g._,
+FairGBM builds upon the popular [LightGBM](https://github.com/microsoft/LightGBM) algorithm and adds customizable 
+constraints for group-wise fairness (_e.g._, equal opportunity, predictive equality) and other global goals (_e.g._, 
 specific Recall or FPR prediction targets).
+
+Please consult [the paper](#citing-fairgbm) for further details.
+
 
 ## Install
 
@@ -81,11 +83,11 @@ view of all vanilla LightGBM parameters (_e.g._, `n_estimators`, `n_jobs`, ...).
 
 You can use FairGBM to equalize the following metrics across protected groups:
 - Equalize FNR (equivalent to equalizing TPR or Recall)
-    - also known as _equal opportunity_ [(Hardt et al., 2016)](https://arxiv.org/abs/1610.02413)
+    - also known as _equal opportunity_ [(Hardt _et al._, 2016)](https://arxiv.org/abs/1610.02413)
 - Equalize FPR (equivalent to equalizing TNR or Specificity)
-    - also known as _predictive equality_ [(Corbett-Davies et al., 2017)](https://arxiv.org/abs/1701.08230)
+    - also known as _predictive equality_ [(Corbett-Davies _et al._, 2017)](https://arxiv.org/abs/1701.08230)
 - Equalize both FNR and FPR simultaneously
-    - also known as _equal odds_ [(Hardt et al., 2016)](https://arxiv.org/abs/1610.02413)
+    - also known as _equal odds_ [(Hardt _et al._, 2016)](https://arxiv.org/abs/1610.02413)
 
 > **Example for _equality of opportunity_** in college admissions:
 > your likelihood of getting admitted to a certain college (predicted positive) given that you're a qualified candidate

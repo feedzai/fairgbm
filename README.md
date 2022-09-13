@@ -67,7 +67,17 @@ The following parameters can be used as key-word arguments for the `FairGBMClass
 |:------:|---------------|:---------:|
 | `groupwise_constraint_type` | The type of fairness (group-wise equality) constraint to use (if any). | `FPR,FNR` |
 | `global_constraint_type` | The type of global equality constraint to use (if any). | _None_ |
-| ... | **TODO** | ... |
+| `multiplier_learning_rate` | The learning rate for the gradient ascent step (w.r.t. Lagrange multipliers). | `0.1` |
+| `constraint_fpr_tolerance` | The slack when fulfilling _group-wise_ FPR constraints. | `0.0` |
+| `constraint_fnr_tolerance` | The slack when fulfilling _group-wise_ FNR constraints. | `0.0` |
+| `global_target_fpr` | Target rate for the _global_ FPR (inequality) constraint. | _None_ |
+| `global_target_fnr` | Target rate for the _global_ FNR (inequality) constraint. | _None_ |
+| `constraint_stepwise_proxy` | Differentiable proxy for the step-wise function in _group-wise_ constraints. | `cross_entropy` |
+| `objective_stepwise_proxy` | Differentiable proxy for the step-wise function in _global_ constraints. | `cross_entropy` |
+| `stepwise_proxy_margin` | Intercept value for the proxy function: value at `f(logodds=0.0)` | `1.0` |
+| `score_threshold` | Score threshold used when assessing _group-wise_ FPR or FNR in training. | `0.5` |
+| `global_score_threshold` | Score threshold used when assessing _global_ FPR or FNR in training. | `0.5` |
+| `init_multipliers` | The initial value of the Lagrange multipliers. | **`0`** |
 | ... | _Any core [`LGBMClassifier` parameter](https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMClassifier.html#lightgbm-lgbmclassifier) can be used with FairGBM as well._ |  |
 
 Please consult [this list](https://lightgbm.readthedocs.io/en/latest/Parameters.html#core-parameters) for a detailed

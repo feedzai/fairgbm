@@ -1,7 +1,5 @@
 # FairGBM
 
-> **Under Construction**; release date: 16th of September.
-
 FairGBM is an easy-to-use and lightweight fairness-aware ML algorithm with state-of-the-art performance on tabular datasets.
 
 FairGBM builds upon the popular [LightGBM](https://github.com/microsoft/LightGBM) algorithm and adds customizable 
@@ -13,12 +11,20 @@ Please consult [the paper](#citing-fairgbm) for further details.
 
 ## Install
 
-FairGBM can be installed from [PyPI](https://pypi.org/project/fairgbm/) <!-- TODO: FairGBM pypi link -->
+<!--
+FairGBM can be installed from [PyPI](https://pypi.org/project/fairgbm/)
 
 ```pip install fairgbm```
 
 or from GitHub
 
+```
+git clone --recurse-submodules https://github.com/feedzai/fairgbm.git
+pip install fairgbm/python-package/
+```
+-->
+
+Installation instructions:
 ```
 git clone --recurse-submodules https://github.com/feedzai/fairgbm.git
 pip install fairgbm/python-package/
@@ -74,7 +80,7 @@ The following parameters can be used as key-word arguments for the `FairGBMClass
 
 | _Name_ | _Description_ | _Default_ |
 |:------:|---------------|:---------:|
-| `groupwise_constraint_type` | The type of fairness (group-wise equality) constraint to use (if any). | `FPR,FNR` |
+| `constraint_type` | The type of fairness (group-wise equality) constraint to use (if any). | `FPR,FNR` |
 | `global_constraint_type` | The type of global equality constraint to use (if any). | _None_ |
 | `multiplier_learning_rate` | The learning rate for the gradient ascent step (w.r.t. Lagrange multipliers). | `0.1` |
 | `constraint_fpr_tolerance` | The slack when fulfilling _group-wise_ FPR constraints. | `0.01` |
@@ -167,7 +173,11 @@ For a more in-depth explanation of FairGBM please consult [the paper](#citing-fa
 
 ## Citing FairGBM
 
-The paper is publicly available at this [arXiv link](https://arxiv.org/abs/2103.12715). _**TODO: update with correct link and reference**_
+<!--
+The paper is publicly available at this [arXiv link](https://arxiv.org/abs/2103.12715).
+-->
+
+_Paper will be publicly available on arXiv in a few days._
 
 ```
 @article{cruz2022fairgbm,

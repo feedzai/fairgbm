@@ -88,8 +88,8 @@ def _preprocess_uci_adult(data_path, names_path, **read_kwargs) -> pd.DataFrame:
     
     # Strip whitespace from categorical values
     for col in data.columns:
-        if data[col].dtype == "category":
-            data[col] = data[col].map(lambda val: val.strip())            
+        if pd.api.types.is_categorical_dtype(data[col]):
+            data[col] = data[col].map(lambda val: val.strip())
 
     # Convert label to numeric
     data[UCI_ADULT_TARGET_COL] = pd.Series(

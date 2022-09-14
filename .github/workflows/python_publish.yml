@@ -17,8 +17,8 @@ on:
       - v*
     branches:
       - main-fairgbm
-    paths:
-      - "VERSION.txt"
+#    paths:
+#      - "VERSION.txt"
 
 permissions:
   contents: read

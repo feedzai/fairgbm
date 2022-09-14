@@ -1204,18 +1204,18 @@ class LGBMRanker(LGBMModel):
 class FairGBMClassifier(LGBMClassifier):
     """Helper wrapper to use FairGBM with an sklearn-like API."""
 
-    FAIRGBM_OBJECTIVE = "constrained_cross_entropy"
+    FAIRGBM_OBJECTIVE = 'constrained_cross_entropy'
 
-    def __init__(self, boosting_type='gbdt', num_leaves=31, 
+    def __init__(self, boosting_type='gbdt', num_leaves=31,
                  max_depth=-1, learning_rate=0.1, n_estimators=100, 
                  subsample_for_bin=200000, class_weight=None, 
                  min_split_gain=0, min_child_weight=0.001, min_child_samples=20, 
                  subsample=1, subsample_freq=0, colsample_bytree=1, 
                  reg_alpha=0, reg_lambda=0, random_state=None, 
                  n_jobs=-1, silent=True, importance_type='split',
-                 multiplier_learning_rate=50_000, constraint_type="FPR",
-                 global_constraint_type="FPR,FNR", global_target_fpr=0.05,
-                 global_target_fnr=0.50, **kwargs):
+                 multiplier_learning_rate=0.1, constraint_type='FPR,FNR',
+                 global_constraint_type='', global_target_fpr=0.99,
+                 global_target_fnr=0.99, **kwargs):
 
         super().__init__(boosting_type=boosting_type, num_leaves=num_leaves,
                          max_depth=max_depth, learning_rate=learning_rate, n_estimators=n_estimators,

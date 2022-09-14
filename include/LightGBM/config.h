@@ -927,7 +927,7 @@ struct Config {
   // desc = used only for constrained optimization (ignored for standard LightGBM)
   // desc = type of group-wise constraint to enforce during training
   // desc = can take values "fpr", "fnr", or "fpr,fnr"
-  std::string constraint_type;
+  std::string constraint_type = "FPR,FNR";
 
   // alias = constraint_proxy_function, constraint_stepwise_proxy_function
   // type = string
@@ -960,21 +960,21 @@ struct Config {
   // check = >=0
   // check = <1.0
   // type = double
-  // default = 0
+  // default = 0.01
   // desc = used only for constrained optimization (ignored for standard LightGBM)
   // desc = the slack when fulfilling group-wise FPR constraints
   // desc = when using the value 0.0 this will enforce group-wise FPR to be *exactly* equal
-  double constraint_fpr_threshold = 0.0;
+  double constraint_fpr_tolerance = 0.01;
 
   // alias = constraint_fnr_slack, constraint_fnr_delta
   // check = >=0
   // check = <1.0
   // type = double
-  // default = 0
+  // default = 0.01
   // desc = used only for constrained optimization (ignored for standard LightGBM)
   // desc = the slack when fulfilling group-wise FNR constraints
   // desc = when using the value 0.0 this will enforce group-wise FNR to be *exactly* equal
-  double constraint_fnr_threshold = 0.0;
+  double constraint_fnr_tolerance = 0.01;
 
   // check = >=0
   // check = <1.0

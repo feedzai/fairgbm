@@ -185,6 +185,10 @@ const std::unordered_map<std::string, std::string>& Config::alias_table() {
   {"target_global_fpr", "global_target_fpr"},
   {"global_fnr", "global_target_fnr"},
   {"target_global_fnr", "global_target_fnr"},
+  {"constraint_fpr_threshold", "constraint_fpr_tolerance"},
+  {"constraint_fnr_threshold", "constraint_fnr_tolerance"},
+  {"constraint_fpr_slack", "constraint_fpr_tolerance"},
+  {"constraint_fnr_slack", "constraint_fnr_tolerance"}
   });
   return aliases;
 }
@@ -329,8 +333,8 @@ const std::unordered_set<std::string>& Config::parameter_set() {
   "objective_stepwise_proxy",
   "stepwise_proxy_margin",
   "constraint_group_column",
-  "constraint_fpr_threshold",
-  "constraint_fnr_threshold",
+  "constraint_fpr_tolerance",
+  "constraint_fnr_tolerance",
   "score_threshold",
   "init_lagrangian_multipliers",
   "multiplier_learning_rate",
@@ -677,11 +681,11 @@ void Config::GetMembersFromString(const std::unordered_map<std::string, std::str
 
   Config::GetString(params, "constraint_group_column", &constraint_group_column);
 
-  Config::GetDouble(params, "constraint_fpr_threshold", &constraint_fpr_threshold);
-  CHECK_GE(constraint_fpr_threshold, 0); CHECK_LT(constraint_fpr_threshold, 1);
+  Config::GetDouble(params, "constraint_fpr_tolerance", &constraint_fpr_tolerance);
+  CHECK_GE(constraint_fpr_tolerance, 0); CHECK_LT(constraint_fpr_tolerance, 1);
 
-  Config::GetDouble(params, "constraint_fnr_threshold", &constraint_fnr_threshold);
-  CHECK_GE(constraint_fnr_threshold, 0); CHECK_LE(constraint_fnr_threshold, 1);
+  Config::GetDouble(params, "constraint_fnr_tolerance", &constraint_fnr_tolerance);
+  CHECK_GE(constraint_fnr_tolerance, 0); CHECK_LE(constraint_fnr_tolerance, 1);
 
   Config::GetDouble(params, "score_threshold", &score_threshold);
   CHECK_GE(score_threshold, 0); CHECK_LE(score_threshold, 1);
@@ -821,8 +825,8 @@ std::string Config::SaveMembersToString() const {
   str_buf << "[stepwise_proxy_margin: " << stepwise_proxy_margin << "]\n";
   str_buf << "[constraint_group_column: " << constraint_group_column << "]\n";
   str_buf << "[score_threshold: " << score_threshold << "]\n";
-  str_buf << "[constraint_fpr_threshold: " << constraint_fpr_threshold << "]\n";
-  str_buf << "[constraint_fnr_threshold: " << constraint_fnr_threshold << "]\n";
+  str_buf << "[constraint_fpr_tolerance: " << constraint_fpr_tolerance << "]\n";
+  str_buf << "[constraint_fnr_tolerance: " << constraint_fnr_tolerance << "]\n";
   str_buf << "[multiplier_learning_rate: " << multiplier_learning_rate << "]\n";
   str_buf << "[init_lagrangian_multipliers: " << Common::Join(init_lagrangian_multipliers, ",") << "]\n";
 

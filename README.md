@@ -177,7 +177,8 @@ For a more in-depth explanation of FairGBM please consult [the paper](#citing-fa
 The paper is publicly available at this [arXiv link](https://arxiv.org/abs/2103.12715).
 -->
 
-_Paper will be publicly available on arXiv in a few days._
+The paper is publicly available at [this link](https://drive.google.com/file/d/1vNOV7t4BE-rurm7ZqWfAJoDgmWTmErAE/view?usp=sharing).
+We will update this section with the arXiv link when it is available in a few days.
 
 ```
 @article{cruz2022fairgbm,

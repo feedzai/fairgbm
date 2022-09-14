@@ -67,7 +67,7 @@ The following parameters can be used as key-word arguments for the `FairGBMClass
 |:------:|---------------|:---------:|
 | `groupwise_constraint_type` | The type of fairness (group-wise equality) constraint to use (if any). | `FPR,FNR` |
 | `global_constraint_type` | The type of global equality constraint to use (if any). | _None_ |
-| `multiplier_learning_rate` | The learning rate for the gradient ascent step (w.r.t. Lagrange multipliers). | `0.2` |
+| `multiplier_learning_rate` | The learning rate for the gradient ascent step (w.r.t. Lagrange multipliers). | `0.1` |
 | `constraint_fpr_tolerance` | The slack when fulfilling _group-wise_ FPR constraints. | `0.01` |
 | `constraint_fnr_tolerance` | The slack when fulfilling _group-wise_ FNR constraints. | `0.01` |
 | `global_target_fpr` | Target rate for the _global_ FPR (inequality) constraint. | _None_ |

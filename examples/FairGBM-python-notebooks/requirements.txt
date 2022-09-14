@@ -1,5 +1,5 @@
 wget
-gdown
 folktables
 lightgbm~=3.2.1
-fairlearn~=0.7.0
+scikit-learn
+optuna

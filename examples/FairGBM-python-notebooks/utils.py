@@ -115,10 +115,6 @@ def split_X_Y_S_uci_adult(data) -> Tuple[pd.DataFrame, pd.Series]:
     return X, Y, S
 
 
-def compute_recall_at_target(y_true, y_pred, fpr=None, fnr=None) -> float:
-    pass # TODO
-
-
 def compute_fairness_ratio(y_true: np.ndarray, y_pred: np.ndarray, s_true, metric: str) -> float:
     """Compute fairness metric as the disparity (group-wise ratio)
     of a given performance metric.

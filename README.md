@@ -140,7 +140,7 @@ you may want to maximize TPR with a constraint on FPR (_e.g._, "maximize TPR wit
 You can achieve this by setting a constraint on `global FPR ≤ 0.05`.
 
 You can simultaneously set constraints on group-wise metrics (fairness constraints) and constraints on global metrics.
-[This notebook](/examples/FairGBM-python-notebooks) shows an example on a highly class imbalanced dataset that makes use of both group-level and global constraints.
+<!-- TODO! [This notebook](/examples/FairGBM-python-notebooks) shows an example on a highly class imbalanced dataset that makes use of both group-level and global constraints. -->
 
 
 ## Technical Details

@@ -21,8 +21,17 @@ or from GitHub
 
 ```
 git clone --recurse-submodules https://github.com/feedzai/fairgbm.git
-pip install fairgbm/python-package
+pip install fairgbm/python-package/
 ```
+
+> **Note**
+> Install requires [CMake](https://cmake.org) and an up-to-date C++ compiler (gcc, clang, or mingw).
+> You may need to install wheel via `pip install wheel` first.
+> For Linux users, glibc >= 2.14 is required.
+> For more details see LightGBM's [installation guide](https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html),
+> or follow [this link](https://github.com/microsoft/LightGBM/tree/master/python-package) for the Python package
+> installation instructions.
+
 
 ## Getting started
 

@@ -13,6 +13,7 @@ We welcome external contributions from the open-source community.
 - Alberto Ferreira
 - João Veiga
 - Sara Guerreiro
+- Pedro Gandola
 - João Bravo
 - Pedro Saleiro
 - Pedro Bizarro

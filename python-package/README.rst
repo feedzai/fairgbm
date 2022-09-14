@@ -1,5 +1,7 @@
-LightGBM Python-package
+FairGBM Python-package
 =======================
+
+See `this link <https://github.com/microsoft/LightGBM/blob/master/python-package/README.rst>`_ for the original LightGBM Python package installation instructions (from which this file was copied).
 
 |License| |Python Versions| |PyPI Version| |Downloads| |API Docs|
 
@@ -13,12 +15,12 @@ Preparation
 
 `setuptools <https://pypi.org/project/setuptools>`_ is needed.
 
-Install from `PyPI <https://pypi.org/project/lightgbm>`_
+Install from `PyPI <https://pypi.org/project/fairgbm>`_
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 .. code:: sh
 
-    pip install lightgbm
+    pip install fairgbm
 
 You may need to install `wheel <https://pythonwheels.com>`_ via ``pip install wheel`` first.
 
@@ -58,7 +60,7 @@ Build Threadless Version
 
 .. code:: sh
 
-    pip install lightgbm --install-option=--nomp
+    pip install fairgbm --install-option=--nomp
 
 All requirements, except the **OpenMP** requirement for **macOS** users, from `Build from Sources section <#build-from-sources>`__ apply for this installation option as well.
 
@@ -69,7 +71,7 @@ Build MPI Version
 
 .. code:: sh
 
-    pip install lightgbm --install-option=--mpi
+    pip install fairgbm --install-option=--mpi
 
 All requirements from `Build from Sources section <#build-from-sources>`__ apply for this installation option as well.
 
@@ -82,7 +84,7 @@ Build GPU Version
 
 .. code:: sh
 
-    pip install lightgbm --install-option=--gpu
+    pip install fairgbm --install-option=--gpu
 
 All requirements from `Build from Sources section <#build-from-sources>`__ apply for this installation option as well.
 
@@ -92,7 +94,7 @@ For **Windows** users, `CMake`_ (version 3.8 or higher) is strongly required.
 
 .. code:: sh
 
-    pip install lightgbm --install-option=--gpu --install-option="--opencl-include-dir=/usr/local/cuda/include/" --install-option="--opencl-library=/usr/local/cuda/lib64/libOpenCL.so"
+    pip install fairgbm --install-option=--gpu --install-option="--opencl-include-dir=/usr/local/cuda/include/" --install-option="--opencl-library=/usr/local/cuda/lib64/libOpenCL.so"
 
 All available options:
 
@@ -115,7 +117,7 @@ Build CUDA Version
 
 .. code:: sh
 
-    pip install lightgbm --install-option=--cuda
+    pip install fairgbm --install-option=--cuda
 
 All requirements from `Build from Sources section <#build-from-sources>`__ apply for this installation option as well, and `CMake`_ (version 3.16 or higher) is strongly required.
 
@@ -126,7 +128,7 @@ Build HDFS Version
 
 .. code:: sh
 
-    pip install lightgbm --install-option=--hdfs
+    pip install fairgbm --install-option=--hdfs
 
 Note that the installation process of HDFS version was tested only on **Linux**.
 
@@ -135,7 +137,7 @@ Build with MinGW-w64 on Windows
 
 .. code:: sh
 
-    pip install lightgbm --install-option=--mingw
+    pip install fairgbm --install-option=--mingw
 
 `CMake`_ and `MinGW-w64 <https://mingw-w64.org/>`_ should be installed first.
 
@@ -147,7 +149,7 @@ Build 32-bit Version with 32-bit Python
 
 .. code:: sh
 
-    pip install lightgbm --install-option=--bit32
+    pip install fairgbm --install-option=--bit32
 
 By default, installation in environment with 32-bit Python is prohibited. However, you can remove this prohibition on your own risk by passing ``bit32`` option.
 
@@ -156,7 +158,7 @@ It is **strongly not recommended** to use this version of LightGBM!
 Install from `conda-forge channel <https://anaconda.org/conda-forge/lightgbm>`_
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-If you use ``conda`` to manage Python dependencies, you can install LightGBM using ``conda install``.
+If you use ``conda`` to manage Python dependencies, you can install fairgbm using ``conda install``.
 
 **Note**: The `lightgbm conda-forge feedstock <https://github.com/conda-forge/lightgbm-feedstock>`_ is not maintained by LightGBM maintainers.
 
@@ -212,7 +214,7 @@ To install all additional dependencies required for Dask-package, you can append
 
 .. code:: sh
 
-    pip install lightgbm[dask]
+    pip install fairgbm[dask]
 
 Or replace ``python setup.py install`` with ``pip install -e .[dask]`` if you are installing the package from source files.
 

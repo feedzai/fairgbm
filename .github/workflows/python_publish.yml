@@ -12,6 +12,14 @@ on:
   release:
     types: [published]
 
+  push:
+    tags:
+      - v*
+    branches:
+      - main-fairgbm
+    paths:
+      - "VERSION.txt"
+
 permissions:
   contents: read
 

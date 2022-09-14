@@ -195,7 +195,7 @@ struct Config {
   // check = >0.0
   // desc = used only for constrained optimization (ignored for standard LightGBM)
   // desc = learning rate for the Lagrangian multipliers (which enforce the constraints)
-  double multiplier_learning_rate = 0.2;
+  double multiplier_learning_rate = 0.1;
 
   // alias = lagrangian_multipliers, init_multipliers
   // type = multi-double
@@ -927,7 +927,7 @@ struct Config {
   // desc = used only for constrained optimization (ignored for standard LightGBM)
   // desc = type of group-wise constraint to enforce during training
   // desc = can take values "fpr", "fnr", or "fpr,fnr"
-  std::string constraint_type;
+  std::string constraint_type = "FPR,FNR";
 
   // alias = constraint_proxy_function, constraint_stepwise_proxy_function
   // type = string

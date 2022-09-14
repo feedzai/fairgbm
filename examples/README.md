@@ -7,6 +7,8 @@ Just as with [vanilla LightGBM](https://github.com/microsoft/LightGBM/tree/maste
 
 ## Using Python
 
+Several Python examples available in the [_notebooks folder_](FairGBM-python-notebooks)!.
+
 **[Recommended]** Using the sklearn-style API:
 
 ```python
@@ -28,7 +30,7 @@ Y_test_pred = fairgbm_clf.predict_proba(X_test)[:, -1]  # Compute continuous cla
 ```
 
 
-Using the standard LightGBM API:
+Or using the standard LightGBM API:
 
 ```python
 from fairgbm import Dataset, train

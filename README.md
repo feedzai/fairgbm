@@ -48,7 +48,7 @@ Y_test_pred = fairgbm_clf.predict_proba(X_test)[:, -1]  # Compute continuous cla
 
 A more in-depth explanation and other usage examples can be found in the [**_examples folder_**](/examples).
 
-For Python examples see the [**_notebooks folder_**](/examples/FairGBM-python-notebooks).
+**For Python examples see the [_notebooks folder_](/examples/FairGBM-python-notebooks).**
 
 
 ## Features

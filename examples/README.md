@@ -1,62 +1,127 @@
-Examples
-========
+# FairGBM Usage Examples
 
-You can learn how to use LightGBM by these examples.
+Just as with [vanilla LightGBM](https://github.com/microsoft/LightGBM/tree/master/examples), you can use FairGBM in multiple ways:
+1. Using the Python API (**_recommended_**)
+1. Using the command line (and config files)
+1. Using the C API
 
-Comments in configuration files might be outdated. Actual information about parameters always can be found [here](https://github.com/microsoft/LightGBM/blob/master/docs/Parameters.rst).
+## Using Python
 
-Machine Learning Challenge Winning Solutions
-============================================
+Several Python examples available in the [_notebooks folder_](FairGBM-python-notebooks)!.
 
-**LightGBM is used in many winning solutions, but this table is updated very infrequently.**
+**[Recommended]** Using the sklearn-style API:
 
-| Place         | Competition   | Solution  | Date |
-| ------------- |:------------- | --------- | -----|
-|1st      | [M5 Forecasting - Uncertainty](https://www.kaggle.com/c/m5-forecasting-uncertainty) | [link](https://www.kaggle.com/c/m5-forecasting-uncertainty/discussion/163368) | 2020.7 |
-|3rd      | [M5 Forecasting - Uncertainty](https://www.kaggle.com/c/m5-forecasting-uncertainty) | [link](https://www.kaggle.com/c/m5-forecasting-uncertainty/discussion/166875) | 2020.7 |
-|3rd      | [ALASKA2 Image Steganalysis](https://www.kaggle.com/c/alaska2-image-steganalysis) | [link](https://www.kaggle.com/c/alaska2-image-steganalysis/discussion/168870) | 2020.7 |
-|1st      | [M5 Forecasting - Accuracy](https://www.kaggle.com/c/m5-forecasting-accuracy) | [link](https://www.kaggle.com/c/m5-forecasting-accuracy/discussion/163684) | 2020.6 |
-|2nd      | [COVID19 Global Forecasting (Week 5)](https://www.kaggle.com/c/covid19-global-forecasting-week-5) | [link](https://www.kaggle.com/c/covid19-global-forecasting-week-5/discussion/143893) | 2020.5 |
-|3rd      | [COVID19 Global Forecasting (Week 5)](https://www.kaggle.com/c/covid19-global-forecasting-week-5) | [link](https://www.kaggle.com/c/covid19-global-forecasting-week-5/discussion/143029) | 2020.5 |
-|1st      | [COVID19 Global Forecasting (Week 4)](https://www.kaggle.com/c/covid19-global-forecasting-week-4) | [link](https://www.kaggle.com/c/covid19-global-forecasting-week-5/discussion/154804) | 2020.5 |
-|2nd      | [COVID19 Global Forecasting (Week 4)](https://www.kaggle.com/c/covid19-global-forecasting-week-4) | [link](https://www.kaggle.com/c/covid19-global-forecasting-week-5/discussion/144081) | 2020.5 |
-|2nd      | [2019 Data Science Bowl](https://www.kaggle.com/c/data-science-bowl-2019) | [link](https://www.kaggle.com/c/data-science-bowl-2019/discussion/127388) | 2020.1 |
-| 3rd     | [RSNA Intracranial Hemorrhage Detection](https://www.kaggle.com/c/rsna-intracranial-hemorrhage-detection) | [link](https://www.kaggle.com/c/rsna-intracranial-hemorrhage-detection/discussion/117223#latest-673643) | 2019.11 |
-| 1st     | [IEEE-CIS Fraud Detection](https://www.kaggle.com/c/ieee-fraud-detection) | [link](https://www.kaggle.com/c/ieee-fraud-detection/discussion/111308) | 2019.10 |
-| 2nd     | [IEEE-CIS Fraud Detection](https://www.kaggle.com/c/ieee-fraud-detection) | [link](https://www.kaggle.com/c/ieee-fraud-detection/discussion/111321) | 2019.10 |
-| 2nd     | [Kuzushiji Recognition](https://www.kaggle.com/c/kuzushiji-recognition) | [link](https://www.kaggle.com/c/kuzushiji-recognition/discussion/112712) | 2019.10 |
-| 1st     | [Los Alamos National Laboratory Earthquake Prediction](https://www.kaggle.com/c/LANL-Earthquake-Prediction) | [link](https://www.kaggle.com/c/LANL-Earthquake-Prediction/discussion/94390#latest-632778) | 2019.6 |
-| 3rd     | [Los Alamos National Laboratory Earthquake Prediction](https://www.kaggle.com/c/LANL-Earthquake-Prediction) | [link](https://www.kaggle.com/c/LANL-Earthquake-Prediction/discussion/94459) | 2019.6 |
-| 1st     | [Santander Customer Transaction Prediction](https://www.kaggle.com/c/santander-customer-transaction-prediction) | [link](https://www.kaggle.com/c/santander-customer-transaction-prediction/discussion/89003#latest-678843) | 2019.4 |
-| 2nd     | [Santander Customer Transaction Prediction](https://www.kaggle.com/c/santander-customer-transaction-prediction) | [link](https://www.kaggle.com/c/santander-customer-transaction-prediction/discussion/88939) | 2019.4 |
-| 3rd     | [Santander Customer Transaction Prediction](https://www.kaggle.com/c/santander-customer-transaction-prediction) | [link](https://www.kaggle.com/c/santander-customer-transaction-prediction/discussion/88902) | 2019.4 |
-| 2nd     | [PetFinder.my Adoption Prediction](https://www.kaggle.com/c/petfinder-adoption-prediction) | [link](https://www.kaggle.com/c/petfinder-adoption-prediction/discussion/88773#latest-512090) | 2019.4 |
-| 1st     | [Google Analytics Customer Revenue Prediction](https://www.kaggle.com/c/ga-customer-revenue-prediction) | [link](https://www.kaggle.com/c/ga-customer-revenue-prediction/discussion/82614#latest-482575) | 2019.3  |
-| 1st     | [VSB Power Line Fault Detection](https://www.kaggle.com/c/vsb-power-line-fault-detection) | [link](https://www.kaggle.com/c/vsb-power-line-fault-detection/discussion/87038#latest-521846) | 2019.3 |
-| 5th     | [Elo Merchant Category Recommendation](https://www.kaggle.com/c/elo-merchant-category-recommendation) | [link](https://www.kaggle.com/c/elo-merchant-category-recommendation/discussion/82314#latest-525737) | 2019.2 |
-| 2nd     | [PLAsTiCC Astronomical Classification](https://www.kaggle.com/c/PLAsTiCC-2018) | [link](https://www.kaggle.com/c/PLAsTiCC-2018/discussion/75059#latest-462457) | 2018.12 | 
-| 1st     | [Google Research Doodle Recognition Challenge](https://www.kaggle.com/c/quickdraw-doodle-recognition) | [link](https://www.kaggle.com/c/quickdraw-doodle-recognition/discussion/73738#latest-550028) | 2018.12 |
-| 1st     | [Home Credit Group Home Credit Default Risk](https://www.kaggle.com/c/home-credit-default-risk) | [link](https://www.kaggle.com/c/home-credit-default-risk/discussion/64480#latest-514514) | 2018.8 |
-| 2nd     | [Home Credit Group Home Credit Default Risk](https://www.kaggle.com/c/home-credit-default-risk) | [link](https://www.kaggle.com/c/home-credit-default-risk/discussion/64722#latest-394948) | 2018.8 |
-| 3rd     | [Home Credit Group Home Credit Default Risk](https://www.kaggle.com/c/home-credit-default-risk) | [link](https://www.kaggle.com/c/home-credit-default-risk/discussion/64596#latest-420333) | 2018.8 |
-| 2nd     | [Google AI Open Images - Visual Relationship Track](https://www.kaggle.com/c/google-ai-open-images-visual-relationship-track) | [link](https://www.kaggle.com/c/google-ai-open-images-visual-relationship-track/discussion/64651) | 2018.8 |
-| 2nd     | [Santander Value Prediction Challenge](https://www.kaggle.com/c/santander-value-prediction-challenge) | [link](https://www.kaggle.com/c/santander-value-prediction-challenge/discussion/63848#latest-374826) | 2018.8 |
-| 1st     | [Avito Demand Prediction Challenge](https://www.kaggle.com/c/avito-demand-prediction) | [link](https://www.kaggle.com/c/avito-demand-prediction/discussion/59880#latest-450523) | 2018.6 |
-| 2nd     | [Avito Demand Prediction Challenge](https://www.kaggle.com/c/avito-demand-prediction) | [link](https://www.kaggle.com/c/avito-demand-prediction/discussion/59871#latest-470807) | 2018.6 |
-| 3rd     | [Avito Demand Prediction Challenge](https://www.kaggle.com/c/avito-demand-prediction) | [link](https://www.kaggle.com/c/avito-demand-prediction/discussion/59885#latest-364403) | 2018.6 |
-| 1st     | [TalkingData AdTracking Fraud Detection Challenge](https://www.kaggle.com/c/talkingdata-adtracking-fraud-detection) | [link](https://www.kaggle.com/c/talkingdata-adtracking-fraud-detection/discussion/56475)| 2018.5 |
-| 1st     | [DonorsChoose.org Application Screening](https://www.kaggle.com/c/donorschoose-application-screening)| [link](https://www.kaggle.com/shadowwarrior/1st-place-solution/notebook) | 2018.4 | 
-| 1st     | [Toxic Comment Classification Challenge](https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge)| [link](https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/discussion/52557) | 2018.3 |
-| 1st     | [Mercari Price Suggestion Challenge](https://www.kaggle.com/c/mercari-price-suggestion-challenge) | [link](https://www.kaggle.com/c/mercari-price-suggestion-challenge/discussion/50256) | 2018.2 |
-| 1st     | [IEEE's Signal Processing Society, Camera Model Identification](https://www.kaggle.com/c/sp-society-camera-model-identification)| [link](https://www.kaggle.com/c/sp-society-camera-model-identification/discussion/49367) | 2018.2 | 
-| 1st     | [Recruit Restaurant Visitor Forecasting](https://www.kaggle.com/c/recruit-restaurant-visitor-forecasting) | [link](https://www.kaggle.com/pureheart/1st-place-lgb-model-public-0-470-private-0-502/comments) | 2018.2| 
-| 1st     | [WSDM CUP 2018 - KKBox's Music Recommendation Challenge](https://www.kaggle.com/c/kkbox-music-recommendation-challenge) | [link](https://www.kaggle.com/c/kkbox-music-recommendation-challenge/discussion/45942) | 2017.12 |
-| 1st     | [Porto Seguro’s Safe Driver Prediction](https://www.kaggle.com/c/porto-seguro-safe-driver-prediction) | [link](https://www.kaggle.com/c/porto-seguro-safe-driver-prediction/discussion/44629) |2017.11 |
-| 1st     | [Quora Question Pairs](https://www.kaggle.com/c/quora-question-pairs) | [link](https://www.kaggle.com/c/quora-question-pairs/discussion/34355) | 2017.6 |
-| 1st     | [Two Sigma Connect: Rental Listing Inquiries](https://www.kaggle.com/c/two-sigma-connect-rental-listing-inquiries) | [link](https://www.kaggle.com/c/two-sigma-connect-rental-listing-inquiries/discussion/32163) | 2017.4 |
-| 1st     | [CIKM2017 AnalytiCup - Lazada Product Title Quality Challenge](http://cikm2017.org/CIKM_AnalytiCup_task3.html) | [link](http://cikm2017.org/download/analytiCup/session3/CIKMAnalytiCup2017_LazadaProductTitleQuality_T3.pdf) | 2017.9 |
-| 2nd     | [Two Sigma Connect: Rental Listing Inquiries](https://www.kaggle.com/c/two-sigma-connect-rental-listing-inquiries) | [link](https://www.kaggle.com/c/two-sigma-connect-rental-listing-inquiries/discussion/32148) | 2017.4 |
-| 3rd     | [Two Sigma Connect: Rental Listing Inquiries](https://www.kaggle.com/c/two-sigma-connect-rental-listing-inquiries) | [link](https://www.kaggle.com/c/two-sigma-connect-rental-listing-inquiries/discussion/32123) | 2017.4 |
-| 3rd     | [Dogs vs. Cats Redux: Kernels Edition](https://www.kaggle.com/c/dogs-vs-cats-redux-kernels-edition) | [link](http://blog.kaggle.com/2017/04/20/dogs-vs-cats-redux-playground-competition-3rd-place-interview-marco-lugo) | - |
-| 3rd     | [Bosch Production Line Performance](https://www.kaggle.com/c/bosch-production-line-performance) | [link](http://blog.kaggle.com/2016/12/15/bosch-production-line-performance-competition-winners-interview-3rd-place-team-data-property-avengers-darragh-marios-mathias-stanislav) | 2016.11 |
-| 1st     | [The 1st Di-Tech Competitions](http://research.xiaojukeji.com/competition/main.action?competitionId=DiTech2016) | - | 2016.7 |
+```python
+from fairgbm import FairGBMClassifier
+
+# Instantiate
+fairgbm_clf = FairGBMClassifier(
+    constraint_type="FNR",    # constraint on equal group-wise TPR (equal opportunity)
+    n_estimators=200,         # core parameters from vanilla LightGBM
+    random_state=42,          # ...
+)
+
+# Train using features (X), labels (Y), and sensitive attributes (S)
+fairgbm_clf.fit(X, Y, constraint_group=S)
+
+# Predict
+Y_test_pred = fairgbm_clf.predict_proba(X_test)[:, -1]  # Compute continuous class probabilities (recommended)
+# Y_test_pred = fairgbm_clf.predict(X_test)             # Or compute discrete class predictions
+```
+
+
+Or using the standard LightGBM API:
+
+```python
+from fairgbm import Dataset, train
+
+# Create train dataset with features (X), labels (Y), and sensitive attributes (S)
+train_set = Dataset(X, label=Y, constraint_group=S)
+
+# Example FairGBM parameters
+fgbm_params = {
+    "objective": "constrained_cross_entropy",   # This objective is FairGBM's entry-point
+    "constraint_type": "FNR",   # Constraint on equal group-wise TPR (equal opportunity)
+    "n_estimators": 200,
+    "random_state": 42,
+}
+
+# Train FairGBM
+fairgbm_clf = train(params=fgbm_params, train_set=train_set)
+
+# Compute test predictions
+y_test_pred = fairgbm_clf.predict(X_test)
+# NOTE! FairGBM doesn't use sensitive attributes (S_test) to predict
+```
+
+
+## Using the command line
+
+To run FairGBM from the command line, you'll need to compile the project locally
+```
+git clone --recurse-submodules https://github.com/feedzai/fairgbm.git
+cd fairgbm
+cmake .
+make -j4
+```
+
+and then call the compiled binary with your config file
+```
+"./lightgbm" config=your_config_file.txt
+```
+
+you can also add other parameters right from the command line
+```
+"./lightgbm" config=train.conf objective=constrained_cross_entropy
+```
+
+For further details see LightGBM's guide on [compiling locally](https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html#installation-guide) and [running from the command line](https://lightgbm.readthedocs.io/en/latest/Quick-Start.html#run-lightgbm).
+
+
+## Using the C API
+> Using the C API is only recommended for interoperability with other languages. 
+> See [this repository](https://github.com/feedzai/feedzai-openml-java/blob/master/openml-lightgbm/lightgbm-provider/src/main/java/com/feedzai/openml/provider/lightgbm/LightGBMBinaryClassificationModelTrainer.java#L126) 
+> for an example on training FairGBM/LightGBM from a Java code-base.
+
+This is a barebones example of using FairGBM with the LightGBM C API.
+For further details please consult LightGBM's [C API reference](https://lightgbm.readthedocs.io/en/latest/C-API.html).
+
+```c
+int main(int argc, char** argv) {
+
+    // Construct dataset
+    LightGBM::DatasetHandle datasetHandle;
+    std::string datasetParameters = (
+            "label_column=name:fraud_bool "
+            "constraint_group_column=name:customer_age_category "
+            "has_header=True");
+    LightGBM::LGBM_DatasetCreateFromFile("examples/FairGBM/BAF-base.train", datasetParameters, &datasetHandle);
+    
+    // Construct GBM model
+    LightGBM::BoosterHandle boosterHandle;
+    std::string boosterParameters = ("objective=constrained_cross_entropy constraint_type=fpr");  // Add other parameters as needed
+    LightGBM::LGBM_BoosterCreate(datasetHandle, parameters, &boosterHandle)
+    
+    // Train model
+    int isFinished, numIterations = 100;
+    for (int trainIteration = 0; trainIteration < numIterations; ++trainIteration) {
+        int returnCodeLGBM = LightGBM::LGBM_BoosterUpdateOneIter(boosterHandle, &isFinished);
+    }
+}
+```
+
+If you're interested in looking under the proverbial C++ hood, you should start from the 
+[`ConstrainedObjectiveFunction`](/include/LightGBM/constrained_objective_function.h) class.
+Most FairGBM-specific classes are in the C++ namespace `LightGBM::Constrained`.
+
+
+## Configuration files
+
+FairGBM's config files functionality is forked from LightGBM.
+Please consult [LightGBM's core parameters](https://lightgbm.readthedocs.io/en/latest/Parameters.html#core-parameters) 
+to see how to set-up a config file.
+
+Example FairGBM config files [here](/examples/FairGBM/train.conf) or [here](/examples/FairGBM-other/train.conf).
+
+**Note**: Remember that to use the FairGBM classifier you must always set `objective=constrained_cross_entropy`.
+This is not needed when using the Python `FairGBMClassifier` class as it's already taken care of.

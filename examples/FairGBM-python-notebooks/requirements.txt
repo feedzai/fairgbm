@@ -1,0 +1,5 @@
+wget
+folktables
+lightgbm~=3.2.1
+scikit-learn
+optuna

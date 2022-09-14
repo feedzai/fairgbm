@@ -134,10 +134,11 @@ positive outcome for the person), you may want to target equalizing FNR.
 
 ### Global constraints
 
-You can also target specific TPR or FPR goals.
+You can also target specific FNR or FPR goals.
 For example, in cases where high accuracy is trivially achieved (_e.g._, problems with high class imbalance),
 you may want to maximize TPR with a constraint on FPR (_e.g._, "maximize TPR with at most 5% FPR").
-You can achieve this by setting a constraint on `global FPR ≤ 0.05`.
+You can set a constraint on global FPR ≤ 0.05 by using `global_target_fpr=0.05` and 
+`global_constraint_type="FPR"`.
 
 You can simultaneously set constraints on group-wise metrics (fairness constraints) and constraints on global metrics.
 <!-- TODO! [This notebook](/examples/FairGBM-python-notebooks) shows an example on a highly class imbalanced dataset that makes use of both group-level and global constraints. -->

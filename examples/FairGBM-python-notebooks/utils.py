@@ -8,6 +8,7 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
+from sklearn.metrics import confusion_matrix
 
 
 DATA_DIR = Path(__file__).parent / "data"
@@ -118,20 +119,53 @@ def compute_recall_at_target(y_true, y_pred, fpr=None, fnr=None) -> float:
     pass # TODO
 
 
-def compute_disparity(y_true, y_pred, metric: str) -> float:
+def compute_fairness_ratio(y_true: np.ndarray, y_pred: np.ndarray, s_true, metric: str) -> float:
     """Compute fairness metric as the disparity (group-wise ratio)
     of a given performance metric.
 
     Parameters
     ----------
-    y_true
-    y_pred
-    metric
+    y_true : np.ndarray
+        The true labels.
+    y_pred : np.ndarray
+        The binarized predictions.
+    s_true : np.ndarray
+        The sensitive attribute column.
+    metric : str
+        The performance metric used to compute disparity.
 
     Returns
     -------
     value : float
         The fairness metric value (between 0 and 1).
     """
-    assert metric.lower() in ("fpr", "fnr", "tpr", "tnr")
-    pass # TODO
+    metric = metric.lower()
+    valid_perf_metrics = ("fpr", "fnr", "tpr", "tnr")
+    
+    def compute_metric(y_true, y_pred):
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+        
+        if metric == "fpr":
+            return fp / (fp + tn)
+        elif metric == "tnr":
+            return tn / (fp + tn)
+        elif metric == "fnr":
+            return fn / (fn + tp)
+        elif metric == "tpr":
+            return tp / (fn + tp)
+        else:
+            raise ValueError(f"Invalid metric chosen; must be one of {valid_perf_metrics}; got '{metric}'")
+
+    groupwise_metrics = []
+    for group in pd.Series(s_true).unique():
+        group_filter = (s_true == group)
+        
+        groupwise_metrics.append(compute_metric(
+            y_true[group_filter],
+            y_pred[group_filter],
+        ))
+
+    return min(groupwise_metrics) / max(groupwise_metrics)
+        
+        
+        

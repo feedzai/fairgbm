@@ -1,3 +1,4 @@
+notebook
 wget
 folktables
 lightgbm~=3.2.1

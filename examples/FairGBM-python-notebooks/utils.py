@@ -13,7 +13,6 @@ from sklearn.metrics import confusion_matrix
 
 DATA_DIR = Path(__file__).parent / "data"
 UCI_ADULT_TARGET_COL = "target"
-UCI_ADULT_SENSITIVE_COL = "sex"
 
 
 def load_uci_adult() -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -91,28 +90,7 @@ def _preprocess_uci_adult(data_path, names_path, **read_kwargs) -> pd.DataFrame:
         if pd.api.types.is_categorical_dtype(data[col]):
             data[col] = data[col].map(lambda val: val.strip())
 
-    # Convert label to numeric
-    data[UCI_ADULT_TARGET_COL] = pd.Series(
-        data=[
-            0 if "<=50K" in val.strip() else 1 
-            for val in data[UCI_ADULT_TARGET_COL]
-        ],
-        dtype=float)
     return data
-
-
-def split_X_Y_S_uci_adult(data) -> Tuple[pd.DataFrame, pd.Series]:
-    """Splits the given UCI Adult data into features and target.
-    """
-    ignored_cols = [UCI_ADULT_TARGET_COL, UCI_ADULT_SENSITIVE_COL, "fnlwgt"]
-    feature_cols = [col for col in data.columns if col not in ignored_cols]
-
-    X = data[feature_cols]
-    Y = data[UCI_ADULT_TARGET_COL].astype(float)
-    S = pd.Series(
-        data=[1. if val == "Male" else 0. for val in data[UCI_ADULT_SENSITIVE_COL]],
-        dtype=float,)
-    return X, Y, S
 
 
 def compute_fairness_ratio(y_true: np.ndarray, y_pred: np.ndarray, s_true, metric: str) -> float:
@@ -162,6 +140,3 @@ def compute_fairness_ratio(y_true: np.ndarray, y_pred: np.ndarray, s_true, metri
         ))
 
     return min(groupwise_metrics) / max(groupwise_metrics)
-        
-        
-        

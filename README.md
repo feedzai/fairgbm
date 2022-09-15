@@ -55,6 +55,7 @@ fairgbm_clf = FairGBMClassifier(
 
 # Train using features (X), labels (Y), and sensitive attributes (S)
 fairgbm_clf.fit(X, Y, constraint_group=S)
+# NOTE: labels (Y) and sensitive attributes (S) must be in numeric format
 
 # Predict
 Y_test_pred = fairgbm_clf.predict_proba(X_test)[:, -1]  # Compute continuous class probabilities (recommended)
@@ -71,7 +72,8 @@ A more in-depth explanation and other usage examples can be found in the [**_exa
 FairGBM enables you to train a GBM model to **minimize a loss function** (_e.g._, cross-entropy) **subject to fairness 
 constraints** (_e.g._, equal opportunity).
 
-Namely, you can target equality of performance metrics (FPR, FNR, or both) across instances from different protected groups (see [fairness constraints](#fairness-constraints) section).
+Namely, you can target equality of performance metrics (FPR, FNR, or both) across instances from _two or more_ different 
+protected groups (see [fairness constraints](#fairness-constraints) section).
 Simultaneously (and optionally), you can add global constraints on specific metrics (see [global constraints](#global-constraints) section).
 
 ### Parameter list
@@ -104,9 +106,38 @@ view of all vanilla LightGBM parameters (_e.g._, `n_estimators`, `n_jobs`, ...).
 > Using a standard non-constrained objective will fallback to using standard LightGBM.
 
 
+### _fit(X, Y, constraint_group=S)_
+
+In addition to the usual `fit` arguments, features `X` and labels `Y`, FairGBM takes in the sensitive attributes `S`
+column for training.
+
+**Regarding the sensitive attributes column `S`:**
+- It should be in numeric format, and have each different protected group take a different integer value, starting at `0`.
+- It is not restricted to binary sensitive attributes: you can use _two or more_ different groups encoded in the same column;
+- It is only required for training and **not** for computing predictions;
+
+Here is an example pre-processing for the sensitive attributes on the UCI Adult dataset:
+```python
+# Given X, Y, S
+X, Y, S = load_dataset()
+
+# The sensitive attributes S must be in numeric format
+S = [1. if val == "Female" else 0. for val in S]
+
+# The labels Y must be binary and in numeric format: {0, 1}
+Y = [1. if val == ">50K" else 0. for val in Y]
+
+# And the features X may be numeric or categorical, but make sure categorical columns are in the correct format
+X: Union[pd.DataFrame, np.ndarray]      # any array-like can be used
+
+# Train FairGBM
+fairgbm_clf.fit(X, Y, constraint_group=S)
+```
+
+
 ### Fairness constraints
 
-You can use FairGBM to equalize the following metrics across protected groups:
+You can use FairGBM to equalize the following metrics across _two or more_ protected groups:
 - Equalize FNR (equivalent to equalizing TPR or Recall)
     - also known as _equal opportunity_ [(Hardt _et al._, 2016)](https://arxiv.org/abs/1610.02413)
 - Equalize FPR (equivalent to equalizing TNR or Specificity)

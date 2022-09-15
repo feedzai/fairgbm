@@ -5,7 +5,7 @@ labels: enhancement, feature-request
 ---
 
 <!--
-Please search your feature on previous issues and our feature requests consolidation hub (https://github.com/microsoft/LightGBM/issues/2302) before you open a new one.
+Please search your feature on previous issues before you open a new one.
 -->
 
 ## Summary
@@ -14,7 +14,7 @@ Please search your feature on previous issues and our feature requests consolida
 
 ## Motivation
 
-<!-- Why is it useful to have this feature in the LightGBM project? -->
+<!-- Why is it useful to have this feature in the FairGBM project? -->
 
 ## Description
 

@@ -8,6 +8,16 @@ specific Recall or FPR prediction targets).
 
 Please consult [the paper](#citing-fairgbm) for further details.
 
+- [Install](#install)
+- [Getting started](#getting-started)
+  - [Parameter list](#parameter-list)
+  - [_fit(X, Y, constraint_group=S)_](#fitx-y-constraint_groups)
+- [Features](#features)
+  - [Fairness constraints](#fairness-constraints)
+  - [Global constraints](#global-constraints)
+- [Technical details](#technical-details)
+- [Citing FairGBM](#citing-fairgbm)
+
 
 ## Install
 
@@ -67,15 +77,6 @@ A more in-depth explanation and other usage examples can be found in the [**_exa
 **For Python examples see the [_notebooks folder_](/examples/FairGBM-python-notebooks).**
 
 
-## Features
-
-FairGBM enables you to train a GBM model to **minimize a loss function** (_e.g._, cross-entropy) **subject to fairness 
-constraints** (_e.g._, equal opportunity).
-
-Namely, you can target equality of performance metrics (FPR, FNR, or both) across instances from _two or more_ different 
-protected groups (see [fairness constraints](#fairness-constraints) section).
-Simultaneously (and optionally), you can add global constraints on specific metrics (see [global constraints](#global-constraints) section).
-
 ### Parameter list
 
 The following parameters can be used as key-word arguments for the `FairGBMClassifier` Python class.
@@ -134,6 +135,15 @@ X: Union[pd.DataFrame, np.ndarray]      # any array-like can be used
 fairgbm_clf.fit(X, Y, constraint_group=S)
 ```
 
+
+## Features
+
+FairGBM enables you to train a GBM model to **minimize a loss function** (_e.g._, cross-entropy) **subject to fairness
+constraints** (_e.g._, equal opportunity).
+
+Namely, you can target equality of performance metrics (FPR, FNR, or both) across instances from _two or more_ different
+protected groups (see [fairness constraints](#fairness-constraints) section).
+Simultaneously (and optionally), you can add global constraints on specific metrics (see [global constraints](#global-constraints) section).
 
 ### Fairness constraints
 
@@ -210,12 +220,12 @@ The paper is publicly available at this [arXiv link](https://arxiv.org/abs/2103.
 -->
 
 The paper is publicly available at [this link](https://drive.google.com/file/d/1vNOV7t4BE-rurm7ZqWfAJoDgmWTmErAE/view?usp=sharing).
-We will update this section with the arXiv link when it is available in a few days.
+We will update this section with the _arXiv_ link when it is available in a few days.
 
 ```
 @article{cruz2022fairgbm,
   title={FairGBM: Gradient Boosting with Fairness Constraints},
-  author={Cruz, Andr{\'e} F and Bel{\'e}m, Catarina and Bravo, Jo\~{a}o and Saleiro, Pedro and Bizarro, Pedro},
+  author={Cruz, Andr\'{e} F and Bel\'{e}m, Catarina and Bravo, Jo\~{a}o and Saleiro, Pedro and Bizarro, Pedro},
   journal={},  %%TBD
   year={2022}
 }

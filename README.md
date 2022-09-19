@@ -6,7 +6,7 @@ FairGBM builds upon the popular [LightGBM](https://github.com/microsoft/LightGBM
 constraints for group-wise fairness (_e.g._, equal opportunity, predictive equality) and other global goals (_e.g._, 
 specific Recall or FPR prediction targets).
 
-Please consult [the paper](#citing-fairgbm) for further details.
+Please consult [the paper](https://arxiv.org/pdf/2209.07850.pdf) for further details.
 
 - [Install](#install)
 - [Getting started](#getting-started)
@@ -204,7 +204,7 @@ of a _label negative_ instance.
     <img src="https://user-images.githubusercontent.com/13498941/189664020-70ebbae4-6b93-4f38-af7d-f870381a8a22.png" width="40%" alt="example of proxy FPR function" />
 </p>
 
-For a more in-depth explanation of FairGBM please consult [the paper](#citing-fairgbm).
+For a more in-depth explanation of FairGBM please consult [the paper](https://arxiv.org/pdf/2209.07850.pdf).
 
 [comment]: <> (### Important C++ source files **TODO**)
 
@@ -215,18 +215,17 @@ For a more in-depth explanation of FairGBM please consult [the paper](#citing-fa
 
 ## Citing FairGBM
 
-<!--
-The paper is publicly available at this [arXiv link](https://arxiv.org/abs/2103.12715).
--->
-
-The paper is publicly available at [this link](https://drive.google.com/file/d/1vNOV7t4BE-rurm7ZqWfAJoDgmWTmErAE/view?usp=sharing).
-We will update this section with the _arXiv_ link when it is available in a few days.
+The paper is publicly available at this [arXiv link](https://arxiv.org/abs/2209.07850).
 
 ```
-@article{cruz2022fairgbm,
-  title={FairGBM: Gradient Boosting with Fairness Constraints},
-  author={Cruz, Andr\'{e} F and Bel\'{e}m, Catarina and Bravo, Jo\~{a}o and Saleiro, Pedro and Bizarro, Pedro},
-  journal={},  %%TBD
-  year={2022}
+@misc{cruz2022fairgbm,
+  doi = {10.48550/ARXIV.2209.07850},
+  url = {https://arxiv.org/abs/2209.07850},
+  author = {Cruz, Andr{\'{e}} F and Bel{\'{e}}m, Catarina and Bravo, Jo{\~{a}}o and Saleiro, Pedro and Bizarro, Pedro},
+  keywords = {Machine Learning (cs.LG), Artificial Intelligence (cs.AI), Computers and Society (cs.CY), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  title = {FairGBM: Gradient Boosting with Fairness Constraints},
+  publisher = {arXiv},
+  year = {2022},
+  copyright = {arXiv.org perpetual, non-exclusive license}
 }
 ```

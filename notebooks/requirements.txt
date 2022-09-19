@@ -1,0 +1,10 @@
+numpy
+scipy
+scikit-learn
+jupyter
+six
+seaborn
+matplotlib
+lightgbm
+tensorflow
+tensorflow_addons

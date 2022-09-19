@@ -1,0 +1,91 @@
+LGBM_FAIRLEARN:
+    classpath: utils.fairlearn.GridSearchReductionClassifier
+
+    kwargs:
+
+        estimator: lightgbm.LGBMClassifier
+
+
+        # # AOF-specific hyperparameters
+        # constraint:
+        #     - fairlearn.reductions.FalsePositiveRateParity       # AOF
+        
+        # protected_column:
+        #     - age-group
+
+
+        # Adult-specific Hyperparameters
+        constraint:
+            - fairlearn.reductions.TruePositiveRateParity    # Adult
+
+        protected_column:
+            - SEX
+
+
+        ### ### ###
+
+        unawareness: False
+
+        random_state:
+            type: int
+            range: [ 1, 1000 ]
+        
+        # GridSearch (fairlearn reduction) hyperparameters
+        grid_size: 100
+        sample_from_grid: 1
+
+        grid_limit: 2.0
+
+
+        ###
+        ### **  Hyperparameters from base estimator  ** ###
+        ###
+
+        model__n_jobs: 1
+
+        model__boosting_type:
+            - goss
+            # - gbdt
+
+        model__enable_bundle:
+            - False
+
+        # Number of base estimators
+        model__n_estimators:
+            type: int
+            range: [ 250, 5000 ]
+            log: True
+
+        # Max tree leaves for base learners
+        model__num_leaves:
+            type: int
+            range: [ 10, 100 ]
+            log: True
+
+        # min_data_in_leaf
+        model__min_child_samples:
+            type: int
+            range: [ 5, 500 ]
+            log: True
+
+        # Max depth for base learners
+        model__max_depth:
+            type: int
+            range: [ 2, 20 ]
+            log: False
+
+        model__learning_rate:
+            type: float
+            range: [ 0.01, 0.2 ]
+            log: True
+
+        # Regularization
+        model__reg_alpha:
+            type: float
+            range: [ 0.0001, 0.1 ]
+            log: True
+
+        model__reg_lambda:
+            type: float
+            range: [ 0.0001, 0.1 ]
+            log: True

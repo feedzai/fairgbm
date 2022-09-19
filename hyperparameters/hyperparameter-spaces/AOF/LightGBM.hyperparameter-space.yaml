@@ -1,0 +1,52 @@
+data:
+    - /mnt/home/andre.cruz/fair-boosting/data/AOF-FairHO/pre-processed_train.header.csv
+
+ignore_column:
+    - name:index            # NO unawareness!
+
+boosting_type:
+    - goss
+    # - gbdt
+
+enable_bundle:
+    - False
+
+# Number of base estimators
+n_estimators:
+    type: int
+    range: [ 250, 5000 ]
+    log: True
+
+# Max tree leaves for base learners
+num_leaves:
+    type: int
+    range: [ 10, 100 ]
+    log: True
+
+# min_data_in_leaf
+min_child_samples:
+    type: int
+    range: [ 5, 500 ]
+    log: True
+
+# Max depth for base learners
+max_depth:
+    type: int
+    range: [ 2, 20 ]
+    log: False
+
+learning_rate:
+    type: float
+    range: [ 0.01, 0.2 ]
+    log: True
+
+# Regularization
+reg_alpha:
+    type: float
+    range: [ 0.0001, 0.1 ]
+    log: True
+
+reg_lambda:
+    type: float
+    range: [ 0.0001, 0.1 ]
+    log: True

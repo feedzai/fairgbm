@@ -213,6 +213,10 @@ For a more in-depth explanation of FairGBM please consult [the paper](https://ar
 [comment]: <> (%% TODO: results and run-time comparisons against fairlearn, TFCO, and others)
 
 
+## Contact
+
+For commercial uses of FairGBM please contact <oss-licenses@feedzai.com>.
+
 ## Citing FairGBM
 
 The paper is publicly available at this [arXiv link](https://arxiv.org/abs/2209.07850).

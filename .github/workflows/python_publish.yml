@@ -15,10 +15,6 @@ on:
   push:
     tags:
       - v*
-    branches:
-      - main-fairgbm
-#    paths:
-#      - "VERSION.txt"
 
 permissions:
   contents: read
@@ -30,6 +26,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: recursive
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
@@ -45,4 +43,5 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
+        packages_dir: python-package/dist
         verbose: true

@@ -274,7 +274,7 @@ lightgbm
 # Created by https://www.gitignore.io/api/python
 
 ### Python ###
-!/python-package/lightgbm/
+!/python-package/fairgbm/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -401,7 +401,7 @@ python-package/LICENSE
 python-package/README.md
 python-package/build_cpp/
 python-package/compile/
-python-package/lightgbm/VERSION.txt
+python-package/fairgbm/VERSION.txt
 
 # R build artefacts
 **/autom4te.cache/

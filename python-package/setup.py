@@ -325,7 +325,12 @@ if __name__ == "__main__":
                   os.path.join(CURRENT_DIR, 'fairgbm', 'VERSION.txt'),
                   verbose=0)  # type:ignore
     version = open(os.path.join(CURRENT_DIR, 'fairgbm', 'VERSION.txt'), encoding='utf-8').read().strip()
-    readme = open(os.path.join(CURRENT_DIR, 'README.rst'), encoding='utf-8').read()
+    
+    if os.path.isfile(os.path.join(CURRENT_DIR, os.path.pardir, 'README.md')):
+        copy_file(os.path.join(CURRENT_DIR, os.path.pardir, 'README.md'),
+                  os.path.join(CURRENT_DIR, 'README.md'),
+                  verbose=0)  # type:ignore
+    readme = open(os.path.join(CURRENT_DIR, 'README.md'), encoding='utf-8').read()
 
     sys.path.insert(0, CURRENT_DIR)
 
@@ -335,6 +340,7 @@ if __name__ == "__main__":
     setup(name='fairgbm',
           version=version,
           description='FairGBM Python Package',
+          long_description_content_type='text/markdown',
           long_description=readme,
           install_requires=[
               'wheel',
@@ -360,10 +366,12 @@ if __name__ == "__main__":
           },
           packages=find_packages(),
           include_package_data=True,
-          license='The Apache License, Version 2.0 (Feedzai)',
+          license='Apache License, Version 2.0',
           url='https://github.com/feedzai/fairgbm',
-          classifiers=['Development Status :: 5 - Production/Stable',
+          classifiers=['Development Status :: 4 - Beta',
+                       'License :: OSI Approved :: Apache Software License',
                        'Intended Audience :: Science/Research',
+                       'Topic :: Scientific/Engineering :: Artificial Intelligence',
                        'Natural Language :: English',
                        'Operating System :: MacOS',
                        'Operating System :: Microsoft :: Windows',
@@ -374,4 +382,5 @@ if __name__ == "__main__":
                        'Programming Language :: Python :: 3.7',
                        'Programming Language :: Python :: 3.8',
                        'Programming Language :: Python :: 3.9',
-                       'Topic :: Scientific/Engineering :: Artificial Intelligence'])
+                       'Programming Language :: Python :: 3.10',
+                       'Programming Language :: Python :: 3.11',])

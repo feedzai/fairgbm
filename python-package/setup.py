@@ -373,10 +373,10 @@ if __name__ == "__main__":
                        'Intended Audience :: Science/Research',
                        'Topic :: Scientific/Engineering :: Artificial Intelligence',
                        'Natural Language :: English',
-                       'Operating System :: MacOS',
-                       'Operating System :: Microsoft :: Windows',
+                    #    'Operating System :: MacOS',   # https://github.com/feedzai/fairgbm/issues/45
+                    #    'Operating System :: Microsoft :: Windows',
                        'Operating System :: POSIX',
-                       'Operating System :: Unix',
+                       'Operating System :: POSIX :: Linux',
                        'Programming Language :: Python :: 3',
                        'Programming Language :: Python :: 3.6',
                        'Programming Language :: Python :: 3.7',

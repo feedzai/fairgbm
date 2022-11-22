@@ -20,6 +20,7 @@ Please consult [the paper](https://arxiv.org/pdf/2209.07850.pdf) for further det
 
 
 ## Install
+> Currently, compatibility is only maintained with Linux OS.
 
 FairGBM can be installed from [PyPI](https://pypi.org/project/fairgbm/)
 

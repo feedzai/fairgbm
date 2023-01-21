@@ -1,5 +1,10 @@
 # FairGBM
 
+> **Note**
+> FairGBM has been accepted as conference paper at **ICLR 2023**. Link to paper [here](https://arxiv.org/pdf/2209.07850.pdf).
+> 
+
+
 FairGBM is an easy-to-use and lightweight fairness-aware ML algorithm with state-of-the-art performance on tabular datasets.
 
 FairGBM builds upon the popular [LightGBM](https://github.com/microsoft/LightGBM) algorithm and adds customizable 
@@ -210,19 +215,18 @@ For a more in-depth explanation of FairGBM please consult [the paper](https://ar
 
 For commercial uses of FairGBM please contact <oss-licenses@feedzai.com>.
 
-## Citing FairGBM
+
+## How to cite FairGBM
+
+```
+@misc{cruz2023fairgbm,
+  url = {https://arxiv.org/abs/2209.07850},
+  author = {Cruz, Andr{\'{e}} F and Bel{\'{e}}m, Catarina and Jesus, S{\'{e}}rgio and Bravo, Jo{\~{a}}o and Saleiro, Pedro and Bizarro, Pedro},
+  title = {FairGBM: Gradient Boosting with Fairness Constraints},
+  booktitle={International Conference on Learning Representations},
+  year = {2023},
+}
+```
 
 The paper is publicly available at this [arXiv link](https://arxiv.org/abs/2209.07850).
 
-```
-@misc{cruz2022fairgbm,
-  doi = {10.48550/ARXIV.2209.07850},
-  url = {https://arxiv.org/abs/2209.07850},
-  author = {Cruz, Andr{\'{e}} F and Bel{\'{e}}m, Catarina and Bravo, Jo{\~{a}}o and Saleiro, Pedro and Bizarro, Pedro},
-  keywords = {Machine Learning (cs.LG), Artificial Intelligence (cs.AI), Computers and Society (cs.CY), FOS: Computer and information sciences, FOS: Computer and information sciences},
-  title = {FairGBM: Gradient Boosting with Fairness Constraints},
-  publisher = {arXiv},
-  year = {2022},
-  copyright = {arXiv.org perpetual, non-exclusive license}
-}
-```

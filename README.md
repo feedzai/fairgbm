@@ -1,9 +1,13 @@
 # FairGBM
 
+![PyPI version](https://badgen.net/pypi/v/fairgbm)
+![OSI license](https://badgen.net/pypi/license/fairgbm)
+[![Downloads](https://static.pepy.tech/badge/fairgbm)](https://pepy.tech/project/fairgbm)
+<!-- ![Python compatibility](https://badgen.net/pypi/python/fairgbm) -->
+
 > **Note**
 > FairGBM has been accepted as conference paper at **ICLR 2023**. Link to paper [here](https://arxiv.org/pdf/2209.07850.pdf).
 > 
-
 
 FairGBM is an easy-to-use and lightweight fairness-aware ML algorithm with state-of-the-art performance on tabular datasets.
 

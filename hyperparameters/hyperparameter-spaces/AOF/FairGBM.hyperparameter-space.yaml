@@ -1,0 +1,52 @@
+
+#  Fixed hyperparams for this FairGBM space
+objective:
+    - constrained_cross_entropy
+
+constraint_stepwise_proxy:
+    - cross_entropy
+
+# exclude label column from column indexing when specifying group column
+constraint_group_column:
+    - name:age-group
+
+
+# Fairness constraint parameters
+constraint_type:
+    - fpr
+
+constraint_fpr_threshold:
+    - 0
+
+proxy_margin:
+    - 1
+
+score_threshold:
+    - 0.5
+
+# Global constraint parameters
+global_constraint_type:
+    - fpr,fnr
+
+# I[score >= 0.5]
+global_score_threshold:
+    - 0.5
+
+# target global FPR <= 5%
+global_target_fpr:
+    - 0.05
+
+# Search for a good FNR constraint value that exerts some pressure
+global_target_fnr:
+    type: float
+    range: [0.3, 0.6]
+    log: False
+
+# Search for a good Lagrangian learning rate
+lagrangian_learning_rate:
+    type: int
+    range: [5000, 20000]
+    log: False
+
+init_lagrange_multipliers:
+    - 1, 0, 0, 0, 0

@@ -223,8 +223,7 @@ For commercial uses of FairGBM please contact <oss-licenses@feedzai.com>.
 ## How to cite FairGBM
 
 ```
-@misc{cruz2023fairgbm,
-  url = {https://arxiv.org/abs/2209.07850},
+@incollection{cruz2023fairgbm,
   author = {Cruz, Andr{\'{e}} F and Bel{\'{e}}m, Catarina and Jesus, S{\'{e}}rgio and Bravo, Jo{\~{a}}o and Saleiro, Pedro and Bizarro, Pedro},
   title = {FairGBM: Gradient Boosting with Fairness Constraints},
   booktitle={International Conference on Learning Representations},

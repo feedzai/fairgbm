@@ -12,30 +12,34 @@
 FairGBM is an easy-to-use and lightweight fairness-aware ML algorithm with state-of-the-art performance on tabular datasets.
 
 FairGBM builds upon the popular [LightGBM](https://github.com/microsoft/LightGBM) algorithm and adds customizable 
-constraints for group-wise fairness (_e.g._, equal opportunity, predictive equality) and other global goals (_e.g._, 
+constraints for group-wise fairness (_e.g._, equal opportunity, predictive equality, equalized odds) and other global goals (_e.g._, 
 specific Recall or FPR prediction targets).
 
-Please consult [the paper](https://arxiv.org/pdf/2209.07850.pdf) for further details.
+<!-- Please consult [the paper](https://arxiv.org/pdf/2209.07850.pdf) for further details. -->
 
-- [Install](#install)
-- [Getting started](#getting-started)
-  - [Parameter list](#parameter-list)
-  - [_fit(X, Y, constraint_group=S)_](#fitx-y-constraint_groups)
-- [Features](#features)
-  - [Fairness constraints](#fairness-constraints)
-  - [Global constraints](#global-constraints)
-- [Technical details](#technical-details)
-- [Citing FairGBM](#citing-fairgbm)
+Table of contents:
+
+- [FairGBM](#fairgbm)
+  - [Install](#install)
+  - [Getting started](#getting-started)
+    - [Parameter list](#parameter-list)
+    - [_fit(X, Y, constraint\_group=S)_](#fitx-y-constraint_groups)
+  - [Features](#features)
+    - [Fairness constraints](#fairness-constraints)
+    - [Global constraints](#global-constraints)
+  - [Technical Details](#technical-details)
+  - [Contact](#contact)
+  - [How to cite FairGBM](#how-to-cite-fairgbm)
 
 
 ## Install
 > Currently, compatibility is only maintained with Linux OS.
 
-FairGBM can be installed from [PyPI](https://pypi.org/project/fairgbm/)
+FairGBM can be installed from [PyPI](https://pypi.org/project/fairgbm/):
 
 ```pip install fairgbm```
 
-or from GitHub
+Or directly from GitHub:
 
 ```
 git clone --recurse-submodules https://github.com/feedzai/fairgbm.git
@@ -52,6 +56,8 @@ pip install fairgbm/python-package/
 
 
 ## Getting started
+
+> **Recommended** Python notebook example [here](examples/FairGBM-python-notebooks/UCI-Adult-example-with-hyperparameter-tuning.ipynb).
 
 You can get FairGBM up and running in just a few lines of Python code:
 
@@ -74,9 +80,17 @@ Y_test_pred = fairgbm_clf.predict_proba(X_test)[:, -1]  # Compute continuous cla
 # Y_test_pred = fairgbm_clf.predict(X_test)             # Or compute discrete class predictions
 ```
 
+**For Python examples see the [_notebooks folder_](/examples/FairGBM-python-notebooks).**
+
 A more in-depth explanation and other usage examples can be found in the [**_examples folder_**](/examples).
 
-**For Python examples see the [_notebooks folder_](/examples/FairGBM-python-notebooks).**
+> **Note** 
+> FairGBM is a research project, so its default hyperparameters (key-word arguments) 
+> will expectedly not be as robust as the default hyperparameters in `sklearn` or 
+> `lightgbm` classifiers. 
+> We earnestly **recommend running hyperparameter-tuning to tune the 
+> `multiplier_learning_rate` hyperparameter** as well as the remaining GBM 
+> hyperparameters (example [here](examples/FairGBM-python-notebooks/UCI-Adult-example-with-hyperparameter-tuning.ipynb)).
 
 
 ### Parameter list
@@ -125,10 +139,10 @@ Here is an example pre-processing for the sensitive attributes on the UCI Adult 
 X, Y, S = load_dataset()
 
 # The sensitive attributes S must be in numeric format
-S = [1. if val == "Female" else 0. for val in S]
+S = np.array([1 if val == "Female" else 0 for val in S])
 
 # The labels Y must be binary and in numeric format: {0, 1}
-Y = [1. if val == ">50K" else 0. for val in Y]
+Y = np.array([1 if val == ">50K" else 0 for val in Y])
 
 # And the features X may be numeric or categorical, but make sure categorical columns are in the correct format
 X: Union[pd.DataFrame, np.ndarray]      # any array-like can be used
@@ -155,7 +169,7 @@ You can use FairGBM to equalize the following metrics across _two or more_ prote
 - Equalize FPR (equivalent to equalizing TNR or Specificity)
     - also known as _predictive equality_ [(Corbett-Davies _et al._, 2017)](https://arxiv.org/abs/1701.08230)
 - Equalize both FNR and FPR simultaneously
-    - also known as _equal odds_ [(Hardt _et al._, 2016)](https://arxiv.org/abs/1610.02413)
+    - also known as _equalized odds_ [(Hardt _et al._, 2016)](https://arxiv.org/abs/1610.02413)
 
 > **Example for _equality of opportunity_** in college admissions:
 > your likelihood of getting admitted to a certain college (predicted positive) given that you're a qualified candidate

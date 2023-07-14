@@ -4,3 +4,4 @@ folktables
 lightgbm~=3.2.1
 scikit-learn
 optuna
+hyperparameter-tuning~=0.2.4

@@ -20,6 +20,7 @@ Table of contents:
 
 - [FairGBM](#fairgbm)
   - [Install](#install)
+    - [Docker image](#docker-image)
   - [Getting started](#getting-started)
     - [Parameter list](#parameter-list)
     - [_fit(X, Y, constraint\_group=S)_](#fitx-y-constraint_groups)
@@ -33,12 +34,6 @@ Table of contents:
 
 ## Install
 
-> **Note**
-> Compatibility is only maintained with **Linux OS**.
-> 
-> If you don't have access to a Linux machine we advise using the free Google 
-> Colab service ([example Colab notebook here](https://colab.research.google.com/github/AndreFCruz/fairgbm-fork/blob/add-colab-example/examples/FairGBM-python-notebooks/FairGBM_example_for_equalized_odds_%5Bgoogle_colab%5D.ipynb)).
-
 FairGBM can be installed from [PyPI](https://pypi.org/project/fairgbm/):
 
 ```pip install fairgbm```
@@ -51,10 +46,34 @@ pip install fairgbm/python-package/
 ```
 
 > **Note**
+> Compatibility is only maintained with **Linux OS**.
+> 
+> If you don't have access to a Linux machine we advise using the free Google 
+> Colab service ([example Colab notebook here](https://colab.research.google.com/github/AndreFCruz/fairgbm-fork/blob/add-colab-example/examples/FairGBM-python-notebooks/FairGBM_example_for_equalized_odds_%5Bgoogle_colab%5D.ipynb)).
+>
+> We also provide a docker image that can be useful for non-linux platforms, run: ```docker run -p 8888:8888 ndrcrz/fairgbm-miniconda``` for a jupyter notebook environment with `fairgbm` installed.
+
+
+> **Note**
 > Follow [this link](https://github.com/microsoft/LightGBM/tree/master/python-package) 
 > for more details on the Python package installation instructions.
 
 <!-- > Install requires [CMake](https://cmake.org) and an up-to-date C++ compiler (gcc, clang, or mingw). -->
+
+### Docker image
+
+We provide a Docker image with python and miniconda installed, ready to run the example
+fairgbm jupyter notebooks.
+
+You can get a jupyter notebook with fairgbm up and running on your local machine with:
+```
+docker run -p 8888:8888 ndrcrz/fairgbm-miniconda
+```
+
+Although it is recommended to use the python package directly on your local x86-64 (non-arm) linux machine,
+using this docker image is an option for users on other platforms (docker image was tested on an M1 Mac).
+
+The Dockerfile is available [here](examples/FairGBM-python-notebooks/Dockerfile).
 
 
 ## Getting started

@@ -1,0 +1,10 @@
+# Git files
+.git
+.gitignore
+
+# Local data
+data
+
+# Cache files
+__pycache__
+.ipynb_checkpoints

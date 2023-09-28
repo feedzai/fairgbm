@@ -6,7 +6,7 @@
 <!-- ![Python compatibility](https://badgen.net/pypi/python/fairgbm) -->
 
 > **Note**
-> FairGBM has been accepted as conference paper at **ICLR 2023**. Link to paper [here](https://arxiv.org/pdf/2209.07850.pdf).
+> FairGBM has been accepted at **ICLR 2023**. Link to paper [here](https://arxiv.org/pdf/2209.07850.pdf).
 > 
 
 FairGBM is an easy-to-use and lightweight fairness-aware ML algorithm with state-of-the-art performance on tabular datasets.
@@ -15,12 +15,12 @@ FairGBM builds upon the popular [LightGBM](https://github.com/microsoft/LightGBM
 constraints for group-wise fairness (_e.g._, equal opportunity, predictive equality, equalized odds) and other global goals (_e.g._, 
 specific Recall or FPR prediction targets).
 
-<!-- Please consult [the paper](https://arxiv.org/pdf/2209.07850.pdf) for further details. -->
 
 Table of contents:
 
 - [FairGBM](#fairgbm)
   - [Install](#install)
+    - [Docker image](#docker-image)
   - [Getting started](#getting-started)
     - [Parameter list](#parameter-list)
     - [_fit(X, Y, constraint\_group=S)_](#fitx-y-constraint_groups)
@@ -33,7 +33,6 @@ Table of contents:
 
 
 ## Install
-> Currently, compatibility is only maintained with Linux OS.
 
 FairGBM can be installed from [PyPI](https://pypi.org/project/fairgbm/):
 
@@ -47,17 +46,39 @@ pip install fairgbm/python-package/
 ```
 
 > **Note**
-> Install requires [CMake](https://cmake.org) and an up-to-date C++ compiler (gcc, clang, or mingw).
-> You may need to install wheel via `pip install wheel` first.
-> For Linux users, glibc >= 2.14 is required.
-> For more details see LightGBM's [installation guide](https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html),
-> or follow [this link](https://github.com/microsoft/LightGBM/tree/master/python-package) for the Python package
-> installation instructions.
+> Compatibility is only maintained with **Linux OS**.
+> 
+> If you don't have access to a Linux machine we advise using the free Google 
+> Colab service ([example Colab notebook here](https://colab.research.google.com/github/AndreFCruz/fairgbm-fork/blob/add-colab-example/examples/FairGBM-python-notebooks/FairGBM_example_for_equalized_odds_%5Bgoogle_colab%5D.ipynb)).
+>
+> We also provide a docker image that can be useful for non-linux platforms, run: ```docker run -p 8888:8888 ndrcrz/fairgbm-miniconda``` for a jupyter notebook environment with `fairgbm` installed.
+
+
+> **Note**
+> Follow [this link](https://github.com/microsoft/LightGBM/tree/master/python-package) 
+> for more details on the Python package installation instructions.
+
+<!-- > Install requires [CMake](https://cmake.org) and an up-to-date C++ compiler (gcc, clang, or mingw). -->
+
+### Docker image
+
+We provide a Docker image with python and miniconda installed, ready to run the example
+fairgbm jupyter notebooks.
+
+You can get a jupyter notebook with fairgbm up and running on your local machine with:
+```
+docker run -p 8888:8888 ndrcrz/fairgbm-miniconda
+```
+
+Although it is recommended to use the python package directly on your local x86-64 (non-arm) linux machine,
+using this docker image is an option for users on other platforms (docker image was tested on an M1 Mac).
+
+The Dockerfile is available [here](examples/FairGBM-python-notebooks/Dockerfile).
 
 
 ## Getting started
 
-> **Recommended** Python notebook example [here](examples/FairGBM-python-notebooks/UCI-Adult-example-with-hyperparameter-tuning.ipynb).
+> **Recommended** Python notebook example [here](examples/FairGBM-python-notebooks/FairGBM_example_for_equalized_odds_[google_colab].ipynb) (Google Colab link [here](https://colab.research.google.com/github/AndreFCruz/fairgbm-fork/blob/add-colab-example/examples/FairGBM-python-notebooks/FairGBM_example_for_equalized_odds_%5Bgoogle_colab%5D.ipynb)).
 
 You can get FairGBM up and running in just a few lines of Python code:
 
@@ -82,7 +103,7 @@ Y_test_pred = fairgbm_clf.predict_proba(X_test)[:, -1]  # Compute continuous cla
 
 **For Python examples see the [_notebooks folder_](/examples/FairGBM-python-notebooks).**
 
-A more in-depth explanation and other usage examples can be found in the [**_examples folder_**](/examples).
+A more in-depth explanation and other usage examples (with python package or compiled binary) can be found in the [**_examples folder_**](/examples).
 
 > **Note** 
 > FairGBM is a research project, so its default hyperparameters (key-word arguments) 
@@ -159,7 +180,7 @@ constraints** (_e.g._, equal opportunity).
 
 Namely, you can target equality of performance metrics (FPR, FNR, or both) across instances from _two or more_ different
 protected groups (see [fairness constraints](#fairness-constraints) section).
-Simultaneously (and optionally), you can add global constraints on specific metrics (see [global constraints](#global-constraints) section).
+Optionally, you can simultaneously add global constraints on specific metrics (see [global constraints](#global-constraints) section).
 
 ### Fairness constraints
 
@@ -237,13 +258,13 @@ For commercial uses of FairGBM please contact <oss-licenses@feedzai.com>.
 ## How to cite FairGBM
 
 ```
-@incollection{cruz2023fairgbm,
-  author = {Cruz, Andr{\'{e}} F and Bel{\'{e}}m, Catarina and Jesus, S{\'{e}}rgio and Bravo, Jo{\~{a}}o and Saleiro, Pedro and Bizarro, Pedro},
-  title = {FairGBM: Gradient Boosting with Fairness Constraints},
-  booktitle={International Conference on Learning Representations},
-  year = {2023},
+@inproceedings{cruz2023fairgbm,
+  author = {Cruz, Andr{\'{e}} F. and Bel{\'{e}}m, Catarina and Jesus, S{\'{e}}rgio and Bravo, Jo{\~{a}}o and Saleiro, Pedro and Bizarro, Pedro},
+  title={Fair{GBM}: Gradient Boosting with Fairness Constraints},
+  booktitle={The Eleventh International Conference on Learning Representations},
+  year={2023},
+  url={https://openreview.net/forum?id=x-mXzBgCX3a}
 }
 ```
 
 The paper is publicly available at this [arXiv link](https://arxiv.org/abs/2209.07850).
-

@@ -71,6 +71,6 @@ FairGBM:
         # Search for a good multipliers' learning rate
         multiplier_learning_rate:
             type: float
-            range: [0.005, 0.2]
+            range: [0.005, 0.5]
             log: True
-            # range: [0.0001, 0.5]       # smaller `multiplier_learning_rate` is better suited for larger datasets
+            # range: [0.0001, 0.1]       # smaller `multiplier_learning_rate` is better suited for larger datasets

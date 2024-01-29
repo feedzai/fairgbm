@@ -1,7 +1,7 @@
 # FairGBM
 
 ![PyPI version](https://badgen.net/pypi/v/fairgbm)
-![OSI license](https://badgen.net/pypi/license/fairgbm)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Downloads](https://static.pepy.tech/badge/fairgbm)](https://pepy.tech/project/fairgbm)
 <!-- ![Python compatibility](https://badgen.net/pypi/python/fairgbm) -->
 

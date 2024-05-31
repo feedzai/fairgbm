@@ -5,6 +5,7 @@ on:
     branches:
     - master
     - main-fairgbm
+    - workflow-tests
   pull_request:
     branches:
     - master

@@ -65,7 +65,7 @@ jobs:
               export COMPILER="gcc"
               export OS_NAME="macos"
           elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-              export COMPILER="clang"
+              export COMPILER="gcc"
               export OS_NAME="linux"
           fi
           export BUILD_DIRECTORY="$GITHUB_WORKSPACE"

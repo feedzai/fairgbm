@@ -9,6 +9,7 @@ on:
     branches:
     - master
     - main-fairgbm
+    - workflow-tests
 
 env:
   CONDA_ENV: test-env

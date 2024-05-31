@@ -78,7 +78,9 @@ fi
 
 if [[ $TASK == "if-else" ]]; then
     conda install -q -y -n $CONDA_ENV numpy
-    ls $BUILD_DIRECTORY || exit -1
+    cmake --version || exit -1
+    clang --version || exit -1
+    gcc --version || exit -1
     mkdir $BUILD_DIRECTORY/build && cd $BUILD_DIRECTORY/build && cmake .. || exit -1 # && make lightgbm -j4 || exit -1
     # cd $BUILD_DIRECTORY/tests/cpp_tests && ../../lightgbm config=train.conf convert_model_language=cpp convert_model=../../src/boosting/gbdt_prediction.cpp && ../../lightgbm config=predict.conf output_result=origin.pred || exit -1
     # cd $BUILD_DIRECTORY/build && make lightgbm -j4 || exit -1

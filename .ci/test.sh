@@ -184,7 +184,6 @@ elif [[ $TASK == "cuda" ]]; then
 elif [[ $TASK == "mpi" ]]; then
     if [[ $METHOD == "pip" ]]; then
         cd $BUILD_DIRECTORY/python-package && python setup.py sdist || exit -1
-        pip install wheel setuptools || exit -1
         pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz -v --config-settings=cmake.define.USE_MPI=ON || exit -1
         pytest $BUILD_DIRECTORY/tests/python_package_test || exit -1
         exit 0

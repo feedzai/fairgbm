@@ -346,7 +346,7 @@ if __name__ == "__main__":
               'wheel',
               'numpy',
               'scipy',
-              'scikit-learn!=0.22.0'
+              'scikit-learn<1.2.0'
           ],
           extras_require={
               'dask': [

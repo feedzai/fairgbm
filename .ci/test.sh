@@ -9,8 +9,8 @@ elif [[ $OS_NAME == "linux" ]] && [[ $COMPILER == "clang" ]]; then
 fi
 
 if [[ "${TASK}" == "r-package" ]]; then
-    bash ${BUILD_DIRECTORY}/.ci/test_r_package.sh || exit -1
-    exit 0
+    echo "R package support has been removed from this fork"
+    exit 1
 fi
 
 if [[ "$TASK" == "cpp-tests" ]]; then

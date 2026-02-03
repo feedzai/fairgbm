@@ -27,7 +27,7 @@ elseif(USE_GPU OR APPLE)
 elseif(USE_CUDA)
   cmake_minimum_required(VERSION 3.16)
 else()
-  cmake_minimum_required(VERSION 3.0)
+  cmake_minimum_required(VERSION 3.5)
 endif()
 
 PROJECT(lightgbm LANGUAGES C CXX)

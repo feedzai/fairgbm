@@ -42,11 +42,11 @@ jobs:
           - os: ubuntu-latest
             task: mpi
             method: pip
-            python_version: 3.7
+            python_version: 3.8
           - os: ubuntu-latest
             task: mpi
             method: wheel
-            python_version: 3.7
+            python_version: 3.8
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2.3.4

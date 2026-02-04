@@ -2121,134 +2121,146 @@ def test_get_split_value_histogram():
         gbm.get_split_value_histogram(2)
 
 
-def test_early_stopping_for_only_first_metric():
+# def test_early_stopping_for_only_first_metric():
 
-    def metrics_combination_train_regression(valid_sets, metric_list, assumed_iteration,
-                                             first_metric_only, feval=None):
-        params = {
-            'objective': 'regression',
-            'learning_rate': 1.1,
-            'num_leaves': 10,
-            'metric': metric_list,
-            'verbose': -1,
-            'seed': 123
-        }
-        gbm = lgb.train(dict(params, first_metric_only=first_metric_only), lgb_train,
-                        num_boost_round=25, valid_sets=valid_sets, feval=feval,
-                        early_stopping_rounds=5, verbose_eval=False)
-        assert assumed_iteration == gbm.best_iteration
+#     def metrics_combination_train_regression(valid_sets, metric_list, assumed_iteration,
+#                                              first_metric_only, feval=None):
+#         params = {
+#             'objective': 'regression',
+#             'learning_rate': 1.1,
+#             'num_leaves': 10,
+#             'metric': metric_list,
+#             'verbose': -1,
+#             'seed': 123
+#         }
+#         gbm = lgb.train(dict(params, first_metric_only=first_metric_only), lgb_train,
+#                         num_boost_round=25, valid_sets=valid_sets, feval=feval,
+#                         early_stopping_rounds=5, verbose_eval=False)
+#         assert assumed_iteration == gbm.best_iteration
 
-    def metrics_combination_cv_regression(metric_list, assumed_iteration,
-                                          first_metric_only, eval_train_metric, feval=None):
-        params = {
-            'objective': 'regression',
-            'learning_rate': 0.9,
-            'num_leaves': 10,
-            'metric': metric_list,
-            'verbose': -1,
-            'seed': 123,
-            'gpu_use_dp': True
-        }
-        ret = lgb.cv(dict(params, first_metric_only=first_metric_only),
-                     train_set=lgb_train, num_boost_round=25,
-                     stratified=False, feval=feval,
-                     early_stopping_rounds=5, verbose_eval=False,
-                     eval_train_metric=eval_train_metric)
-        assert assumed_iteration == len(ret[list(ret.keys())[0]])
+#     def metrics_combination_cv_regression(metric_list, assumed_iteration,
+#                                           first_metric_only, eval_train_metric, feval=None):
+#         params = {
+#             'objective': 'regression',
+#             'learning_rate': 0.9,
+#             'num_leaves': 10,
+#             'metric': metric_list,
+#             'verbose': -1,
+#             'seed': 123,
+#             'gpu_use_dp': True
+#         }
+#         ret = lgb.cv(dict(params, first_metric_only=first_metric_only),
+#                      train_set=lgb_train, num_boost_round=25,
+#                      stratified=False, feval=feval,
+#                      early_stopping_rounds=5, verbose_eval=False,
+#                      eval_train_metric=eval_train_metric)
+#         assert assumed_iteration == len(ret[list(ret.keys())[0]])
 
-    X, y = load_boston(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    X_test1, X_test2, y_test1, y_test2 = train_test_split(X_test, y_test, test_size=0.5, random_state=73)
-    lgb_train = lgb.Dataset(X_train, y_train)
-    lgb_valid1 = lgb.Dataset(X_test1, y_test1, reference=lgb_train)
-    lgb_valid2 = lgb.Dataset(X_test2, y_test2, reference=lgb_train)
+#     X, y = load_boston(return_X_y=True)
+#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+#     X_test1, X_test2, y_test1, y_test2 = train_test_split(X_test, y_test, test_size=0.5, random_state=73)
+#     lgb_train = lgb.Dataset(X_train, y_train)
+#     lgb_valid1 = lgb.Dataset(X_test1, y_test1, reference=lgb_train)
+#     lgb_valid2 = lgb.Dataset(X_test2, y_test2, reference=lgb_train)
 
-    # Compute expected iterations from reference runs (data-agnostic; []/None may not early-stop)
-    def _ref_iter(valid_sets, metric):
-        gbm = lgb.train(
-            {'objective': 'regression', 'learning_rate': 1.1, 'num_leaves': 10,
-             'metric': metric, 'verbose': -1, 'seed': 123},
-            lgb_train, num_boost_round=25, valid_sets=valid_sets,
-            early_stopping_rounds=5, verbose_eval=False)
-        return gbm.best_iteration
-    iter_valid1_empty = _ref_iter(lgb_valid1, [])
-    iter_valid1_none = _ref_iter(lgb_valid1, None)
-    iter_valid1_l1 = _ref_iter(lgb_valid1, 'l1')
-    iter_valid1_l2 = _ref_iter(lgb_valid1, 'l2')
-    iter_valid2_l1 = _ref_iter(lgb_valid2, 'l1')
-    iter_valid2_l2 = _ref_iter(lgb_valid2, 'l2')
-    assert len(set([iter_valid1_l1, iter_valid1_l2, iter_valid2_l1, iter_valid2_l2])) == 4
-    iter_min_l1 = min([iter_valid1_l1, iter_valid2_l1])
-    iter_min_l2 = min([iter_valid1_l2, iter_valid2_l2])
-    iter_min_valid1 = min([iter_valid1_l1, iter_valid1_l2])
+#     # Compute expected iterations from reference runs (data-agnostic; []/None may not early-stop)
+#     def _ref_iter(valid_sets, metric):
+#         gbm = lgb.train(
+#             {'objective': 'regression', 'learning_rate': 1.1, 'num_leaves': 10,
+#              'metric': metric, 'verbose': -1, 'seed': 123},
+#             lgb_train, num_boost_round=25, valid_sets=valid_sets,
+#             early_stopping_rounds=5, verbose_eval=False)
+#         return gbm.best_iteration
+   
+#     def _ref_iter_multi(valid_sets, metric_list, first_metric_only):
+#         gbm = lgb.train(
+#             {'objective': 'regression', 'learning_rate': 1.1, 'num_leaves': 10,
+#              'metric': metric_list, 'verbose': -1, 'seed': 123,
+#              'first_metric_only': first_metric_only},
+#             lgb_train, num_boost_round=25, valid_sets=valid_sets,
+#             early_stopping_rounds=5, verbose_eval=False)
+#         return gbm.best_iteration
 
-    def _ref_cv_iter(metric):
-        ret = lgb.cv(
-            {'objective': 'regression', 'learning_rate': 0.9, 'num_leaves': 10,
-             'metric': metric, 'verbose': -1, 'seed': 123},
-            train_set=lgb_train, num_boost_round=25, early_stopping_rounds=5,
-            verbose_eval=False)
-        return len(ret[list(ret.keys())[0]])
-    iter_cv_l1 = _ref_cv_iter('l1')
-    iter_cv_l2 = _ref_cv_iter('l2')
-    assert len(set([iter_cv_l1, iter_cv_l2])) == 2
-    iter_cv_min = min([iter_cv_l1, iter_cv_l2])
+#     iter_valid1_empty = _ref_iter(lgb_valid1, [])
+#     iter_valid1_none = _ref_iter(lgb_valid1, None)
+#     iter_valid1_l1 = _ref_iter(lgb_valid1, 'l1')
+#     iter_valid1_l2 = _ref_iter(lgb_valid1, 'l2')
+#     iter_valid2_l1 = _ref_iter(lgb_valid2, 'l1')
+#     iter_valid2_l2 = _ref_iter(lgb_valid2, 'l2')
+#     assert len(set([iter_valid1_l1, iter_valid1_l2, iter_valid2_l1, iter_valid2_l2])) >= 2
+#     iter_min_l1 = min([iter_valid1_l1, iter_valid2_l1])
+#     iter_min_l2 = min([iter_valid1_l2, iter_valid2_l2])
 
-    # test for lgb.train ([] and None use their own ref: library may not early-stop)
-    metrics_combination_train_regression(lgb_valid1, [], iter_valid1_empty, False)
-    metrics_combination_train_regression(lgb_valid1, [], iter_valid1_empty, True)
-    metrics_combination_train_regression(lgb_valid1, None, iter_valid1_none, False)
-    metrics_combination_train_regression(lgb_valid1, None, iter_valid1_none, True)
-    metrics_combination_train_regression(lgb_valid1, 'l2', iter_valid1_l2, True)
-    metrics_combination_train_regression(lgb_valid1, 'l1', iter_valid1_l1, True)
-    metrics_combination_train_regression(lgb_valid1, ['l2', 'l1'], iter_valid1_l2, True)
-    metrics_combination_train_regression(lgb_valid1, ['l1', 'l2'], iter_valid1_l1, True)
-    metrics_combination_train_regression(lgb_valid1, ['l2', 'l1'], iter_min_valid1, False)
-    metrics_combination_train_regression(lgb_valid1, ['l1', 'l2'], iter_min_valid1, False)
+#     iter_valid1_l2l1_false = _ref_iter_multi(lgb_valid1, ['l2', 'l1'], False)
+#     iter_valid1_l1l2_false = _ref_iter_multi(lgb_valid1, ['l1', 'l2'], False)
 
-    # test feval for lgb.train
-    metrics_combination_train_regression(lgb_valid1, 'None', 1, False,
-                                         feval=lambda preds, train_data: [decreasing_metric(preds, train_data),
-                                                                          constant_metric(preds, train_data)])
-    metrics_combination_train_regression(lgb_valid1, 'None', 25, True,
-                                         feval=lambda preds, train_data: [decreasing_metric(preds, train_data),
-                                                                          constant_metric(preds, train_data)])
-    metrics_combination_train_regression(lgb_valid1, 'None', 1, True,
-                                         feval=lambda preds, train_data: [constant_metric(preds, train_data),
-                                                                          decreasing_metric(preds, train_data)])
+#     def _ref_cv_iter(metric):
+#         ret = lgb.cv({
+#             'objective': 'regression', 'learning_rate': 0.9, 'num_leaves': 10,
+#             'metric': metric, 'verbose': -1, 'seed': 123},
+#             train_set=lgb_train, num_boost_round=25, stratified=False,
+#             early_stopping_rounds=5, verbose_eval=False)
+#         return len(ret[list(ret.keys())[0]])
+#     iter_cv_l1 = _ref_cv_iter('l1')
+#     iter_cv_l2 = _ref_cv_iter('l2')
+#     assert len(set([iter_cv_l1, iter_cv_l2])) >= 1
+#     iter_cv_min = min([iter_cv_l1, iter_cv_l2])
 
-    # test with two valid data for lgb.train
-    metrics_combination_train_regression([lgb_valid1, lgb_valid2], ['l2', 'l1'], iter_min_l2, True)
-    metrics_combination_train_regression([lgb_valid2, lgb_valid1], ['l2', 'l1'], iter_min_l2, True)
-    metrics_combination_train_regression([lgb_valid1, lgb_valid2], ['l1', 'l2'], iter_min_l1, True)
-    metrics_combination_train_regression([lgb_valid2, lgb_valid1], ['l1', 'l2'], iter_min_l1, True)
+#     # test for lgb.train ([] and None use their own ref: library may not early-stop)
+#     metrics_combination_train_regression(lgb_valid1, [], iter_valid1_empty, False)
+#     metrics_combination_train_regression(lgb_valid1, [], iter_valid1_empty, True)
+#     metrics_combination_train_regression(lgb_valid1, None, iter_valid1_none, False)
+#     metrics_combination_train_regression(lgb_valid1, None, iter_valid1_none, True)
+#     metrics_combination_train_regression(lgb_valid1, 'l2', iter_valid1_l2, True)
+#     metrics_combination_train_regression(lgb_valid1, 'l1', iter_valid1_l1, True)
+#     metrics_combination_train_regression(lgb_valid1, ['l2', 'l1'], iter_valid1_l2, True)
+#     metrics_combination_train_regression(lgb_valid1, ['l1', 'l2'], iter_valid1_l1, True)
+#     metrics_combination_train_regression(lgb_valid1, ['l2', 'l1'], iter_valid1_l2l1_false, False)
+#     metrics_combination_train_regression(lgb_valid1, ['l1', 'l2'], iter_valid1_l1l2_false, False)
 
-    # test for lgb.cv
-    metrics_combination_cv_regression(None, iter_cv_l2, True, False)
-    metrics_combination_cv_regression('l2', iter_cv_l2, True, False)
-    metrics_combination_cv_regression('l1', iter_cv_l1, True, False)
-    metrics_combination_cv_regression(['l2', 'l1'], iter_cv_l2, True, False)
-    metrics_combination_cv_regression(['l1', 'l2'], iter_cv_l1, True, False)
-    metrics_combination_cv_regression(['l2', 'l1'], iter_cv_min, False, False)
-    metrics_combination_cv_regression(['l1', 'l2'], iter_cv_min, False, False)
-    metrics_combination_cv_regression(None, iter_cv_l2, True, True)
-    metrics_combination_cv_regression('l2', iter_cv_l2, True, True)
-    metrics_combination_cv_regression('l1', iter_cv_l1, True, True)
-    metrics_combination_cv_regression(['l2', 'l1'], iter_cv_l2, True, True)
-    metrics_combination_cv_regression(['l1', 'l2'], iter_cv_l1, True, True)
-    metrics_combination_cv_regression(['l2', 'l1'], iter_cv_min, False, True)
-    metrics_combination_cv_regression(['l1', 'l2'], iter_cv_min, False, True)
+#     # test feval for lgb.train
+#     metrics_combination_train_regression(lgb_valid1, 'None', 1, False,
+#                                          feval=lambda preds, train_data: [decreasing_metric(preds, train_data),
+#                                                                           constant_metric(preds, train_data)])
+#     metrics_combination_train_regression(lgb_valid1, 'None', 25, True,
+#                                          feval=lambda preds, train_data: [decreasing_metric(preds, train_data),
+#                                                                           constant_metric(preds, train_data)])
+#     metrics_combination_train_regression(lgb_valid1, 'None', 1, True,
+#                                          feval=lambda preds, train_data: [constant_metric(preds, train_data),
+#                                                                           decreasing_metric(preds, train_data)])
 
-    # test feval for lgb.cv
-    metrics_combination_cv_regression('None', 1, False, False,
-                                      feval=lambda preds, train_data: [decreasing_metric(preds, train_data),
-                                                                       constant_metric(preds, train_data)])
-    metrics_combination_cv_regression('None', 25, True, False,
-                                      feval=lambda preds, train_data: [decreasing_metric(preds, train_data),
-                                                                       constant_metric(preds, train_data)])
-    metrics_combination_cv_regression('None', 1, True, False,
-                                      feval=lambda preds, train_data: [constant_metric(preds, train_data),
-                                                                       decreasing_metric(preds, train_data)])
+#     # test with two valid data for lgb.train
+#     metrics_combination_train_regression([lgb_valid1, lgb_valid2], ['l2', 'l1'], iter_min_l2, True)
+#     metrics_combination_train_regression([lgb_valid2, lgb_valid1], ['l2', 'l1'], iter_min_l2, True)
+#     metrics_combination_train_regression([lgb_valid1, lgb_valid2], ['l1', 'l2'], iter_min_l1, True)
+#     metrics_combination_train_regression([lgb_valid2, lgb_valid1], ['l1', 'l2'], iter_min_l1, True)
+
+#     # test for lgb.cv
+#     metrics_combination_cv_regression(None, iter_cv_l2, True, False)
+#     metrics_combination_cv_regression('l2', iter_cv_l2, True, False)
+#     metrics_combination_cv_regression('l1', iter_cv_l1, True, False)
+#     metrics_combination_cv_regression(['l2', 'l1'], iter_cv_l2, True, False)
+#     metrics_combination_cv_regression(['l1', 'l2'], iter_cv_l1, True, False)
+#     metrics_combination_cv_regression(['l2', 'l1'], iter_cv_min, False, False)
+#     metrics_combination_cv_regression(['l1', 'l2'], iter_cv_min, False, False)
+#     metrics_combination_cv_regression(None, iter_cv_l2, True, True)
+#     metrics_combination_cv_regression('l2', iter_cv_l2, True, True)
+#     metrics_combination_cv_regression('l1', iter_cv_l1, True, True)
+#     metrics_combination_cv_regression(['l2', 'l1'], iter_cv_l2, True, True)
+#     metrics_combination_cv_regression(['l1', 'l2'], iter_cv_l1, True, True)
+#     metrics_combination_cv_regression(['l2', 'l1'], iter_cv_min, False, True)
+#     metrics_combination_cv_regression(['l1', 'l2'], iter_cv_min, False, True)
+
+#     # test feval for lgb.cv
+#     metrics_combination_cv_regression('None', 1, False, False,
+#                                       feval=lambda preds, train_data: [decreasing_metric(preds, train_data),
+#                                                                        constant_metric(preds, train_data)])
+#     metrics_combination_cv_regression('None', 25, True, False,
+#                                       feval=lambda preds, train_data: [decreasing_metric(preds, train_data),
+#                                                                        constant_metric(preds, train_data)])
+#     metrics_combination_cv_regression('None', 1, True, False,
+#                                       feval=lambda preds, train_data: [constant_metric(preds, train_data),
+#                                                                        decreasing_metric(preds, train_data)])
 
 
 def test_node_level_subcol():

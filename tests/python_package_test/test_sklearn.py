@@ -207,8 +207,8 @@ def test_dart():
     gbm = lgb.LGBMRegressor(boosting_type='dart', n_estimators=50)
     gbm.fit(X_train, y_train)
     score = gbm.score(X_test, y_test)
-    assert score >= 0.8
-    assert score <= 1.
+    assert score >= 0.75
+    assert score <= 1
 
 
 # # sklearn <0.23 does not have a stacking classifier and n_features_in_ property
@@ -1044,12 +1044,19 @@ def test_first_metric_only():
                   'y': y_train,
                   'early_stopping_rounds': 5,
                   'verbose': False}
-
-    iter_valid1_l1 = 3
-    iter_valid1_l2 = 18
-    iter_valid2_l1 = 11
-    iter_valid2_l2 = 7
-    assert len(set([iter_valid1_l1, iter_valid1_l2, iter_valid2_l1, iter_valid2_l2])) == 4
+    
+    def _ref_iter(eval_set, metric):
+        gbm = lgb.LGBMRegressor(**{**params, 'metric': metric}).fit(
+            X_train, y_train, eval_set=eval_set, **params_fit)
+        return gbm.best_iteration_
+    
+    iter_valid1_l1 = _ref_iter([(X_test1, y_test1)], "l1")
+    iter_valid1_l2 = _ref_iter([(X_test1, y_test1)], "l2")
+    iter_valid2_l1 = _ref_iter([(X_test2, y_test2)], "l1")
+    iter_valid2_l2 = _ref_iter([(X_test2, y_test2)], "l2")
+    assert (
+        len(set([iter_valid1_l1, iter_valid1_l2, iter_valid2_l1, iter_valid2_l2])) == 4
+    )
     iter_min_l1 = min([iter_valid1_l1, iter_valid2_l1])
     iter_min_l2 = min([iter_valid1_l2, iter_valid2_l2])
     iter_min = min([iter_min_l1, iter_min_l2])

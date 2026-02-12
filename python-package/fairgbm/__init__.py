@@ -1,5 +1,5 @@
 # coding: utf-8
-"""FairGBM, Gradient Boosting models that are both high-performance *and* Fair!
+"""FairGBM, Gradient Boosting models that are both high-performance *and* Fair.
 
 Contributors: https://github.com/feedzai/fairgbm/graphs/contributors.
 """
@@ -10,7 +10,7 @@ from .callback import early_stopping, print_evaluation, record_evaluation, reset
 from .engine import CVBooster, cv, train
 
 try:
-    from .sklearn import LGBMClassifier, LGBMModel, LGBMRanker, LGBMRegressor, FairGBMClassifier
+    from .sklearn import FairGBMClassifier, LGBMClassifier, LGBMModel, LGBMRanker, LGBMRegressor
 except ImportError:
     pass
 try:

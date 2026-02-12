@@ -325,8 +325,7 @@ void GBDT::Train(int snapshot_freq, const std::string& model_output_path) {
   bool is_finished = false, is_finished_lagrangian = false;
   auto start_time = std::chrono::steady_clock::now();
 
-  for (int iter = 0; iter < config_->num_iterations and (!is_finished or !is_finished_lagrangian); ++iter) {
-
+  for (int iter = 0; iter < config_->num_iterations && (!is_finished || !is_finished_lagrangian); ++iter) {
     // Do one training iteration
     // - execute a descent step on the loss function;
     // - (optionally) execute an ascent step w.r.t. the Lagrangian multipliers (only if using constrained optim.)

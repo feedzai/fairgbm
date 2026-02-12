@@ -11,13 +11,8 @@ from sklearn.base import clone
 from sklearn.metrics import log_loss, mean_squared_error
 from sklearn.model_selection import train_test_split
 
-from .utils import (
-    load_baf_base,
-    load_boston,
-    load_breast_cancer,
-    load_digits,
-    load_iris,
-)
+from .utils import load_baf_base, load_boston, load_breast_cancer, load_digits, load_iris, load_linnerud, make_ranking
+
 
 sk_version = parse_version(sk_version)
 if sk_version < parse_version("0.23"):

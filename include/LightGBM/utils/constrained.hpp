@@ -22,13 +22,18 @@
 #define LIGHTGBM_UTILS_CONSTRAINED_HPP_
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstring>
-#include <string>
-#include <chrono>
 #include <ctime>
-#include <sstream>
 #include <fstream>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 #include <sys/stat.h>
 
 namespace LightGBM {
@@ -51,14 +56,10 @@ inline double sigmoid(double x) {
  * @return The <K, V> pair with highest value V.
  */
 template <class Key, class Value>
-std::pair<Key, Value> findMaxValuePair(std::unordered_map<Key, Value> const &x)
-{
-  return *std::max_element(
-          x.begin(), x.end(),
-          [](const std::pair<Key, Value> &p1, const std::pair<Key, Value> &p2) {
-              return p1.second < p2.second;
-          }
-  );
+std::pair<Key, Value> findMaxValuePair(std::unordered_map<Key, Value> const& x) {
+  return *std::max_element(x.begin(), x.end(), [](const std::pair<Key, Value>& p1, const std::pair<Key, Value>& p2) {
+    return p1.second < p2.second;
+  });
 }
 
 /**
@@ -69,9 +70,8 @@ std::pair<Key, Value> findMaxValuePair(std::unordered_map<Key, Value> const &x)
  * @param filename The name of the file to write on.
  * @param values A vector of the values to append to the file.
  */
-template<typename T, typename Allocator = std::allocator<T>>
-void write_values(const std::string& dir, const std::string& filename,
-                  std::vector<T, Allocator> values) {
+template <typename T, typename Allocator = std::allocator<T>>
+void write_values(const std::string& dir, const std::string& filename, std::vector<T, Allocator> values) {
   struct stat buf;
 
   std::string filename_path = dir + "/" + filename;
@@ -82,8 +82,8 @@ void write_values(const std::string& dir, const std::string& filename,
   outfile << LightGBM::Common::Join(values, ",") << std::endl;
 
   outfile.close();
-};
 }
-}
+}  // namespace Constrained
+}  // namespace LightGBM
 
 #endif  // LIGHTGBM_UTILS_CONSTRAINED_HPP_

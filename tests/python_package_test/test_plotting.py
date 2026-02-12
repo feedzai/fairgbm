@@ -1,9 +1,9 @@
 # coding: utf-8
 import pytest
+from fairgbm.compat import GRAPHVIZ_INSTALLED, MATPLOTLIB_INSTALLED
 from sklearn.model_selection import train_test_split
 
 import fairgbm as lgb
-from fairgbm.compat import GRAPHVIZ_INSTALLED, MATPLOTLIB_INSTALLED
 
 if MATPLOTLIB_INSTALLED:
     import matplotlib

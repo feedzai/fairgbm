@@ -2,7 +2,6 @@
 import itertools
 import math
 
-import fairgbm as lgb
 import numpy as np
 import pytest
 from pkg_resources import parse_version
@@ -11,8 +10,9 @@ from sklearn.base import clone
 from sklearn.metrics import log_loss, mean_squared_error
 from sklearn.model_selection import train_test_split
 
-from .utils import load_baf_base, load_boston, load_breast_cancer, load_digits, load_iris, load_linnerud, make_ranking
+import fairgbm as lgb
 
+from .utils import load_baf_base, load_boston, load_breast_cancer, load_digits, load_iris, load_linnerud, make_ranking
 
 sk_version = parse_version(sk_version)
 if sk_version < parse_version("0.23"):
@@ -1075,8 +1075,8 @@ def test_nan_handle():
 
 #     # single eval_set
 #     params_fit['eval_set'] = [(X_test1, y_test1)]
-#     params['metric'] = 'l2'   
-#     # params.pop('metric') 
+#     params['metric'] = 'l2'
+#     # params.pop('metric')
 #     params_fit.pop('eval_metric')
 #     fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, False)
 #     fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, True)

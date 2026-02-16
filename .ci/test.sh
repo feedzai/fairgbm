@@ -26,11 +26,6 @@ source activate $CONDA_ENV
 
 conda install -q -y -n $CONDA_ENV cmake
 
-echo "Python: $(which python)"
-echo "CMake: $(which cmake)"
-cmake --version
-
-
 cd $BUILD_DIRECTORY
 
 if [[ $TASK == "check-docs" ]] || [[ $TASK == "check-links" ]]; then

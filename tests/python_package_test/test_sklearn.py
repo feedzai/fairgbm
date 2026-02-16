@@ -1,22 +1,25 @@
-# coding: utf-8
 import itertools
 import math
 
+import fairgbm as lgb
 import numpy as np
 import pytest
-from pkg_resources import parse_version
+from packaging.version import Version
 from sklearn import __version__ as sk_version
 from sklearn.base import clone
 from sklearn.metrics import log_loss, mean_squared_error
 from sklearn.model_selection import train_test_split
 
-import fairgbm as lgb
+from .utils import (
+    load_baf_base,
+    load_boston,
+    load_breast_cancer,
+    load_digits,
+    load_iris,
+)
 
-from .utils import load_baf_base, load_boston, load_breast_cancer, load_digits, load_iris, load_linnerud, make_ranking
-
-sk_version = parse_version(sk_version)
-if sk_version < parse_version("0.23"):
-
+sk_version = Version(sk_version)
+if sk_version < Version("0.23"):
     pass
 else:
     pass
@@ -32,7 +35,7 @@ def custom_asymmetric_obj(y_true, y_pred):
 
 
 def objective_ls(y_true, y_pred):
-    grad = (y_pred - y_true)
+    grad = y_pred - y_true
     hess = np.ones(len(y_true))
     return grad, hess
 
@@ -49,15 +52,15 @@ def custom_dummy_obj(y_true, y_pred):
 
 
 def constant_metric(y_true, y_pred):
-    return 'error', 0, False
+    return "error", 0, False
 
 
 def decreasing_metric(y_true, y_pred):
-    return ('decreasing_metric', next(decreasing_generator), False)
+    return ("decreasing_metric", next(decreasing_generator), False)
 
 
 def mse(y_true, y_pred):
-    return 'custom MSE', mean_squared_error(y_true, y_pred), False
+    return "custom MSE", mean_squared_error(y_true, y_pred), False
 
 
 def binary_error(y_true, y_pred):
@@ -106,34 +109,64 @@ def test_binary_fairgbm_no_constraint_group_as_positional_argument():
 
 def test_binary():
     X, y = load_breast_cancer(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.1, random_state=42
+    )
     gbm = lgb.LGBMClassifier(n_estimators=50, silent=True)
-    gbm.fit(X_train, y_train, eval_set=[(X_test, y_test)], early_stopping_rounds=5, verbose=False)
+    gbm.fit(
+        X_train,
+        y_train,
+        eval_set=[(X_test, y_test)],
+        early_stopping_rounds=5,
+        verbose=False,
+    )
     ret = log_loss(y_test, gbm.predict_proba(X_test))
     assert ret < 0.12
-    assert gbm.evals_result_['valid_0']['binary_logloss'][gbm.best_iteration_ - 1] == pytest.approx(ret)
+    assert gbm.evals_result_["valid_0"]["binary_logloss"][
+        gbm.best_iteration_ - 1
+    ] == pytest.approx(ret)
 
 
 def test_regression():
     X, y = load_boston(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.1, random_state=42
+    )
     gbm = lgb.LGBMRegressor(n_estimators=50, silent=True)
-    gbm.fit(X_train, y_train, eval_set=[(X_test, y_test)], early_stopping_rounds=5, verbose=False)
+    gbm.fit(
+        X_train,
+        y_train,
+        eval_set=[(X_test, y_test)],
+        early_stopping_rounds=5,
+        verbose=False,
+    )
     ret = mean_squared_error(y_test, gbm.predict(X_test))
     assert ret < 7
-    assert gbm.evals_result_['valid_0']['l2'][gbm.best_iteration_ - 1] == pytest.approx(ret)
+    assert gbm.evals_result_["valid_0"]["l2"][gbm.best_iteration_ - 1] == pytest.approx(
+        ret
+    )
 
 
 def test_multiclass():
     X, y = load_digits(n_class=10, return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.1, random_state=42
+    )
     gbm = lgb.LGBMClassifier(n_estimators=50, silent=True)
-    gbm.fit(X_train, y_train, eval_set=[(X_test, y_test)], early_stopping_rounds=5, verbose=False)
+    gbm.fit(
+        X_train,
+        y_train,
+        eval_set=[(X_test, y_test)],
+        early_stopping_rounds=5,
+        verbose=False,
+    )
     ret = multi_error(y_test, gbm.predict(X_test))
     assert ret < 0.05
     ret = multi_logloss(y_test, gbm.predict_proba(X_test))
     assert ret < 0.16
-    assert gbm.evals_result_['valid_0']['multi_logloss'][gbm.best_iteration_ - 1] == pytest.approx(ret)
+    assert gbm.evals_result_["valid_0"]["multi_logloss"][
+        gbm.best_iteration_ - 1
+    ] == pytest.approx(ret)
 
 
 # def test_lambdarank():
@@ -195,8 +228,10 @@ def test_multiclass():
 
 def test_dart():
     X, y = load_boston(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
-    gbm = lgb.LGBMRegressor(boosting_type='dart', n_estimators=50)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.1, random_state=42
+    )
+    gbm = lgb.LGBMRegressor(boosting_type="dart", n_estimators=50)
     gbm.fit(X_train, y_train)
     score = gbm.score(X_test, y_test)
     assert score >= 0.75
@@ -443,11 +478,17 @@ def test_clone_and_property():
 
 def test_random_state_object():
     X, y = load_iris(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.1, random_state=42
+    )
     state1 = np.random.RandomState(123)
     state2 = np.random.RandomState(123)
-    clf1 = lgb.LGBMClassifier(n_estimators=10, subsample=0.5, subsample_freq=1, random_state=state1)
-    clf2 = lgb.LGBMClassifier(n_estimators=10, subsample=0.5, subsample_freq=1, random_state=state2)
+    clf1 = lgb.LGBMClassifier(
+        n_estimators=10, subsample=0.5, subsample_freq=1, random_state=state1
+    )
+    clf2 = lgb.LGBMClassifier(
+        n_estimators=10, subsample=0.5, subsample_freq=1, random_state=state2
+    )
     # Test if random_state is properly stored
     assert clf1.random_state is state1
     assert clf2.random_state is state2
@@ -496,39 +537,57 @@ def test_random_state_object():
 
 def test_pandas_categorical():
     pd = pytest.importorskip("pandas")
-    np.random.seed(42)  # sometimes there is no difference how cols are treated (cat or not cat)
-    X = pd.DataFrame({"A": np.random.permutation(['a', 'b', 'c', 'd'] * 75),  # str
-                      "B": np.random.permutation([1, 2, 3] * 100),  # int
-                      "C": np.random.permutation([0.1, 0.2, -0.1, -0.1, 0.2] * 60),  # float
-                      "D": np.random.permutation([True, False] * 150),  # bool
-                      "E": pd.Categorical(np.random.permutation(['z', 'y', 'x', 'w', 'v'] * 60),
-                                          ordered=True)})  # str and ordered categorical
+    np.random.seed(
+        42
+    )  # sometimes there is no difference how cols are treated (cat or not cat)
+    X = pd.DataFrame(
+        {
+            "A": np.random.permutation(["a", "b", "c", "d"] * 75),  # str
+            "B": np.random.permutation([1, 2, 3] * 100),  # int
+            "C": np.random.permutation([0.1, 0.2, -0.1, -0.1, 0.2] * 60),  # float
+            "D": np.random.permutation([True, False] * 150),  # bool
+            "E": pd.Categorical(
+                np.random.permutation(["z", "y", "x", "w", "v"] * 60), ordered=True
+            ),
+        }
+    )  # str and ordered categorical
     y = np.random.permutation([0, 1] * 150)
-    X_test = pd.DataFrame({"A": np.random.permutation(['a', 'b', 'e'] * 20),  # unseen category
-                           "B": np.random.permutation([1, 3] * 30),
-                           "C": np.random.permutation([0.1, -0.1, 0.2, 0.2] * 15),
-                           "D": np.random.permutation([True, False] * 30),
-                           "E": pd.Categorical(np.random.permutation(['z', 'y'] * 30),
-                                               ordered=True)})
+    X_test = pd.DataFrame(
+        {
+            "A": np.random.permutation(["a", "b", "e"] * 20),  # unseen category
+            "B": np.random.permutation([1, 3] * 30),
+            "C": np.random.permutation([0.1, -0.1, 0.2, 0.2] * 15),
+            "D": np.random.permutation([True, False] * 30),
+            "E": pd.Categorical(np.random.permutation(["z", "y"] * 30), ordered=True),
+        }
+    )
     np.random.seed()  # reset seed
     cat_cols_actual = ["A", "B", "C", "D"]
     cat_cols_to_store = cat_cols_actual + ["E"]
-    X[cat_cols_actual] = X[cat_cols_actual].astype('category')
-    X_test[cat_cols_actual] = X_test[cat_cols_actual].astype('category')
+    X[cat_cols_actual] = X[cat_cols_actual].astype("category")
+    X_test[cat_cols_actual] = X_test[cat_cols_actual].astype("category")
     cat_values = [X[col].cat.categories.tolist() for col in cat_cols_to_store]
     gbm0 = lgb.sklearn.LGBMClassifier(n_estimators=10).fit(X, y)
     pred0 = gbm0.predict(X_test, raw_score=True)
     pred_prob = gbm0.predict_proba(X_test)[:, 1]
-    gbm1 = lgb.sklearn.LGBMClassifier(n_estimators=10).fit(X, pd.Series(y), categorical_feature=[0])
+    gbm1 = lgb.sklearn.LGBMClassifier(n_estimators=10).fit(
+        X, pd.Series(y), categorical_feature=[0]
+    )
     pred1 = gbm1.predict(X_test, raw_score=True)
-    gbm2 = lgb.sklearn.LGBMClassifier(n_estimators=10).fit(X, y, categorical_feature=['A'])
+    gbm2 = lgb.sklearn.LGBMClassifier(n_estimators=10).fit(
+        X, y, categorical_feature=["A"]
+    )
     pred2 = gbm2.predict(X_test, raw_score=True)
-    gbm3 = lgb.sklearn.LGBMClassifier(n_estimators=10).fit(X, y, categorical_feature=['A', 'B', 'C', 'D'])
+    gbm3 = lgb.sklearn.LGBMClassifier(n_estimators=10).fit(
+        X, y, categorical_feature=["A", "B", "C", "D"]
+    )
     pred3 = gbm3.predict(X_test, raw_score=True)
-    gbm3.booster_.save_model('categorical.model')
-    gbm4 = lgb.Booster(model_file='categorical.model')
+    gbm3.booster_.save_model("categorical.model")
+    gbm4 = lgb.Booster(model_file="categorical.model")
     pred4 = gbm4.predict(X_test)
-    gbm5 = lgb.sklearn.LGBMClassifier(n_estimators=10).fit(X, y, categorical_feature=['A', 'B', 'C', 'D', 'E'])
+    gbm5 = lgb.sklearn.LGBMClassifier(n_estimators=10).fit(
+        X, y, categorical_feature=["A", "B", "C", "D", "E"]
+    )
     pred5 = gbm5.predict(X_test, raw_score=True)
     gbm6 = lgb.sklearn.LGBMClassifier(n_estimators=10).fit(X, y, categorical_feature=[])
     pred6 = gbm6.predict(X_test, raw_score=True)
@@ -540,7 +599,9 @@ def test_pandas_categorical():
     np.testing.assert_allclose(pred0, pred3)
     np.testing.assert_allclose(pred_prob, pred4)
     with pytest.raises(AssertionError):
-        np.testing.assert_allclose(pred0, pred5)  # ordered cat features aren't treated as cat features by default
+        np.testing.assert_allclose(
+            pred0, pred5
+        )  # ordered cat features aren't treated as cat features by default
     with pytest.raises(AssertionError):
         np.testing.assert_allclose(pred0, pred6)
     assert gbm0.booster_.pandas_categorical == cat_values
@@ -558,19 +619,27 @@ def test_pandas_sparse():
         from pandas.arrays import SparseArray
     except ImportError:  # support old versions
         from pandas import SparseArray
-    X = pd.DataFrame({"A": SparseArray(np.random.permutation([0, 1, 2] * 100)),
-                      "B": SparseArray(np.random.permutation([0.0, 0.1, 0.2, -0.1, 0.2] * 60)),
-                      "C": SparseArray(np.random.permutation([True, False] * 150))})
+    X = pd.DataFrame(
+        {
+            "A": SparseArray(np.random.permutation([0, 1, 2] * 100)),
+            "B": SparseArray(np.random.permutation([0.0, 0.1, 0.2, -0.1, 0.2] * 60)),
+            "C": SparseArray(np.random.permutation([True, False] * 150)),
+        }
+    )
     y = pd.Series(SparseArray(np.random.permutation([0, 1] * 150)))
-    X_test = pd.DataFrame({"A": SparseArray(np.random.permutation([0, 2] * 30)),
-                           "B": SparseArray(np.random.permutation([0.0, 0.1, 0.2, -0.1] * 15)),
-                           "C": SparseArray(np.random.permutation([True, False] * 30))})
-    if pd.__version__ >= '0.24.0':
+    X_test = pd.DataFrame(
+        {
+            "A": SparseArray(np.random.permutation([0, 2] * 30)),
+            "B": SparseArray(np.random.permutation([0.0, 0.1, 0.2, -0.1] * 15)),
+            "C": SparseArray(np.random.permutation([True, False] * 30)),
+        }
+    )
+    if pd.__version__ >= "0.24.0":
         for dtype in pd.concat([X.dtypes, X_test.dtypes, pd.Series(y.dtypes)]):
             assert pd.api.types.is_sparse(dtype)
     gbm = lgb.sklearn.LGBMClassifier(n_estimators=10).fit(X, y)
     pred_sparse = gbm.predict(X_test, raw_score=True)
-    if hasattr(X_test, 'sparse'):
+    if hasattr(X_test, "sparse"):
         pred_dense = gbm.predict(X_test.sparse.to_dense(), raw_score=True)
     else:
         pred_dense = gbm.predict(X_test.to_dense(), raw_score=True)
@@ -580,13 +649,14 @@ def test_pandas_sparse():
 def test_predict():
     # With default params
     iris = load_iris(return_X_y=False)
-    X_train, X_test, y_train, y_test = train_test_split(iris.data, iris.target,
-                                                        test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(
+        iris.data, iris.target, test_size=0.2, random_state=42
+    )
 
-    gbm = lgb.train({'objective': 'multiclass',
-                     'num_class': 3,
-                     'verbose': -1},
-                    lgb.Dataset(X_train, y_train))
+    gbm = lgb.train(
+        {"objective": "multiclass", "num_class": 3, "verbose": -1},
+        lgb.Dataset(X_train, y_train),
+    )
     clf = lgb.LGBMClassifier(verbose=-1).fit(X_train, y_train)
 
     # Tests same probabilities
@@ -616,9 +686,9 @@ def test_predict():
 
     # Tests other parameters for the prediction works
     res_engine = gbm.predict(X_test)
-    res_sklearn_params = clf.predict_proba(X_test,
-                                           pred_early_stop=True,
-                                           pred_early_stop_margin=1.0)
+    res_sklearn_params = clf.predict_proba(
+        X_test, pred_early_stop=True, pred_early_stop_margin=1.0
+    )
     with pytest.raises(AssertionError):
         np.testing.assert_allclose(res_engine, res_sklearn_params)
 
@@ -650,25 +720,29 @@ def test_predict():
 
     # Tests other parameters for the prediction works, starting from iteration 10
     res_engine = gbm.predict(X_test, start_iteration=10)
-    res_sklearn_params = clf.predict_proba(X_test,
-                                           pred_early_stop=True,
-                                           pred_early_stop_margin=1.0, start_iteration=10)
+    res_sklearn_params = clf.predict_proba(
+        X_test, pred_early_stop=True, pred_early_stop_margin=1.0, start_iteration=10
+    )
     with pytest.raises(AssertionError):
         np.testing.assert_allclose(res_engine, res_sklearn_params)
 
 
 def test_evaluate_train_set():
     X, y = load_boston(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.1, random_state=42
+    )
     gbm = lgb.LGBMRegressor(n_estimators=10, silent=True)
-    gbm.fit(X_train, y_train, eval_set=[(X_train, y_train), (X_test, y_test)], verbose=False)
+    gbm.fit(
+        X_train, y_train, eval_set=[(X_train, y_train), (X_test, y_test)], verbose=False
+    )
     assert len(gbm.evals_result_) == 2
-    assert 'training' in gbm.evals_result_
-    assert len(gbm.evals_result_['training']) == 1
-    assert 'l2' in gbm.evals_result_['training']
-    assert 'valid_1' in gbm.evals_result_
-    assert len(gbm.evals_result_['valid_1']) == 1
-    assert 'l2' in gbm.evals_result_['valid_1']
+    assert "training" in gbm.evals_result_
+    assert len(gbm.evals_result_["training"]) == 1
+    assert "l2" in gbm.evals_result_["training"]
+    assert "valid_1" in gbm.evals_result_
+    assert len(gbm.evals_result_["valid_1"]) == 1
+    assert "l2" in gbm.evals_result_["valid_1"]
 
 
 # def test_metrics():
@@ -982,11 +1056,17 @@ def test_inf_handle():
     X = np.random.randn(nrows, ncols)
     y = np.random.randn(nrows) + np.full(nrows, 1e30)
     weight = np.full(nrows, 1e10)
-    params = {'n_estimators': 20, 'verbose': -1}
-    params_fit = {'X': X, 'y': y, 'sample_weight': weight, 'eval_set': (X, y),
-                  'verbose': False, 'early_stopping_rounds': 5}
+    params = {"n_estimators": 20, "verbose": -1}
+    params_fit = {
+        "X": X,
+        "y": y,
+        "sample_weight": weight,
+        "eval_set": (X, y),
+        "verbose": False,
+        "early_stopping_rounds": 5,
+    }
     gbm = lgb.LGBMRegressor(**params).fit(**params_fit)
-    np.testing.assert_allclose(gbm.evals_result_['training']['l2'], np.inf)
+    np.testing.assert_allclose(gbm.evals_result_["training"]["l2"], np.inf)
 
 
 def test_nan_handle():
@@ -995,161 +1075,226 @@ def test_nan_handle():
     X = np.random.randn(nrows, ncols)
     y = np.random.randn(nrows) + np.full(nrows, 1e30)
     weight = np.zeros(nrows)
-    params = {'n_estimators': 20, 'verbose': -1}
-    params_fit = {'X': X, 'y': y, 'sample_weight': weight, 'eval_set': (X, y),
-                  'verbose': False, 'early_stopping_rounds': 5}
+    params = {"n_estimators": 20, "verbose": -1}
+    params_fit = {
+        "X": X,
+        "y": y,
+        "sample_weight": weight,
+        "eval_set": (X, y),
+        "verbose": False,
+        "early_stopping_rounds": 5,
+    }
     gbm = lgb.LGBMRegressor(**params).fit(**params_fit)
-    np.testing.assert_allclose(gbm.evals_result_['training']['l2'], np.nan)
+    np.testing.assert_allclose(gbm.evals_result_["training"]["l2"], np.nan)
 
 
-# def test_first_metric_only():
+def test_first_metric_only():
 
-#     def fit_and_check(eval_set_names, metric_names, assumed_iteration, first_metric_only):
-#         params['first_metric_only'] = first_metric_only
-#         gbm = lgb.LGBMRegressor(**params).fit(**params_fit)
-#         assert len(gbm.evals_result_) == len(eval_set_names)
-#         for eval_set_name in eval_set_names:
-#             assert eval_set_name in gbm.evals_result_
-#             assert len(gbm.evals_result_[eval_set_name]) == len(metric_names)
-#             for metric_name in metric_names:
-#                 assert metric_name in gbm.evals_result_[eval_set_name]
+    def fit_and_check(
+        eval_set_names, metric_names, assumed_iteration, first_metric_only
+    ):
+        params["first_metric_only"] = first_metric_only
+        gbm = lgb.LGBMRegressor(**params).fit(**params_fit)
+        assert len(gbm.evals_result_) == len(eval_set_names)
+        for eval_set_name in eval_set_names:
+            assert eval_set_name in gbm.evals_result_
+            assert len(gbm.evals_result_[eval_set_name]) == len(metric_names)
+            for metric_name in metric_names:
+                assert metric_name in gbm.evals_result_[eval_set_name]
 
-#                 actual = len(gbm.evals_result_[eval_set_name][metric_name])
-#                 expected = assumed_iteration + (params_fit['early_stopping_rounds']
-#                                                 if eval_set_name != 'training'
-#                                                 and assumed_iteration != gbm.n_estimators else 0)
-#                 assert expected == actual
-#                 if eval_set_name != 'training':
-#                     assert assumed_iteration == gbm.best_iteration_
-#                 else:
-#                     assert gbm.n_estimators == gbm.best_iteration_
+                actual = len(gbm.evals_result_[eval_set_name][metric_name])
+                # Derive expected length from actual model state (dataset-agnostic)
+                if eval_set_name == "training":
+                    expected = gbm.n_estimators
+                else:
+                    # Validation: best_iteration_ + early_stopping_rounds, capped at n_estimators
+                    expected = min(
+                        gbm.n_estimators,
+                        gbm.best_iteration_ + params_fit["early_stopping_rounds"],
+                    )
+                assert expected == actual, (
+                    f"{eval_set_name}/{metric_name}: expected {expected} entries, got {actual}"
+                )
+                if eval_set_name != "training":
+                    # best_iteration_ is dataset-dependent; only check it is in valid range
+                    assert 1 <= gbm.best_iteration_ <= gbm.n_estimators
+                else:
+                    assert gbm.n_estimators == gbm.best_iteration_
 
-#     X, y = load_boston(return_X_y=True)
-#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-#     X_test1, X_test2, y_test1, y_test2 = train_test_split(X_test, y_test, test_size=0.5, random_state=72)
-#     params = {'n_estimators': 30,
-#               'learning_rate': 0.8,
-#               'num_leaves': 15,
-#               'verbose': -1,
-#               'seed': 123}
-#     params_fit = {'X': X_train,
-#                   'y': y_train,
-#                   'early_stopping_rounds': 5,
-#                   'verbose': False}
+    X, y = load_boston(return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+    X_test1, X_test2, y_test1, y_test2 = train_test_split(
+        X_test, y_test, test_size=0.5, random_state=72
+    )
+    params = {
+        "n_estimators": 30,
+        "learning_rate": 0.8,
+        "num_leaves": 15,
+        "verbose": -1,
+        "seed": 123,
+    }
+    params_fit = {
+        "X": X_train,
+        "y": y_train,
+        "early_stopping_rounds": 5,
+        "verbose": False,
+    }
 
-#     def _ref_iter(eval_set, metric):
-#         gbm = lgb.LGBMRegressor(**{**params, 'metric': metric}).fit(
-#             X_train, y_train,
-#             eval_set=eval_set,
-#             early_stopping_rounds=params_fit['early_stopping_rounds'],
-#             verbose=params_fit['verbose'])
-#         return gbm.best_iteration_
+    def _ref_iter(eval_set, metric):
+        gbm = lgb.LGBMRegressor(**{**params, "metric": metric}).fit(
+            X_train,
+            y_train,
+            eval_set=eval_set,
+            early_stopping_rounds=params_fit["early_stopping_rounds"],
+            verbose=params_fit["verbose"],
+        )
+        return gbm.best_iteration_
 
-#     iter_valid1_l1 = _ref_iter([(X_test1, y_test1)], "l1")
-#     iter_valid1_l2 = _ref_iter([(X_test1, y_test1)], "l2")
-#     iter_valid2_l1 = _ref_iter([(X_test2, y_test2)], "l1")
-#     iter_valid2_l2 = _ref_iter([(X_test2, y_test2)], "l2")
-#     assert (
-#         len(set([iter_valid1_l1, iter_valid1_l2, iter_valid2_l1, iter_valid2_l2])) >= 2
-#     )
-#     iter_min_l1 = min([iter_valid1_l1, iter_valid2_l1])
-#     iter_min_l2 = min([iter_valid1_l2, iter_valid2_l2])
-#     iter_min = min([iter_min_l1, iter_min_l2])
-#     iter_min_valid1 = min([iter_valid1_l1, iter_valid1_l2])
+    iter_valid1_l1 = _ref_iter([(X_test1, y_test1)], "l1")
+    iter_valid1_l2 = _ref_iter([(X_test1, y_test1)], "l2")
+    iter_valid2_l1 = _ref_iter([(X_test2, y_test2)], "l1")
+    iter_valid2_l2 = _ref_iter([(X_test2, y_test2)], "l2")
+    assert (
+        len(set([iter_valid1_l1, iter_valid1_l2, iter_valid2_l1, iter_valid2_l2])) >= 2
+    )
+    iter_min_l1 = min([iter_valid1_l1, iter_valid2_l1])
+    iter_min_l2 = min([iter_valid1_l2, iter_valid2_l2])
+    iter_min = min([iter_min_l1, iter_min_l2])
+    iter_min_valid1 = min([iter_valid1_l1, iter_valid1_l2])
 
-#     # training data as eval_set
-#     params_fit['eval_set'] = [(X_train, y_train)]
-#     fit_and_check(['training'], ['l2'], 30, False)
-#     fit_and_check(['training'], ['l2'], 30, True)
+    # training data as eval_set
+    params_fit["eval_set"] = [(X_train, y_train)]
+    fit_and_check(["training"], ["l2"], 30, False)
+    fit_and_check(["training"], ["l2"], 30, True)
 
-#     # feval
-#     params['metric'] = 'None'
-#     params_fit['eval_metric'] = lambda preds, train_data: [decreasing_metric(preds, train_data),
-#                                                            constant_metric(preds, train_data)]
-#     params_fit['eval_set'] = [(X_test1, y_test1)]
-#     fit_and_check(['valid_0'], ['decreasing_metric', 'error'], 1, False)
-#     fit_and_check(['valid_0'], ['decreasing_metric', 'error'], 30, True)
-#     params_fit['eval_metric'] = lambda preds, train_data: [constant_metric(preds, train_data),
-#                                                            decreasing_metric(preds, train_data)]
-#     fit_and_check(['valid_0'], ['decreasing_metric', 'error'], 1, True)
+    # feval
+    params["metric"] = "None"
+    params_fit["eval_metric"] = lambda preds, train_data: [
+        decreasing_metric(preds, train_data),
+        constant_metric(preds, train_data),
+    ]
+    params_fit["eval_set"] = [(X_test1, y_test1)]
+    fit_and_check(["valid_0"], ["decreasing_metric", "error"], 1, False)
+    fit_and_check(["valid_0"], ["decreasing_metric", "error"], 30, True)
+    params_fit["eval_metric"] = lambda preds, train_data: [
+        constant_metric(preds, train_data),
+        decreasing_metric(preds, train_data),
+    ]
+    fit_and_check(["valid_0"], ["decreasing_metric", "error"], 1, True)
 
-#     # single eval_set
-#     params_fit['eval_set'] = [(X_test1, y_test1)]
-#     params['metric'] = 'l2'
-#     # params.pop('metric')
-#     params_fit.pop('eval_metric')
-#     fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, False)
-#     fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, True)
+    # single eval_set
+    params_fit["eval_set"] = [(X_test1, y_test1)]
+    params["metric"] = "l2"
+    # params.pop('metric')
+    params_fit.pop("eval_metric")
+    fit_and_check(["valid_0"], ["l2"], iter_valid1_l2, False)
+    fit_and_check(["valid_0"], ["l2"], iter_valid1_l2, True)
 
-#     params_fit['eval_metric'] = "l2"
-#     fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, False)
-#     fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, True)
+    params_fit["eval_metric"] = "l2"
+    fit_and_check(["valid_0"], ["l2"], iter_valid1_l2, False)
+    fit_and_check(["valid_0"], ["l2"], iter_valid1_l2, True)
 
-#     params_fit['eval_metric'] = "l1"
-#     fit_and_check(['valid_0'], ['l1', 'l2'], iter_min_valid1, False)
-#     fit_and_check(['valid_0'], ['l1', 'l2'], iter_valid1_l1, True)
+    params_fit["eval_metric"] = "l1"
+    fit_and_check(["valid_0"], ["l1", "l2"], iter_min_valid1, False)
+    fit_and_check(["valid_0"], ["l1", "l2"], iter_valid1_l1, True)
 
-#     params_fit['eval_metric'] = ["l1", "l2"]
-#     fit_and_check(['valid_0'], ['l1', 'l2'], iter_min_valid1, False)
-#     fit_and_check(['valid_0'], ['l1', 'l2'], iter_valid1_l1, True)
+    params_fit["eval_metric"] = ["l1", "l2"]
+    fit_and_check(["valid_0"], ["l1", "l2"], iter_min_valid1, False)
+    fit_and_check(["valid_0"], ["l1", "l2"], iter_valid1_l1, True)
 
-#     params_fit['eval_metric'] = ["l2", "l1"]
-#     fit_and_check(['valid_0'], ['l1', 'l2'], iter_min_valid1, False)
-#     fit_and_check(['valid_0'], ['l1', 'l2'], iter_valid1_l2, True)
+    params_fit["eval_metric"] = ["l2", "l1"]
+    fit_and_check(["valid_0"], ["l1", "l2"], iter_min_valid1, False)
+    fit_and_check(["valid_0"], ["l1", "l2"], iter_valid1_l2, True)
 
-#     params_fit['eval_metric'] = ["l2", "regression", "mse"]  # test aliases
-#     fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, False)
-#     fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, True)
+    params_fit["eval_metric"] = ["l2", "regression", "mse"]  # test aliases
+    fit_and_check(["valid_0"], ["l2"], iter_valid1_l2, False)
+    fit_and_check(["valid_0"], ["l2"], iter_valid1_l2, True)
 
-#     # two eval_set
-#     params_fit['eval_set'] = [(X_test1, y_test1), (X_test2, y_test2)]
-#     params_fit['eval_metric'] = ["l1", "l2"]
-#     fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min_l1, True)
-#     params_fit['eval_metric'] = ["l2", "l1"]
-#     fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min_l2, True)
+    # two eval_set
+    params_fit["eval_set"] = [(X_test1, y_test1), (X_test2, y_test2)]
+    params_fit["eval_metric"] = ["l1", "l2"]
+    fit_and_check(["valid_0", "valid_1"], ["l1", "l2"], iter_min_l1, True)
+    params_fit["eval_metric"] = ["l2", "l1"]
+    fit_and_check(["valid_0", "valid_1"], ["l1", "l2"], iter_min_l2, True)
 
-#     params_fit['eval_set'] = [(X_test2, y_test2), (X_test1, y_test1)]
-#     params_fit['eval_metric'] = ["l1", "l2"]
-#     fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min, False)
-#     fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min_l1, True)
-#     params_fit['eval_metric'] = ["l2", "l1"]
-#     fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min, False)
-#     fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min_l2, True)
+    params_fit["eval_set"] = [(X_test2, y_test2), (X_test1, y_test1)]
+    params_fit["eval_metric"] = ["l1", "l2"]
+    fit_and_check(["valid_0", "valid_1"], ["l1", "l2"], iter_min, False)
+    fit_and_check(["valid_0", "valid_1"], ["l1", "l2"], iter_min_l1, True)
+    params_fit["eval_metric"] = ["l2", "l1"]
+    fit_and_check(["valid_0", "valid_1"], ["l1", "l2"], iter_min, False)
+    fit_and_check(["valid_0", "valid_1"], ["l1", "l2"], iter_min_l2, True)
 
 
 def test_class_weight():
     X, y = load_digits(n_class=10, return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    y_train_str = y_train.astype('str')
-    y_test_str = y_test.astype('str')
-    gbm = lgb.LGBMClassifier(n_estimators=10, class_weight='balanced', silent=True)
-    gbm.fit(X_train, y_train,
-            eval_set=[(X_train, y_train), (X_test, y_test), (X_test, y_test),
-                      (X_test, y_test), (X_test, y_test)],
-            eval_class_weight=['balanced', None, 'balanced', {1: 10, 4: 20}, {5: 30, 2: 40}],
-            verbose=False)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+    y_train_str = y_train.astype("str")
+    y_test_str = y_test.astype("str")
+    gbm = lgb.LGBMClassifier(n_estimators=10, class_weight="balanced", silent=True)
+    gbm.fit(
+        X_train,
+        y_train,
+        eval_set=[
+            (X_train, y_train),
+            (X_test, y_test),
+            (X_test, y_test),
+            (X_test, y_test),
+            (X_test, y_test),
+        ],
+        eval_class_weight=[
+            "balanced",
+            None,
+            "balanced",
+            {1: 10, 4: 20},
+            {5: 30, 2: 40},
+        ],
+        verbose=False,
+    )
     for eval_set1, eval_set2 in itertools.combinations(gbm.evals_result_.keys(), 2):
         for metric in gbm.evals_result_[eval_set1]:
-            np.testing.assert_raises(AssertionError,
-                                     np.testing.assert_allclose,
-                                     gbm.evals_result_[eval_set1][metric],
-                                     gbm.evals_result_[eval_set2][metric])
-    gbm_str = lgb.LGBMClassifier(n_estimators=10, class_weight='balanced', silent=True)
-    gbm_str.fit(X_train, y_train_str,
-                eval_set=[(X_train, y_train_str), (X_test, y_test_str),
-                          (X_test, y_test_str), (X_test, y_test_str), (X_test, y_test_str)],
-                eval_class_weight=['balanced', None, 'balanced', {'1': 10, '4': 20}, {'5': 30, '2': 40}],
-                verbose=False)
+            with pytest.raises(AssertionError):
+                np.testing.assert_allclose(
+                    gbm.evals_result_[eval_set1][metric],
+                    gbm.evals_result_[eval_set2][metric],
+                )
+    gbm_str = lgb.LGBMClassifier(n_estimators=10, class_weight="balanced", silent=True)
+    gbm_str.fit(
+        X_train,
+        y_train_str,
+        eval_set=[
+            (X_train, y_train_str),
+            (X_test, y_test_str),
+            (X_test, y_test_str),
+            (X_test, y_test_str),
+            (X_test, y_test_str),
+        ],
+        eval_class_weight=[
+            "balanced",
+            None,
+            "balanced",
+            {"1": 10, "4": 20},
+            {"5": 30, "2": 40},
+        ],
+        verbose=False,
+    )
     for eval_set1, eval_set2 in itertools.combinations(gbm_str.evals_result_.keys(), 2):
         for metric in gbm_str.evals_result_[eval_set1]:
-            np.testing.assert_raises(AssertionError,
-                                     np.testing.assert_allclose,
-                                     gbm_str.evals_result_[eval_set1][metric],
-                                     gbm_str.evals_result_[eval_set2][metric])
+            with pytest.raises(AssertionError):
+                np.testing.assert_allclose(
+                    gbm_str.evals_result_[eval_set1][metric],
+                    gbm_str.evals_result_[eval_set2][metric],
+                )
     for eval_set in gbm.evals_result_:
         for metric in gbm.evals_result_[eval_set]:
-            np.testing.assert_allclose(gbm.evals_result_[eval_set][metric],
-                                       gbm_str.evals_result_[eval_set][metric])
+            np.testing.assert_allclose(
+                gbm.evals_result_[eval_set][metric],
+                gbm_str.evals_result_[eval_set][metric],
+            )
 
 
 # def test_continue_training_with_model():

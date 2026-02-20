@@ -11,6 +11,7 @@ ignore=
   http.*amd.com/.*
   https?://doi\.org/10\.1080/.*
   https?://research\.microsoft\.com/.*
+  https?://.*swig\.org/.*
 ignorewarnings=http-robots-denied,https-certificate-error
 checkextern=1
 

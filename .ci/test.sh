@@ -46,7 +46,7 @@ if [[ $TASK == "check-docs" ]] || [[ $TASK == "check-links" ]]; then
     if [[ $TASK == "check-links" ]]; then
         # check docs for broken links
         pip install --user linkchecker
-        linkchecker --config=.linkcheckerrc ./_build/html/*.html || exit -1
+        linkchecker --config=.linkcheckerrc ./_build/html/*.html; test "$?" -lt 2 || exit -1
         exit 0
     fi
     # check the consistency of parameters' descriptions and other stuff

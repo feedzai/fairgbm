@@ -32,9 +32,15 @@ if [[ $TASK == "check-docs" ]] || [[ $TASK == "check-links" ]]; then
     pip install --user -r requirements.txt
     # check reStructuredText formatting
     cd $BUILD_DIRECTORY/python-package
-    rstcheck --report warning `find . -type f -name "*.rst"` || exit -1
+    RST_FILES=$(find . -type f -name "*.rst")
+    if [ -n "$RST_FILES" ]; then
+        rstcheck --report-level warning $RST_FILES || exit -1
+    fi
     cd $BUILD_DIRECTORY/docs
-    rstcheck --report warning --ignore-directives=autoclass,autofunction,doxygenfile `find . -type f -name "*.rst"` || exit -1
+    RST_FILES=$(find . -type f -name "*.rst")
+    if [ -n "$RST_FILES" ]; then
+        rstcheck --report-level warning --ignore-directives=autoclass,autofunction,doxygenfile,autosummary $RST_FILES || exit -1
+    fi
     # build docs
     make html || exit -1
     if [[ $TASK == "check-links" ]]; then

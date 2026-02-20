@@ -986,6 +986,7 @@ struct Config {
   double score_threshold = 0.5;
 
   // type = string
+  // default = ""
   // desc = used only for constrained optimization (ignored for standard LightGBM)
   // desc = type of GLOBAL constraint to enforce during training
   // desc = can take values "fpr", "fnr", or "fpr,fnr"

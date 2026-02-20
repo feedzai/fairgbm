@@ -598,13 +598,13 @@ And open an issue in GitHub `here`_ with that log.
 
 .. _Khronos official OpenCL headers: https://github.com/KhronosGroup/OpenCL-Headers
 
-.. _this: http://iweb.dl.sourceforge.net/project/mingw-w64/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/installer/mingw-w64-install.exe
+.. _this: https://sourceforge.net/projects/mingw-w64/files/
 
 .. _Boost: https://www.boost.org/users/history/
 
-.. _Prebuilt Boost x86_64: https://mirror.linux-ia64.org/fedora/linux/releases/32/Everything/x86_64/os/Packages/m/mingw64-boost-static-1.66.0-6.fc32.noarch.rpm
+.. _Prebuilt Boost x86_64: https://packages.fedoraproject.org/pkgs/mingw-boost/mingw64-boost-static/
 
-.. _Prebuilt Boost i686: https://mirror.linux-ia64.org/fedora/linux/releases/32/Everything/x86_64/os/Packages/m/mingw32-boost-static-1.66.0-6.fc32.noarch.rpm
+.. _Prebuilt Boost i686: https://packages.fedoraproject.org/pkgs/mingw-boost/mingw32-boost-static/
 
 .. _7zip: https://www.7-zip.org/download.html
 

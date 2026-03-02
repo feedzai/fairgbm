@@ -22,6 +22,17 @@ if [[ $OS_NAME == "macos" ]]; then
         -o miniforge.sh \
         https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-x86_64.sh
 else  # Linux
+    # Ensure CA certificates are available for HTTPS
+    sudo apt-get update
+    sudo apt-get install --no-install-recommends -y ca-certificates
+    sudo update-ca-certificates
+
+    # Always install cmake, build-essential, and compiler (needed for local testing with act)
+    sudo apt-get install --no-install-recommends -y cmake build-essential
+    if [[ $COMPILER == "clang" ]]; then
+        sudo apt-get install --no-install-recommends -y clang libomp-dev
+    fi
+
     if [[ $IN_UBUNTU_LATEST_CONTAINER == "true" ]]; then
         # fixes error "unable to initialize frontend: Dialog"
         # https://github.com/moby/moby/issues/27988#issuecomment-462809153
@@ -41,8 +52,8 @@ else  # Linux
             iputils-ping \
             jq \
             libcurl4 \
-            libicu66 \
-            libssl1.1 \
+            libicu74 \
+            libssl3 \
             libunwind8 \
             locales \
             netcat \
@@ -97,17 +108,22 @@ else  # Linux
     fi
     if [[ $SETUP_CONDA != "false" ]]; then
         ARCH=$(uname -m)
+        # Note: -k flag used for local testing with act (SSL cert issues in Docker)
+        # GitHub Actions doesn't need this flag
         curl \
-            -sL \
+            -fsSLk \
             -o miniforge.sh \
-            https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-${ARCH}.sh
+            https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-${ARCH}.sh \
+            || { echo "Failed to download miniforge"; exit 1; }
     fi
 fi
 
 if [[ "${TASK}" != "r-package" ]] && [[ "${TASK}" != "r-rchk" ]]; then
     if [[ $SETUP_CONDA != "false" ]]; then
         sh miniforge.sh -b -p $CONDA
+        # Add conda to PATH so subsequent commands work
+        export PATH="$CONDA/bin:$PATH"
+        conda config --set always_yes yes --set changeps1 no
+        conda update -q -y conda
     fi
-    conda config --set always_yes yes --set changeps1 no
-    conda update -q -y conda
 fi

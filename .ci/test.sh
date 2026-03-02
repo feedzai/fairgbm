@@ -24,12 +24,14 @@ fi
 conda create -q -y -n $CONDA_ENV python=$PYTHON_VERSION
 source activate $CONDA_ENV
 
+conda install -q -y -n $CONDA_ENV cmake
+
 cd $BUILD_DIRECTORY
 
 if [[ $TASK == "check-docs" ]] || [[ $TASK == "check-links" ]]; then
     cd $BUILD_DIRECTORY/docs
     conda install -q -y -n $CONDA_ENV -c conda-forge doxygen rstcheck
-    pip install --user -r requirements.txt
+    pip install -r requirements.txt
     # check reStructuredText formatting
     cd $BUILD_DIRECTORY/python-package
     rstcheck --report warning `find . -type f -name "*.rst"` || exit -1
@@ -39,7 +41,7 @@ if [[ $TASK == "check-docs" ]] || [[ $TASK == "check-links" ]]; then
     make html || exit -1
     if [[ $TASK == "check-links" ]]; then
         # check docs for broken links
-        pip install --user linkchecker
+        pip install linkchecker
         linkchecker --config=.linkcheckerrc ./_build/html/*.html || exit -1
         exit 0
     fi
@@ -63,7 +65,7 @@ if [[ $TASK == "lint" ]]; then
             libxml2 \
             "r-xfun>=0.19" \
             "r-lintr>=2.0"
-    pip install --user cpplint isort mypy
+    pip install cpplint isort mypy
     echo "Linting Python code"
     pycodestyle --ignore=E501,W503 --exclude=./.nuget,./external_libs . || exit -1
     pydocstyle --convention=numpy --add-ignore=D105 --match-dir="^(?!^external_libs|test|example).*" --match="(?!^test_|setup).*\.py" . || exit -1
@@ -114,7 +116,7 @@ fi
 
 if [[ $TASK == "sdist" ]]; then
     cd $BUILD_DIRECTORY/python-package && python setup.py sdist || exit -1
-    pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz -v || exit -1
+    pip install $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz -v || exit -1
     if [[ $PRODUCES_ARTIFACTS == "true" ]]; then
         cp $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz $BUILD_ARTIFACTSTAGINGDIRECTORY
     fi
@@ -139,7 +141,7 @@ elif [[ $TASK == "bdist" ]]; then
             cp dist/fairgbm-$LGB_VER-py3-none-$PLATFORM.whl $BUILD_ARTIFACTSTAGINGDIRECTORY
         fi
     fi
-    pip install --user $BUILD_DIRECTORY/python-package/dist/*.whl || exit -1
+    pip install $BUILD_DIRECTORY/python-package/dist/*.whl || exit -1
     pytest $BUILD_DIRECTORY/tests || exit -1
     exit 0
 fi
@@ -151,12 +153,12 @@ if [[ $TASK == "gpu" ]]; then
     grep -q 'std::string device_type = "gpu"' $BUILD_DIRECTORY/include/LightGBM/config.h || exit -1  # make sure that changes were really done
     if [[ $METHOD == "pip" ]]; then
         cd $BUILD_DIRECTORY/python-package && python setup.py sdist || exit -1
-        pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz -v --install-option=--gpu --install-option="--opencl-include-dir=$AMDAPPSDK_PATH/include/" || exit -1
+        pip install $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz -v --install-option=--gpu --install-option="--opencl-include-dir=$AMDAPPSDK_PATH/include/" || exit -1
         pytest $BUILD_DIRECTORY/tests/python_package_test || exit -1
         exit 0
     elif [[ $METHOD == "wheel" ]]; then
         cd $BUILD_DIRECTORY/python-package && python setup.py bdist_wheel --gpu --opencl-include-dir="$AMDAPPSDK_PATH/include/" || exit -1
-        pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER*.whl -v || exit -1
+        pip install $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER*.whl -v || exit -1
         pytest $BUILD_DIRECTORY/tests || exit -1
         exit 0
     elif [[ $METHOD == "source" ]]; then
@@ -167,12 +169,12 @@ elif [[ $TASK == "cuda" ]]; then
     grep -q 'std::string device_type = "cuda"' $BUILD_DIRECTORY/include/LightGBM/config.h || exit -1  # make sure that changes were really done
     if [[ $METHOD == "pip" ]]; then
         cd $BUILD_DIRECTORY/python-package && python setup.py sdist || exit -1
-        pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz -v --install-option=--cuda || exit -1
+        pip install $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz -v --install-option=--cuda || exit -1
         pytest $BUILD_DIRECTORY/tests/python_package_test || exit -1
         exit 0
     elif [[ $METHOD == "wheel" ]]; then
         cd $BUILD_DIRECTORY/python-package && python setup.py bdist_wheel --cuda || exit -1
-        pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER*.whl -v || exit -1
+        pip install $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER*.whl -v || exit -1
         pytest $BUILD_DIRECTORY/tests || exit -1
         exit 0
     elif [[ $METHOD == "source" ]]; then
@@ -181,12 +183,12 @@ elif [[ $TASK == "cuda" ]]; then
 elif [[ $TASK == "mpi" ]]; then
     if [[ $METHOD == "pip" ]]; then
         cd $BUILD_DIRECTORY/python-package && python setup.py sdist || exit -1
-        pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz -v || exit -1
+        pip install $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER.tar.gz -v || exit -1
         pytest $BUILD_DIRECTORY/tests/python_package_test || exit -1
         exit 0
     elif [[ $METHOD == "wheel" ]]; then
         cd $BUILD_DIRECTORY/python-package && python setup.py bdist_wheel --mpi || exit -1
-        pip install --user $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER*.whl -v || exit -1
+        pip install $BUILD_DIRECTORY/python-package/dist/fairgbm-$LGB_VER*.whl -v || exit -1
         pytest $BUILD_DIRECTORY/tests || exit -1
         exit 0
     elif [[ $METHOD == "source" ]]; then
@@ -198,7 +200,7 @@ fi
 
 make _lightgbm -j4 || exit -1
 
-cd $BUILD_DIRECTORY/python-package && python setup.py install --precompile --user || exit -1
+cd $BUILD_DIRECTORY/python-package && python setup.py install --precompile || exit -1
 pytest $BUILD_DIRECTORY/tests || exit -1
 
 if [[ $TASK == "regular" ]]; then

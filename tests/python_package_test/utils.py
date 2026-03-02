@@ -2,26 +2,32 @@
 from functools import lru_cache
 from pathlib import Path
 from typing import Tuple
-import logging
 
-import pytest
 import numpy as np
+import pytest
 import sklearn.datasets
+from sklearn.metrics import confusion_matrix, roc_curve
 from sklearn.utils import check_random_state
-from sklearn.metrics import roc_curve, confusion_matrix
 
 
 @lru_cache(maxsize=None)
 def load_baf_base():
     pd = pytest.importorskip(
         "pandas",
-        reason="The `pandas` package must be installed to import BAF-base and run fairness tests.")
+        reason="The `pandas` package must be installed to import BAF-base and run fairness tests.",
+    )
 
     local_root_path = Path(__file__).parent.parent.parent / "examples" / "FairGBM"
     label_col = "fraud_bool"
     sensitive_col = "customer_age"
     # month_col = "month"
-    categorical_cols = ["payment_type", "employment_status", "housing_status", "source", "device_os"]
+    categorical_cols = [
+        "payment_type",
+        "employment_status",
+        "housing_status",
+        "source",
+        "device_os",
+    ]
     age_category_threshold = 50
 
     def split_X_Y_S(path):
@@ -49,7 +55,8 @@ def load_baf_base():
 def load_compas():
     pd = pytest.importorskip(
         "pandas",
-        reason="The `pandas` package must be installed to import COMPAS and run fairness tests.")
+        reason="The `pandas` package must be installed to import COMPAS and run fairness tests.",
+    )
 
     local_root_path = Path(__file__).parent.parent.parent / "examples" / "FairGBM-other"
     target_col_name = "two_year_recid"
@@ -59,7 +66,13 @@ def load_compas():
         data = pd.read_csv(path, header=0, sep="\t", index_col=None)
         Y = data[target_col_name]
         S = data[sensitive_col_name]
-        X = data[[col for col in data.columns if col not in {target_col_name, sensitive_col_name}]]
+        X = data[
+            [
+                col
+                for col in data.columns
+                if col not in {target_col_name, sensitive_col_name}
+            ]
+        ]
         return X, Y, S
 
     data_paths = {
@@ -71,8 +84,17 @@ def load_compas():
 
 
 @lru_cache(maxsize=None)
+def _fetch_regression_dataset():
+    """California housing dataset: same API as legacy load_boston, no ethical concerns."""
+    return sklearn.datasets.fetch_california_housing()
+
+
 def load_boston(**kwargs):
-    return sklearn.datasets.load_boston(**kwargs)
+    """Load a regression dataset (California housing). Replaces deprecated load_boston."""
+    data = _fetch_regression_dataset()
+    if kwargs.get("return_X_y", False):
+        return data.data, data.target
+    return data
 
 
 @lru_cache(maxsize=None)
@@ -95,8 +117,16 @@ def load_linnerud(**kwargs):
     return sklearn.datasets.load_linnerud(**kwargs)
 
 
-def make_ranking(n_samples=100, n_features=20, n_informative=5, gmax=2,
-                 group=None, random_gs=False, avg_gs=10, random_state=0):
+def make_ranking(
+    n_samples=100,
+    n_features=20,
+    n_informative=5,
+    gmax=2,
+    group=None,
+    random_gs=False,
+    avg_gs=10,
+    random_state=0,
+):
     """Generate a learning-to-rank dataset - feature vectors grouped together with
     integer-valued graded relevance scores. Replace this with a sklearn.datasets function
     if ranking objective becomes supported in sklearn.datasets module.
@@ -142,11 +172,13 @@ def make_ranking(n_samples=100, n_features=20, n_informative=5, gmax=2,
     relvalues = range(gmax + 1)
 
     # build y/target and group-id vectors with user-specified group sizes.
-    if group is not None and hasattr(group, '__len__'):
+    if group is not None and hasattr(group, "__len__"):
         n_samples = np.sum(group)
 
         for i, gsize in enumerate(group):
-            y_vec = np.concatenate((y_vec, rnd_generator.choice(relvalues, size=gsize, replace=True)))
+            y_vec = np.concatenate(
+                (y_vec, rnd_generator.choice(relvalues, size=gsize, replace=True))
+            )
             group_id_vec = np.concatenate((group_id_vec, [i] * gsize))
 
     # build y/target and group-id vectors according to n_samples, avg_gs, and random_gs.
@@ -158,7 +190,9 @@ def make_ranking(n_samples=100, n_features=20, n_informative=5, gmax=2,
             if gsize < 1:
                 continue
 
-            y_vec = np.append(y_vec, rnd_generator.choice(relvalues, size=gsize, replace=True))
+            y_vec = np.append(
+                y_vec, rnd_generator.choice(relvalues, size=gsize, replace=True)
+            )
             group_id_vec = np.append(group_id_vec, [gid] * gsize)
             gid += 1
 
@@ -176,11 +210,11 @@ def make_ranking(n_samples=100, n_features=20, n_informative=5, gmax=2,
 
 
 def threshold_at_target(
-        y_true: np.ndarray,
-        y_pred: np.ndarray,
-        target_tpr: float = None,
-        target_fpr: float = None,
-    ) -> float:
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    target_tpr: float = None,
+    target_fpr: float = None,
+) -> float:
     """Computes the threshold at the given target.
     Does not untie rows, may miss target in the presence of ties.
     Uses scikit-learn to compute ROC curve.
@@ -198,12 +232,16 @@ def threshold_at_target(
     threshold = thresholds[threshold_idx]
 
     # Sanity check!
-    y_pred_binarized = (y_pred >= threshold)
+    y_pred_binarized = y_pred >= threshold
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred_binarized).ravel()
     actual_tpr = tp / (tp + fn)
     actual_fpr = fp / (fp + tn)
-    if (target_tpr and actual_tpr < target_tpr) or (target_fpr and actual_fpr > target_fpr):
-        raise Exception(f"Missed target metric: TPR={actual_tpr:.1%}, FPR={actual_fpr:.1%};")
+    if (target_tpr and actual_tpr < target_tpr) or (
+        target_fpr and actual_fpr > target_fpr
+    ):
+        raise Exception(
+            f"Missed target metric: TPR={actual_tpr:.1%}, FPR={actual_fpr:.1%};"
+        )
 
     return threshold
 
@@ -224,17 +262,13 @@ def evaluate_fairness(y_true, y_pred, sensitive_col, metric_col="FPR"):
     aequitas_group = pytest.importorskip("aequitas.group")
 
     g = aequitas_group.Group()
-    aequitas_df = pd.DataFrame({
-        "label": y_true,
-        "prediction": y_pred,
-        "sensitive": sensitive_col.astype(str)
-    })
+    aequitas_df = pd.DataFrame(
+        {"label": y_true, "prediction": y_pred, "sensitive": sensitive_col.astype(str)}
+    )
 
     aequitas_results, _ = g.get_crosstabs(
-        aequitas_df,
-        label_col="label",
-        score_col="prediction",
-        attr_cols=["sensitive"])
+        aequitas_df, label_col="label", score_col="prediction", attr_cols=["sensitive"]
+    )
 
     perf_metrics = aequitas_results[metric_col.lower()]
     return perf_metrics.min() / perf_metrics.max()

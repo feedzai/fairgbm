@@ -325,7 +325,7 @@ if __name__ == "__main__":
                   os.path.join(CURRENT_DIR, 'fairgbm', 'VERSION.txt'),
                   verbose=0)  # type:ignore
     version = open(os.path.join(CURRENT_DIR, 'fairgbm', 'VERSION.txt'), encoding='utf-8').read().strip()
-    
+
     if os.path.isfile(os.path.join(CURRENT_DIR, os.path.pardir, 'README.md')):
         copy_file(os.path.join(CURRENT_DIR, os.path.pardir, 'README.md'),
                   os.path.join(CURRENT_DIR, 'README.md'),
@@ -373,8 +373,8 @@ if __name__ == "__main__":
                        'Intended Audience :: Science/Research',
                        'Topic :: Scientific/Engineering :: Artificial Intelligence',
                        'Natural Language :: English',
-                    #    'Operating System :: MacOS',   # https://github.com/feedzai/fairgbm/issues/45
-                    #    'Operating System :: Microsoft :: Windows',
+                       # 'Operating System :: MacOS',  # https://github.com/feedzai/fairgbm/issues/45
+                       # 'Operating System :: Microsoft :: Windows',
                        'Operating System :: POSIX',
                        'Operating System :: POSIX :: Linux',
                        'Programming Language :: Python :: 3',

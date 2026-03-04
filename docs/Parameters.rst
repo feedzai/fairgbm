@@ -167,6 +167,20 @@ Core Parameters
 
    -  in ``dart``, it also affects on normalization weights of dropped trees
 
+-  ``multiplier_learning_rate`` :raw-html:`<a id="multiplier_learning_rate" title="Permalink to this parameter" href="#multiplier_learning_rate">&#x1F517;&#xFE0E;</a>`, default = ``0.1``, type = double, aliases: ``multiplier_shrinkage_rate``, ``lagrangian_learning_rate``, ``lagrangian_multiplier_learning_rate``, constraints: ``multiplier_learning_rate > 0.0``
+
+   -  used only for constrained optimization (ignored for standard LightGBM)
+
+   -  learning rate for the Lagrangian multipliers (which enforce the constraints)
+
+-  ``init_lagrangian_multipliers`` :raw-html:`<a id="init_lagrangian_multipliers" title="Permalink to this parameter" href="#init_lagrangian_multipliers">&#x1F517;&#xFE0E;</a>`, default = ``0,0,...,0``, type = multi-double, aliases: ``lagrangian_multipliers``, ``init_multipliers``
+
+   -  used only for constrained optimization (ignored for standard LightGBM)
+
+   -  list representing the magnitude of *initial* (first iteration only) penalties for each constraint
+
+   -  list should have the same number of elements as the number of constraints
+
 -  ``num_leaves`` :raw-html:`<a id="num_leaves" title="Permalink to this parameter" href="#num_leaves">&#x1F517;&#xFE0E;</a>`, default = ``31``, type = int, aliases: ``num_leaf``, ``max_leaves``, ``max_leaf``, constraints: ``1 < num_leaves <= 131072``
 
    -  max number of leaves in one tree
@@ -1030,6 +1044,104 @@ Objective Parameters
    -  relevant gain for labels. For example, the gain of label ``2`` is ``3`` in case of default label gains
 
    -  separate by ``,``
+
+-  ``constraint_type`` :raw-html:`<a id="constraint_type" title="Permalink to this parameter" href="#constraint_type">&#x1F517;&#xFE0E;</a>`, default = ``None``, type = string
+
+   -  used only for constrained optimization (ignored for standard LightGBM)
+
+   -  type of group-wise constraint to enforce during training
+
+   -  can take values "fpr", "fnr", or "fpr,fnr"
+
+-  ``constraint_stepwise_proxy`` :raw-html:`<a id="constraint_stepwise_proxy" title="Permalink to this parameter" href="#constraint_stepwise_proxy">&#x1F517;&#xFE0E;</a>`, default = ``cross_entropy``, type = string, aliases: ``constraint_proxy_function``, ``constraint_stepwise_proxy_function``
+
+   -  used only for constrained optimization (ignored for standard LightGBM)
+
+   -  type of proxy function to use in group-wise constraints
+
+   -  this will be used as a differentiable proxy for the stepwise function in the gradient descent step
+
+   -  can take values "hinge", "quadratic", or "cross_entropy"
+
+-  ``objective_stepwise_proxy`` :raw-html:`<a id="objective_stepwise_proxy" title="Permalink to this parameter" href="#objective_stepwise_proxy">&#x1F517;&#xFE0E;</a>`, default = ``None``, type = string, aliases: ``objective_proxy_function``, ``objective_stepwise_proxy_function``
+
+   -  used only for constrained optimization (ignored for standard LightGBM)
+
+   -  type of proxy function to use as the proxy objective
+
+   -  only used when optimizing for functions with a stepwise (e.g., FNR, FPR)
+
+-  ``stepwise_proxy_margin`` :raw-html:`<a id="stepwise_proxy_margin" title="Permalink to this parameter" href="#stepwise_proxy_margin">&#x1F517;&#xFE0E;</a>`, default = ``1.0``, type = double, aliases: ``proxy_margin``, constraints: ``stepwise_proxy_margin > 0``
+
+   -  used only for constrained optimization (ignored for standard LightGBM)
+
+   -  for `ConstrainedCrossEntropy`: the value of the function at x=0; f(0)=stepwise_proxy_margin; (vertical margin)
+
+   -  for other constrained objectives: the horizontal margin of the function; i.e., for stepwise_proxy_margin=1, the proxy function will be 0 until x=-1 for FPR and non-zero onwards, or non-zero until x=1 for FNR, and non-zero onwards;
+
+   -  **TODO**: set all functions to use this value as the vertical margin
+
+-  ``constraint_fpr_tolerance`` :raw-html:`<a id="constraint_fpr_tolerance" title="Permalink to this parameter" href="#constraint_fpr_tolerance">&#x1F517;&#xFE0E;</a>`, default = ``0.01``, type = double, aliases: ``constraint_fpr_slack``, ``constraint_fpr_delta``, constraints: ``0 <= constraint_fpr_tolerance < 1.0``
+
+   -  used only for constrained optimization (ignored for standard LightGBM)
+
+   -  the slack when fulfilling group-wise FPR constraints
+
+   -  when using the value 0.0 this will enforce group-wise FPR to be *exactly* equal
+
+-  ``constraint_fnr_tolerance`` :raw-html:`<a id="constraint_fnr_tolerance" title="Permalink to this parameter" href="#constraint_fnr_tolerance">&#x1F517;&#xFE0E;</a>`, default = ``0.01``, type = double, aliases: ``constraint_fnr_slack``, ``constraint_fnr_delta``, constraints: ``0 <= constraint_fnr_tolerance < 1.0``
+
+   -  used only for constrained optimization (ignored for standard LightGBM)
+
+   -  the slack when fulfilling group-wise FNR constraints
+
+   -  when using the value 0.0 this will enforce group-wise FNR to be *exactly* equal
+
+-  ``score_threshold`` :raw-html:`<a id="score_threshold" title="Permalink to this parameter" href="#score_threshold">&#x1F517;&#xFE0E;</a>`, default = ``0.5``, type = double, constraints: ``0 <= score_threshold < 1.0``
+
+   -  used only for constrained optimization (ignored for standard LightGBM)
+
+   -  score threshold used for computing the GROUP-WISE confusion matrices
+
+   -  used to compute violation of group-wise constraints during training
+
+-  ``global_constraint_type`` :raw-html:`<a id="global_constraint_type" title="Permalink to this parameter" href="#global_constraint_type">&#x1F517;&#xFE0E;</a>`, default = ``""``, type = string
+
+   -  used only for constrained optimization (ignored for standard LightGBM)
+
+   -  type of GLOBAL constraint to enforce during training
+
+   -  can take values "fpr", "fnr", or "fpr,fnr"
+
+   -  must be paired with the arguments "global_target_<fpr|fnr>" accordingly
+
+-  ``global_target_fpr`` :raw-html:`<a id="global_target_fpr" title="Permalink to this parameter" href="#global_target_fpr">&#x1F517;&#xFE0E;</a>`, default = ``1.0``, type = double, aliases: ``global_fpr``, ``target_global_fpr``, constraints: ``0 <= global_target_fpr <= 1.0``
+
+   -  used only for constrained optimization (ignored for standard LightGBM)
+
+   -  target rate for the global FPR (inequality) constraint
+
+   -  constraint is fulfilled with global_fpr <= global_target_fpr
+
+   -  the default value of 1 means that this constraint is always fulfilled (never active)
+
+-  ``global_target_fnr`` :raw-html:`<a id="global_target_fnr" title="Permalink to this parameter" href="#global_target_fnr">&#x1F517;&#xFE0E;</a>`, default = ``1.0``, type = double, aliases: ``global_fnr``, ``target_global_fnr``, constraints: ``0 <= global_target_fnr <= 1.0``
+
+   -  used only for constrained optimization (ignored for standard LightGBM)
+
+   -  target rate for the global FNR (inequality) constraint
+
+   -  constraint is fulfilled with global_fnr <= global_target_fnr
+
+   -  the default value of 1 means that this constraint is always fulfilled (never active)
+
+-  ``global_score_threshold`` :raw-html:`<a id="global_score_threshold" title="Permalink to this parameter" href="#global_score_threshold">&#x1F517;&#xFE0E;</a>`, default = ``0.5``, type = double, constraints: ``0 <= global_score_threshold < 1.0``
+
+   -  used only for constrained optimization (ignored for standard LightGBM)
+
+   -  score threshold for computing the GLOBAL confusion matrix
+
+   -  used to compute violation of GLOBAL constraints during training
 
 Metric Parameters
 -----------------

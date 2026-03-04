@@ -32,43 +32,37 @@
 namespace LightGBM {
 namespace Constrained {
 
-class HingeProxyLoss : public ProxyLoss
-{
-public:
+class HingeProxyLoss : public ProxyLoss {
+ public:
+  using ProxyLoss::ProxyLoss;
 
-    using ProxyLoss::ProxyLoss;
+  /*! \brief virtual destructor */
+  ~HingeProxyLoss() override = default;
 
-    /*! \brief virtual destructor */
-    ~HingeProxyLoss() override = default;
+  inline double ComputeInstancewiseFPR(double score) const override {
+    // LABEL is assumed to be NEGATIVE (0)
+    return std::max(0., score + proxy_margin_);
+    //        return score >= -proxy_margin_ ? score + proxy_margin_ : 0.;  // NOTE: equivalent notation
+  }
 
-    inline double ComputeInstancewiseFPR(double score) const override
-    {
-        // LABEL is assumed to be NEGATIVE (0)
-        return std::max(0., score + proxy_margin_);
-//        return score >= -proxy_margin_ ? score + proxy_margin_ : 0.;  // NOTE: equivalent notation
-    }
+  inline double ComputeInstancewiseFNR(double score) const override {
+    // LABEL is assumed to be POSITIVE (1)
+    return std::max(0., -score + proxy_margin_);
+    //        return score <= proxy_margin_ ? -score + proxy_margin_ : 0.;  // NOTE: equivalent notation
+  }
 
-    inline double ComputeInstancewiseFNR(double score) const override
-    {
-        // LABEL is assumed to be POSITIVE (1)
-        return std::max(0., -score + proxy_margin_);
-//        return score <= proxy_margin_ ? -score + proxy_margin_ : 0.;  // NOTE: equivalent notation
-    }
+  inline double ComputeInstancewiseFPRGradient(double score) const override {
+    // LABEL is assumed to be NEGATIVE (0)
+    return score >= -proxy_margin_ ? 1. : 0.;
+  }
 
-    inline double ComputeInstancewiseFPRGradient(double score) const override
-    {
-        // LABEL is assumed to be NEGATIVE (0)
-        return score >= -proxy_margin_ ? 1. : 0.;
-    }
-
-    inline double ComputeInstancewiseFNRGradient(double score) const override
-    {
-        // LABEL is assumed to be POSITIVE (1)
-        return score <= proxy_margin_ ? -1. : 0.;
-    }
+  inline double ComputeInstancewiseFNRGradient(double score) const override {
+    // LABEL is assumed to be POSITIVE (1)
+    return score <= proxy_margin_ ? -1. : 0.;
+  }
 };
 
-}   // Constrained
-}   // LightGBM
+}  // namespace Constrained
+}  // namespace LightGBM
 
 #endif  // LIGHTGBM_PROXY_LOSSES_HINGE_HPP_

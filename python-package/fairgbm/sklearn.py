@@ -1207,11 +1207,11 @@ class FairGBMClassifier(LGBMClassifier):
     FAIRGBM_OBJECTIVE = 'constrained_cross_entropy'
 
     def __init__(self, boosting_type='gbdt', num_leaves=31,
-                 max_depth=-1, learning_rate=0.1, n_estimators=100, 
-                 subsample_for_bin=200000, class_weight=None, 
-                 min_split_gain=0, min_child_weight=0.001, min_child_samples=20, 
-                 subsample=1, subsample_freq=0, colsample_bytree=1, 
-                 reg_alpha=0, reg_lambda=0, random_state=None, 
+                 max_depth=-1, learning_rate=0.1, n_estimators=100,
+                 subsample_for_bin=200000, class_weight=None,
+                 min_split_gain=0, min_child_weight=0.001, min_child_samples=20,
+                 subsample=1, subsample_freq=0, colsample_bytree=1,
+                 reg_alpha=0, reg_lambda=0, random_state=None,
                  n_jobs=-1, silent=True, importance_type='split',
                  multiplier_learning_rate=0.1, constraint_type='FPR,FNR',
                  global_constraint_type='', global_target_fpr=0.99,
@@ -1239,7 +1239,50 @@ class FairGBMClassifier(LGBMClassifier):
             early_stopping_rounds=None, verbose=True,
             feature_name='auto', categorical_feature='auto',
             callbacks=None, init_model=None):
+        """Fit the FairGBM classifier with fairness constraints.
 
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data.
+        y : array-like of shape (n_samples,)
+            Target values.
+        constraint_group : array-like of shape (n_samples,)
+            Group membership for fairness constraints.
+        sample_weight : array-like of shape (n_samples,), optional
+            Weights of training data.
+        init_score : array-like of shape (n_samples,), optional
+            Init score of training data.
+        eval_set : list, optional
+            A list of (X, y) tuples for validation.
+        eval_names : list of str, optional
+            Names of eval_set.
+        eval_sample_weight : list of array-like, optional
+            Weights of eval data.
+        eval_class_weight : list of dict, optional
+            Class weights of eval data.
+        eval_init_score : list of array-like, optional
+            Init score of eval data.
+        eval_metric : str, callable, list, optional
+            Evaluation metrics.
+        early_stopping_rounds : int, optional
+            Activates early stopping.
+        verbose : bool or int, optional
+            Verbosity level.
+        feature_name : list of str or 'auto', optional
+            Feature names.
+        categorical_feature : list of str or int or 'auto', optional
+            Categorical features.
+        callbacks : list of callable, optional
+            List of callback functions.
+        init_model : str, pathlib.Path, Booster, LGBMModel, optional
+            Model to continue training from.
+
+        Returns
+        -------
+        self : FairGBMClassifier
+            Returns self.
+        """
         return super().fit(X, y,
                            constraint_group=constraint_group,
                            sample_weight=sample_weight, init_score=init_score,

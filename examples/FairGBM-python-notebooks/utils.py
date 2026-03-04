@@ -10,14 +10,13 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
 
-
 DATA_DIR = Path(__file__).parent / "data"
 UCI_ADULT_TARGET_COL = "target"
 
 
 def load_uci_adult() -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Downloads and pre-processes the UCI Adult dataset.
-    
+
     Returns
     -------
     train_set, test_set : tuple[pd.DataFrame, pd.DataFrame]
@@ -33,7 +32,7 @@ def load_uci_adult() -> Tuple[pd.DataFrame, pd.DataFrame]:
     train_url = base_url + "adult.data"
     test_url = base_url + "adult.test"
     names_url = base_url + "adult.names"
-    
+
     # Make local data directory
     DATA_DIR.mkdir(exist_ok=True)
 
@@ -41,7 +40,7 @@ def load_uci_adult() -> Tuple[pd.DataFrame, pd.DataFrame]:
     train_path = wget.download(train_url, str(DATA_DIR))
     test_path = wget.download(test_url, str(DATA_DIR))
     names_path = wget.download(names_url, str(DATA_DIR))
-    
+
     return (
         _preprocess_uci_adult(train_path, names_path),
         _preprocess_uci_adult(test_path, names_path, skiprows=1),
@@ -56,9 +55,10 @@ def _preprocess_uci_adult(data_path, names_path, **read_kwargs) -> pd.DataFrame:
 
     with open(names_path, "r") as f_in:
         lines = f_in.readlines()
-        for l in lines:
-            match = line_regexp.match(l)
-            if not match: continue
+        for line in lines:
+            match = line_regexp.match(line)
+            if not match:
+                continue
 
             col_name = match.group(1)
             col_values = match.group(2).split(", ")
@@ -84,7 +84,7 @@ def _preprocess_uci_adult(data_path, names_path, **read_kwargs) -> pd.DataFrame:
             float if col_value == "continuous" else "category"
         ) for col_name, col_value in column_map.items()
     })
-    
+
     # Strip whitespace from categorical values
     for col in data.columns:
         if pd.api.types.is_categorical_dtype(data[col]):
@@ -115,10 +115,10 @@ def compute_fairness_ratio(y_true: np.ndarray, y_pred: np.ndarray, s_true, metri
     """
     metric = metric.lower()
     valid_perf_metrics = ("fpr", "fnr", "tpr", "tnr")
-    
+
     def compute_metric(y_true, y_pred):
         tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-        
+
         if metric == "fpr":
             return fp / (fp + tn)
         elif metric == "tnr":
@@ -133,7 +133,7 @@ def compute_fairness_ratio(y_true: np.ndarray, y_pred: np.ndarray, s_true, metri
     groupwise_metrics = []
     for group in pd.Series(s_true).unique():
         group_filter = (s_true == group)
-        
+
         groupwise_metrics.append(compute_metric(
             y_true[group_filter],
             y_pred[group_filter],

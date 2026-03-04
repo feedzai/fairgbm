@@ -3,12 +3,12 @@ import os
 
 import numpy as np
 import pytest
+from fairgbm.compat import PANDAS_INSTALLED, pd_Series
 from scipy import sparse
 from sklearn.datasets import dump_svmlight_file, load_svmlight_file
 from sklearn.model_selection import train_test_split
 
 import fairgbm as lgb
-from fairgbm.compat import PANDAS_INSTALLED, pd_Series
 
 from .utils import load_breast_cancer
 
@@ -82,6 +82,7 @@ def test_basic(tmp_path):
         dump_svmlight_file(X_test, y_test, f, zero_based=False)
     np.testing.assert_raises_regex(lgb.basic.LightGBMError, bad_shape_error_msg,
                                    bst.predict, tname)
+
 
 def test_chunked_dataset():
     X_train, X_test, y_train, y_test = train_test_split(*load_breast_cancer(return_X_y=True), test_size=0.1,

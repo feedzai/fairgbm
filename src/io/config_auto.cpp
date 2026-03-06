@@ -37,6 +37,11 @@ const std::unordered_map<std::string, std::string>& Config::alias_table() {
   {"n_estimators", "num_iterations"},
   {"shrinkage_rate", "learning_rate"},
   {"eta", "learning_rate"},
+  {"multiplier_shrinkage_rate", "multiplier_learning_rate"},
+  {"lagrangian_learning_rate", "multiplier_learning_rate"},
+  {"lagrangian_multiplier_learning_rate", "multiplier_learning_rate"},
+  {"lagrangian_multipliers", "init_lagrangian_multipliers"},
+  {"init_multipliers", "init_lagrangian_multipliers"},
   {"num_leaf", "num_leaves"},
   {"max_leaves", "num_leaves"},
   {"max_leaf", "num_leaves"},
@@ -148,6 +153,19 @@ const std::unordered_map<std::string, std::string>& Config::alias_table() {
   {"num_classes", "num_class"},
   {"unbalance", "is_unbalance"},
   {"unbalanced_sets", "is_unbalance"},
+  {"constraint_proxy_function", "constraint_stepwise_proxy"},
+  {"constraint_stepwise_proxy_function", "constraint_stepwise_proxy"},
+  {"objective_proxy_function", "objective_stepwise_proxy"},
+  {"objective_stepwise_proxy_function", "objective_stepwise_proxy"},
+  {"proxy_margin", "stepwise_proxy_margin"},
+  {"constraint_fpr_slack", "constraint_fpr_tolerance"},
+  {"constraint_fpr_delta", "constraint_fpr_tolerance"},
+  {"constraint_fnr_slack", "constraint_fnr_tolerance"},
+  {"constraint_fnr_delta", "constraint_fnr_tolerance"},
+  {"global_fpr", "global_target_fpr"},
+  {"target_global_fpr", "global_target_fpr"},
+  {"global_fnr", "global_target_fnr"},
+  {"target_global_fnr", "global_target_fnr"},
   {"metrics", "metric"},
   {"metric_types", "metric"},
   {"output_freq", "metric_freq"},
@@ -166,29 +184,6 @@ const std::unordered_map<std::string, std::string>& Config::alias_table() {
   {"mlist", "machine_list_filename"},
   {"workers", "machines"},
   {"nodes", "machines"},
-
-  // FairGBM parameters
-  {"groupwise_constraint_type", "constraint_type"},
-  {"fairness_constraint_type", "constraint_type"},
-  {"lagrangian_learning_rate", "multiplier_learning_rate"},
-  {"lagrangian_multiplier_learning_rate", "multiplier_learning_rate"},
-  {"init_lagrange_multipliers", "init_lagrangian_multipliers"},
-  {"lagrangian_multipliers", "init_lagrangian_multipliers"},
-  {"init_multipliers", "init_lagrangian_multipliers"},
-  {"output_dir", "debugging_output_dir"},
-  {"constraint_proxy_function", "constraint_stepwise_proxy"},
-  {"constraint_stepwise_proxy_function", "constraint_stepwise_proxy"},
-  {"objective_proxy_function", "objective_stepwise_proxy"},
-  {"objective_stepwise_proxy_function", "objective_stepwise_proxy"},
-  {"proxy_margin", "stepwise_proxy_margin"},
-  {"global_fpr", "global_target_fpr"},
-  {"target_global_fpr", "global_target_fpr"},
-  {"global_fnr", "global_target_fnr"},
-  {"target_global_fnr", "global_target_fnr"},
-  {"constraint_fpr_threshold", "constraint_fpr_tolerance"},
-  {"constraint_fnr_threshold", "constraint_fnr_tolerance"},
-  {"constraint_fpr_slack", "constraint_fpr_tolerance"},
-  {"constraint_fnr_slack", "constraint_fnr_tolerance"}
   });
   return aliases;
 }
@@ -204,6 +199,8 @@ const std::unordered_set<std::string>& Config::parameter_set() {
   "valid",
   "num_iterations",
   "learning_rate",
+  "multiplier_learning_rate",
+  "init_lagrangian_multipliers",
   "num_leaves",
   "tree_learner",
   "num_threads",
@@ -310,6 +307,17 @@ const std::unordered_set<std::string>& Config::parameter_set() {
   "lambdarank_truncation_level",
   "lambdarank_norm",
   "label_gain",
+  "constraint_type",
+  "constraint_stepwise_proxy",
+  "objective_stepwise_proxy",
+  "stepwise_proxy_margin",
+  "constraint_fpr_tolerance",
+  "constraint_fnr_tolerance",
+  "score_threshold",
+  "global_constraint_type",
+  "global_target_fpr",
+  "global_target_fnr",
+  "global_score_threshold",
   "metric",
   "metric_freq",
   "is_provide_training_metric",
@@ -325,23 +333,6 @@ const std::unordered_set<std::string>& Config::parameter_set() {
   "gpu_device_id",
   "gpu_use_dp",
   "num_gpu",
-
-  // FairGBM parameters
-  "debugging_output_dir",
-  "constraint_type",
-  "constraint_stepwise_proxy",
-  "objective_stepwise_proxy",
-  "stepwise_proxy_margin",
-  "constraint_group_column",
-  "constraint_fpr_tolerance",
-  "constraint_fnr_tolerance",
-  "score_threshold",
-  "init_lagrangian_multipliers",
-  "multiplier_learning_rate",
-  "global_constraint_type",
-  "global_target_fpr",
-  "global_target_fnr",
-  "global_score_threshold"
   });
   return params;
 }
@@ -361,6 +352,13 @@ void Config::GetMembersFromString(const std::unordered_map<std::string, std::str
 
   GetDouble(params, "learning_rate", &learning_rate);
   CHECK_GT(learning_rate, 0.0);
+
+  GetDouble(params, "multiplier_learning_rate", &multiplier_learning_rate);
+  CHECK_GT(multiplier_learning_rate, 0.0);
+
+  if (GetString(params, "init_lagrangian_multipliers", &tmp_str)) {
+    init_lagrangian_multipliers = Common::StringToArray<double>(tmp_str, ',');
+  }
 
   GetInt(params, "num_leaves", &num_leaves);
   CHECK_GT(num_leaves, 1);
@@ -630,6 +628,41 @@ void Config::GetMembersFromString(const std::unordered_map<std::string, std::str
     label_gain = Common::StringToArray<double>(tmp_str, ',');
   }
 
+  GetString(params, "constraint_type", &constraint_type);
+
+  GetString(params, "constraint_stepwise_proxy", &constraint_stepwise_proxy);
+
+  GetString(params, "objective_stepwise_proxy", &objective_stepwise_proxy);
+
+  GetDouble(params, "stepwise_proxy_margin", &stepwise_proxy_margin);
+  CHECK_GT(stepwise_proxy_margin, 0);
+
+  GetDouble(params, "constraint_fpr_tolerance", &constraint_fpr_tolerance);
+  CHECK_GE(constraint_fpr_tolerance, 0);
+  CHECK_LT(constraint_fpr_tolerance, 1.0);
+
+  GetDouble(params, "constraint_fnr_tolerance", &constraint_fnr_tolerance);
+  CHECK_GE(constraint_fnr_tolerance, 0);
+  CHECK_LT(constraint_fnr_tolerance, 1.0);
+
+  GetDouble(params, "score_threshold", &score_threshold);
+  CHECK_GE(score_threshold, 0);
+  CHECK_LT(score_threshold, 1.0);
+
+  GetString(params, "global_constraint_type", &global_constraint_type);
+
+  GetDouble(params, "global_target_fpr", &global_target_fpr);
+  CHECK_GE(global_target_fpr, 0);
+  CHECK_LE(global_target_fpr, 1.0);
+
+  GetDouble(params, "global_target_fnr", &global_target_fnr);
+  CHECK_GE(global_target_fnr, 0);
+  CHECK_LE(global_target_fnr, 1.0);
+
+  GetDouble(params, "global_score_threshold", &global_score_threshold);
+  CHECK_GE(global_score_threshold, 0);
+  CHECK_LT(global_score_threshold, 1.0);
+
   GetInt(params, "metric_freq", &metric_freq);
   CHECK_GT(metric_freq, 0);
 
@@ -667,49 +700,6 @@ void Config::GetMembersFromString(const std::unordered_map<std::string, std::str
 
   GetInt(params, "num_gpu", &num_gpu);
   CHECK_GT(num_gpu, 0);
-
-  // FairGBM parameters
-  Config::GetString(params, "debugging_output_dir", &debugging_output_dir);
-
-  Config::GetString(params, "constraint_type", &constraint_type);
-
-  Config::GetString(params, "constraint_stepwise_proxy", &constraint_stepwise_proxy);
-
-  Config::GetString(params, "objective_stepwise_proxy", &objective_stepwise_proxy);
-
-  Config::GetDouble(params, "stepwise_proxy_margin", &stepwise_proxy_margin);
-
-  Config::GetString(params, "constraint_group_column", &constraint_group_column);
-
-  Config::GetDouble(params, "constraint_fpr_tolerance", &constraint_fpr_tolerance);
-  CHECK_GE(constraint_fpr_tolerance, 0); CHECK_LT(constraint_fpr_tolerance, 1);
-
-  Config::GetDouble(params, "constraint_fnr_tolerance", &constraint_fnr_tolerance);
-  CHECK_GE(constraint_fnr_tolerance, 0); CHECK_LE(constraint_fnr_tolerance, 1);
-
-  Config::GetDouble(params, "score_threshold", &score_threshold);
-  CHECK_GE(score_threshold, 0); CHECK_LE(score_threshold, 1);
-
-  Config::GetDouble(params, "multiplier_learning_rate", &multiplier_learning_rate);
-  CHECK_GE(multiplier_learning_rate, 0);
-
-  if (GetString(params, "init_lagrangian_multipliers", &tmp_str)) {
-    init_lagrangian_multipliers = Common::StringToArray<double>(tmp_str, ',');
-    for (auto lag : init_lagrangian_multipliers)
-      CHECK_GE(lag, 0);
-  }
-
-  // Parameters for global constraints
-  Config::GetString(params, "global_constraint_type", &global_constraint_type);
-
-  Config::GetDouble(params, "global_target_fpr", &global_target_fpr);
-  CHECK_GE(global_target_fpr, 0); CHECK_LE(global_target_fpr, 1);
-
-  Config::GetDouble(params, "global_target_fnr", &global_target_fnr);
-  CHECK_GE(global_target_fnr, 0); CHECK_LE(global_target_fnr, 1);
-
-  Config::GetDouble(params, "global_score_threshold", &global_score_threshold);
-  CHECK_GE(global_score_threshold, 0); CHECK_LE(global_score_threshold, 1);
 }
 
 std::string Config::SaveMembersToString() const {
@@ -719,6 +709,8 @@ std::string Config::SaveMembersToString() const {
   str_buf << "[valid: " << Common::Join(valid, ",") << "]\n";
   str_buf << "[num_iterations: " << num_iterations << "]\n";
   str_buf << "[learning_rate: " << learning_rate << "]\n";
+  str_buf << "[multiplier_learning_rate: " << multiplier_learning_rate << "]\n";
+  str_buf << "[init_lagrangian_multipliers: " << Common::Join(init_lagrangian_multipliers, ",") << "]\n";
   str_buf << "[num_leaves: " << num_leaves << "]\n";
   str_buf << "[num_threads: " << num_threads << "]\n";
   str_buf << "[deterministic: " << deterministic << "]\n";
@@ -806,6 +798,17 @@ std::string Config::SaveMembersToString() const {
   str_buf << "[lambdarank_truncation_level: " << lambdarank_truncation_level << "]\n";
   str_buf << "[lambdarank_norm: " << lambdarank_norm << "]\n";
   str_buf << "[label_gain: " << Common::Join(label_gain, ",") << "]\n";
+  str_buf << "[constraint_type: " << constraint_type << "]\n";
+  str_buf << "[constraint_stepwise_proxy: " << constraint_stepwise_proxy << "]\n";
+  str_buf << "[objective_stepwise_proxy: " << objective_stepwise_proxy << "]\n";
+  str_buf << "[stepwise_proxy_margin: " << stepwise_proxy_margin << "]\n";
+  str_buf << "[constraint_fpr_tolerance: " << constraint_fpr_tolerance << "]\n";
+  str_buf << "[constraint_fnr_tolerance: " << constraint_fnr_tolerance << "]\n";
+  str_buf << "[score_threshold: " << score_threshold << "]\n";
+  str_buf << "[global_constraint_type: " << global_constraint_type << "]\n";
+  str_buf << "[global_target_fpr: " << global_target_fpr << "]\n";
+  str_buf << "[global_target_fnr: " << global_target_fnr << "]\n";
+  str_buf << "[global_score_threshold: " << global_score_threshold << "]\n";
   str_buf << "[eval_at: " << Common::Join(eval_at, ",") << "]\n";
   str_buf << "[multi_error_top_k: " << multi_error_top_k << "]\n";
   str_buf << "[auc_mu_weights: " << Common::Join(auc_mu_weights, ",") << "]\n";
@@ -818,27 +821,6 @@ std::string Config::SaveMembersToString() const {
   str_buf << "[gpu_device_id: " << gpu_device_id << "]\n";
   str_buf << "[gpu_use_dp: " << gpu_use_dp << "]\n";
   str_buf << "[num_gpu: " << num_gpu << "]\n";
-
-  str_buf << "[------- FAIRGBM ------]\n";
-  str_buf << "[debugging_output_dir: " << debugging_output_dir << "]\n";
-  str_buf << "[constraint_type: " << constraint_type << "]\n";
-  str_buf << "[stepwise_proxy_margin: " << stepwise_proxy_margin << "]\n";
-  str_buf << "[constraint_group_column: " << constraint_group_column << "]\n";
-  str_buf << "[score_threshold: " << score_threshold << "]\n";
-  str_buf << "[constraint_fpr_tolerance: " << constraint_fpr_tolerance << "]\n";
-  str_buf << "[constraint_fnr_tolerance: " << constraint_fnr_tolerance << "]\n";
-  str_buf << "[multiplier_learning_rate: " << multiplier_learning_rate << "]\n";
-  str_buf << "[init_lagrangian_multipliers: " << Common::Join(init_lagrangian_multipliers, ",") << "]\n";
-
-  // Global constraint parameters
-  str_buf << "[global_constraint_type: " << global_constraint_type << "]\n";
-  str_buf << "[global_target_fpr: " << global_target_fpr << "]\n";
-  str_buf << "[global_target_fnr: " << global_target_fnr << "]\n";
-  str_buf << "[global_score_threshold: " << global_score_threshold << "]\n";
-
-  // TODO -- Add option to normalize multipliers
-  // str_buf << "[normalize_lagrangian_multipliers: ";
-
   return str_buf.str();
 }
 

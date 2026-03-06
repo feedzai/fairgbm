@@ -6,7 +6,7 @@ import pytest
 
 import fairgbm as lgb
 
-from .utils import load_baf_base, binarize_predictions, evaluate_recall, evaluate_fairness
+from .utils import binarize_predictions, evaluate_fairness, evaluate_recall, load_baf_base
 
 
 @pytest.fixture

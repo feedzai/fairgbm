@@ -893,7 +893,7 @@ gcc
 
 .. _VS Build Tools: https://visualstudio.microsoft.com/downloads/
 
-.. _MinGW-w64: https://mingw-w64.org/doku.php/download
+.. _MinGW-w64: https://mingw-w64.org/downloads
 
 .. _MPI: https://en.wikipedia.org/wiki/Message_Passing_Interface
 

@@ -455,7 +455,7 @@ Example
 
 .. _MMLSpark: https://aka.ms/spark
 
-.. _this MMLSpark example: https://github.com/Azure/mmlspark/blob/master/notebooks/samples/LightGBM%20-%20Quantile%20Regression%20for%20Drug%20Discovery.ipynb
+.. _this MMLSpark example: https://microsoft.github.io/SynapseML/docs/Explore%20Algorithms/LightGBM/Overview/
 
 .. _the Dask Array documentation: https://docs.dask.org/en/latest/array.html
 
@@ -467,11 +467,11 @@ Example
 
 .. _the metrics functions from dask-ml: https://ml.dask.org/modules/api.html#dask-ml-metrics-metrics
 
-.. _the MMLSpark Documentation: https://github.com/Azure/mmlspark/blob/master/docs/lightgbm.md
+.. _the MMLSpark Documentation: https://microsoft.github.io/SynapseML/docs/Explore%20Algorithms/LightGBM/Overview/
 
 .. _these Dask examples: https://github.com/microsoft/lightgbm/tree/master/examples/python-guide/dask
 
-.. _Kubeflow Fairing: https://www.kubeflow.org/docs/components/fairing/fairing-overview
+.. _Kubeflow Fairing: https://kubeflow-fairing.readthedocs.io/en/stable/
 
 .. _These examples: https://github.com/kubeflow/fairing/tree/master/examples/lightgbm
 

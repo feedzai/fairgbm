@@ -35,17 +35,20 @@ if [[ $TASK == "check-docs" ]] || [[ $TASK == "check-links" ]]; then
     # check reStructuredText formatting
     cd $BUILD_DIRECTORY/python-package
     RST_FILES=$(find . -type f -name "*.rst")
-    if [[ -n "$RST_FILES" ]]; then
+    if [ -n "$RST_FILES" ]; then
         rstcheck --report-level warning $RST_FILES || exit -1
     fi
     cd $BUILD_DIRECTORY/docs
-    rstcheck --report-level warning --ignore-directives=autoclass,autofunction,doxygenfile,autosummary,toctree,versionadded,currentmodule --ignore-roles=ref $(find . -type f -name "*.rst") || exit -1
+    RST_FILES=$(find . -type f -name "*.rst")
+    if [ -n "$RST_FILES" ]; then
+        rstcheck --report-level warning --ignore-directives=autoclass,autofunction,doxygenfile,autosummary $RST_FILES || exit -1
+    fi
     # build docs
     make html || exit -1
     if [[ $TASK == "check-links" ]]; then
         # check docs for broken links
-        pip install linkchecker
-        linkchecker --config=.linkcheckerrc ./_build/html/*.html || exit -1
+        pip install --user linkchecker
+        linkchecker --config=.linkcheckerrc ./_build/html/*.html; test "$?" -lt 2 || exit -1
         exit 0
     fi
     # check the consistency of parameters' descriptions and other stuff

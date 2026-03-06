@@ -40,6 +40,7 @@ INTERNAL_REF_REGEX = compile(r"(?P<url>\.\/.+)(?P<extension>\.rst)(?P<anchor>$|#
 # -- mock out modules (only mock if not already importable)
 MOCK_MODULES = ['numpy', 'scipy', 'scipy.sparse',
                 'sklearn', 'matplotlib', 'pandas', 'graphviz', 'dask', 'dask.distributed']
+
 for mod_name in MOCK_MODULES:
     if mod_name not in sys.modules:
         try:

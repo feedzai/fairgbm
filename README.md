@@ -46,9 +46,9 @@ pip install fairgbm/python-package/
 ```
 
 > **Note**
-> Compatibility is only maintained with **Linux OS**.
+> Compatibility is only maintained with **Ubuntu OS**.
 > 
-> If you don't have access to a Linux machine we advise using the free Google 
+> If you don't have access to a Ubuntu machine we advise using the free Google 
 > Colab service ([example Colab notebook here](https://colab.research.google.com/github/AndreFCruz/fairgbm-fork/blob/add-colab-example/examples/FairGBM-python-notebooks/FairGBM_example_for_equalized_odds_%5Bgoogle_colab%5D.ipynb)).
 >
 > We also provide a docker image that can be useful for non-linux platforms, run: ```docker run -p 8888:8888 ndrcrz/fairgbm-miniconda``` for a jupyter notebook environment with `fairgbm` installed.
@@ -74,6 +74,8 @@ Although it is recommended to use the python package directly on your local x86-
 using this docker image is an option for users on other platforms (docker image was tested on an M1 Mac).
 
 The Dockerfile is available [here](examples/FairGBM-python-notebooks/Dockerfile).
+
+You can also set up your own environment as long as you build a docker image like this [here](examples/Dockerfile)
 
 
 ## Getting started

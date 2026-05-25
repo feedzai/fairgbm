@@ -1,0 +1,4 @@
+include VERSION.txt
+include LICENSE
+include README.md
+recursive-include native *.cpp *.h *.hpp CMakeLists.txt

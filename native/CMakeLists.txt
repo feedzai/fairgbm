@@ -19,6 +19,11 @@ set(FAIRGBM_SOURCES
     src/fairgbm_c_api.cpp
 )
 
+# Default output to fairgbm/ package dir when not overridden by setuptools
+if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../fairgbm")
+endif()
+
 add_library(lib_fairgbm SHARED ${FAIRGBM_SOURCES})
 
 target_include_directories(lib_fairgbm PRIVATE

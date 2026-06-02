@@ -2,11 +2,27 @@
  * Copyright 2022 Feedzai
  *
  * FairGBM configuration structure.
- * Replaces the dependency on LightGBM's Config for FairGBM-specific parameters.
+ * When building inside LightGBM (Java build), this aliases LightGBM::Config.
+ * When building standalone (Python build), this provides a self-contained struct.
  */
 
 #ifndef FAIRGBM_CONFIG_H_
 #define FAIRGBM_CONFIG_H_
+
+// Detect if we're building inside full LightGBM (Java build context)
+// The patched LightGBM config.h defines constraint_group_column and other FairGBM params
+#if __has_include(<LightGBM/config.h>)
+#include <LightGBM/config.h>
+// Check if this is the patched config with FairGBM params
+#ifdef LIGHTGBM_CONFIG_H_
+namespace FairGBM {
+  using Config = LightGBM::Config;
+}  // namespace FairGBM
+#define FAIRGBM_CONFIG_IS_LIGHTGBM_CONFIG 1
+#endif
+#endif
+
+#ifndef FAIRGBM_CONFIG_IS_LIGHTGBM_CONFIG
 
 #include <string>
 
@@ -37,5 +53,7 @@ struct Config {
 };
 
 }  // namespace FairGBM
+
+#endif  // FAIRGBM_CONFIG_IS_LIGHTGBM_CONFIG
 
 #endif  // FAIRGBM_CONFIG_H_

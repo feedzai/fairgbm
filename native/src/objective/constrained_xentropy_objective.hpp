@@ -58,6 +58,11 @@ class ConstrainedCrossEntropy : public ConstrainedObjectiveFunction {
     SetUpFromConfig(config);
   }
 
+  // Constructor for model loading from string representation (resuming/prediction)
+  explicit ConstrainedCrossEntropy(const std::vector<std::string>&)
+          : deterministic_(false) {
+  }
+
   ~ConstrainedCrossEntropy() override = default;
 
   double ComputePredictiveLoss(label_t label, double score) const override {

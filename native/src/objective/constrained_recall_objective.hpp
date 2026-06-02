@@ -59,6 +59,11 @@ class ConstrainedRecallObjective : public ConstrainedObjectiveFunction {
     }
   }
 
+  // Constructor for model loading from string representation (resuming/prediction)
+  explicit ConstrainedRecallObjective(const std::vector<std::string>&)
+          : deterministic_(false) {
+  }
+
   ~ConstrainedRecallObjective() override = default;
 
   const char* GetName() const override { return "constrained_recall_objective"; }

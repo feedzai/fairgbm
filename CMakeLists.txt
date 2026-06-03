@@ -1,20 +1,26 @@
 # FairGBM root CMakeLists.txt
 #
-# Strategy: At configure time, patch vendor/LightGBM with FairGBM extensions,
-# then tell cmake to actually build from vendor/LightGBM by using a custom
-# target that invokes cmake on the patched directory.
+# Patches vendor/LightGBM with FairGBM extensions, then builds via ExternalProject.
+# Compatible with: mkdir build && cd build && cmake .. -DUSE_SWIG=ON && make -j4
 
 cmake_minimum_required(VERSION 3.14)
 project(fairgbm_java_build LANGUAGES C CXX)
 
 set(LIGHTGBM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor/LightGBM")
 set(FAIRGBM_NATIVE "${CMAKE_CURRENT_SOURCE_DIR}/native")
+set(FAIRGBM_PATCHES "${FAIRGBM_NATIVE}/patches")
 
 message(STATUS "[FairGBM] Patching vendor/LightGBM with FairGBM extensions...")
 
-# --- Patch config ---
+# --- Overwrite core LightGBM files with FairGBM-patched versions ---
+# These are full file replacements from the old v0.9.14 fork
 file(COPY_FILE "${FAIRGBM_NATIVE}/include/LightGBM/config.h" "${LIGHTGBM_DIR}/include/LightGBM/config.h")
 file(COPY_FILE "${FAIRGBM_NATIVE}/include/LightGBM/config_auto.cpp" "${LIGHTGBM_DIR}/src/io/config_auto.cpp")
+file(COPY_FILE "${FAIRGBM_PATCHES}/src/io/dataset.cpp" "${LIGHTGBM_DIR}/src/io/dataset.cpp")
+file(COPY_FILE "${FAIRGBM_PATCHES}/src/io/metadata.cpp" "${LIGHTGBM_DIR}/src/io/metadata.cpp")
+file(COPY_FILE "${FAIRGBM_PATCHES}/src/objective/objective_function.cpp" "${LIGHTGBM_DIR}/src/objective/objective_function.cpp")
+file(COPY_FILE "${FAIRGBM_PATCHES}/dataset.h" "${LIGHTGBM_DIR}/include/LightGBM/dataset.h")
+file(COPY_FILE "${FAIRGBM_PATCHES}/meta.h" "${LIGHTGBM_DIR}/include/LightGBM/meta.h")
 
 # --- Copy FairGBM headers ---
 file(COPY "${FAIRGBM_NATIVE}/include/FairGBM" DESTINATION "${LIGHTGBM_DIR}/include/")
@@ -31,24 +37,8 @@ file(COPY ${_ps} DESTINATION "${LIGHTGBM_DIR}/src/proxy_losses/")
 file(GLOB _os "${FAIRGBM_NATIVE}/src/objective/*")
 file(COPY ${_os} DESTINATION "${LIGHTGBM_DIR}/src/objective/")
 
-# --- Copy SWIG ---
+# --- Copy SWIG files ---
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/swig/" DESTINATION "${LIGHTGBM_DIR}/swig/")
-
-# --- Patch objective_function.cpp ---
-file(READ "${LIGHTGBM_DIR}/src/objective/objective_function.cpp" _ofc)
-string(FIND "${_ofc}" "constrained_xentropy" _idx)
-if(_idx EQUAL -1)
-    string(REPLACE "#include \"xentropy_objective.hpp\""
-        "#include \"xentropy_objective.hpp\"\n#include \"constrained_xentropy_objective.hpp\"\n#include \"constrained_recall_objective.hpp\""
-        _ofc "${_ofc}")
-    string(REPLACE "} else if (type == std::string(\"cross_entropy_lambda\")) {\n    return new CrossEntropyLambda(config);"
-        "} else if (type == std::string(\"constrained_cross_entropy\")) {\n    return new Constrained::ConstrainedCrossEntropy(config);\n  } else if (type == std::string(\"constrained_recall_objective\")) {\n    return new Constrained::ConstrainedRecallObjective(config);\n  } else if (type == std::string(\"cross_entropy_lambda\")) {\n    return new CrossEntropyLambda(config);"
-        _ofc "${_ofc}")
-    string(REPLACE "} else if (type == std::string(\"cross_entropy_lambda\")) {\n    return new CrossEntropyLambda(strs);"
-        "} else if (type == std::string(\"constrained_cross_entropy\")) {\n    return new Constrained::ConstrainedCrossEntropy(strs);\n  } else if (type == std::string(\"constrained_recall_objective\")) {\n    return new Constrained::ConstrainedRecallObjective(strs);\n  } else if (type == std::string(\"cross_entropy_lambda\")) {\n    return new CrossEntropyLambda(strs);"
-        _ofc "${_ofc}")
-    file(WRITE "${LIGHTGBM_DIR}/src/objective/objective_function.cpp" "${_ofc}")
-endif()
 
 # --- Patch LightGBM CMakeLists to add proxy_losses ---
 file(READ "${LIGHTGBM_DIR}/CMakeLists.txt" _lc)
@@ -59,11 +49,8 @@ if(_idx2 EQUAL -1)
 endif()
 
 message(STATUS "[FairGBM] Patch complete.")
-message(STATUS "[FairGBM] Configuring LightGBM build in vendor/LightGBM...")
 
-# --- Configure and build LightGBM from vendor/ ---
-# Use ExternalProject to build LightGBM as a separate cmake project
-# This ensures PROJECT_SOURCE_DIR is correct inside LightGBM's CMakeLists
+# --- Build LightGBM via ExternalProject ---
 include(ExternalProject)
 ExternalProject_Add(lightgbm_build
     SOURCE_DIR "${LIGHTGBM_DIR}"
@@ -77,7 +64,7 @@ ExternalProject_Add(lightgbm_build
     BUILD_ALWAYS 1
 )
 
-# After build, copy artifacts to where the pipeline expects them
+# Copy artifacts to where the pipeline expects them
 ExternalProject_Add_Step(lightgbm_build copy_artifacts
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${LIGHTGBM_DIR}/lib_lightgbm.so" "${CMAKE_CURRENT_SOURCE_DIR}/lib_lightgbm.so"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${LIGHTGBM_DIR}/lib_lightgbm_swig.so" "${CMAKE_CURRENT_SOURCE_DIR}/lib_lightgbm_swig.so"

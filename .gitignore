@@ -459,3 +459,5 @@ dask-worker-space/
 
 # Others
 src/main.*.cpp
+
+.kiro/

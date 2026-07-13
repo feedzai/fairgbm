@@ -16,19 +16,60 @@ OPTION(BUILD_STATIC_LIB "Build static library" OFF)
 OPTION(__BUILD_FOR_R "Set to ON if building lib_lightgbm for use with the R package" OFF)
 OPTION(__INTEGRATE_OPENCL "Set to ON if building LightGBM with the OpenCL ICD Loader and its dependencies included" OFF)
 
+# cmake_minimum_required must be the very first command.
+# FetchContent (used to fetch upstream LightGBM) requires >= 3.14.
+cmake_minimum_required(VERSION 3.14)
+
+OPTION(USE_MPI "Enable MPI-based distributed learning" OFF)
+OPTION(USE_OPENMP "Enable OpenMP" ON)
+OPTION(USE_GPU "Enable GPU-accelerated training" OFF)
+OPTION(USE_SWIG "Enable SWIG to generate Java API" OFF)
+OPTION(USE_HDFS "Enable HDFS support (EXPERIMENTAL)" OFF)
+OPTION(USE_TIMETAG "Set to ON to output time costs" OFF)
+OPTION(USE_CUDA "Enable CUDA-accelerated training (EXPERIMENTAL)" OFF)
+OPTION(USE_DEBUG "Set to ON for Debug mode" OFF)
+OPTION(USE_SANITIZER "Use santizer flags" OFF)
+SET(SANITIZER_PATH "" CACHE STRING "Path to sanitizer libs")
+SET(ENABLED_SANITIZERS "address" "leak" "undefined" CACHE STRING
+  "Semicolon separated list of sanitizer names. E.g 'address;leak'. Supported sanitizers are
+address, leak, undefined and thread.")
+OPTION(BUILD_CPP_TEST "Build C++ tests with Google Test" OFF)
+OPTION(BUILD_STATIC_LIB "Build static library" OFF)
+OPTION(__BUILD_FOR_R "Set to ON if building lib_lightgbm for use with the R package" OFF)
+OPTION(__INTEGRATE_OPENCL "Set to ON if building LightGBM with the OpenCL ICD Loader and its dependencies included" OFF)
+
 if(APPLE)
   OPTION(APPLE_OUTPUT_DYLIB "Output dylib shared library" OFF)
 endif(APPLE)
 
-if(__INTEGRATE_OPENCL)
-  cmake_minimum_required(VERSION 3.11)
-elseif(USE_GPU OR APPLE)
-  cmake_minimum_required(VERSION 3.2)
-elseif(USE_CUDA)
-  cmake_minimum_required(VERSION 3.16)
-else()
-  cmake_minimum_required(VERSION 3.5)
-endif()
+# ---------------------------------------------------------------------------
+# Fetch upstream LightGBM sources and overlay FairGBM's modified files on top
+# ---------------------------------------------------------------------------
+include(FetchContent)
+
+# Pin to v3.2.1 – the upstream release this fork is based on
+# (identified by the 4-arg Parser::CreateParser signature in dataset.h).
+# GIT_SHALLOW avoids downloading full history.
+FetchContent_Declare(
+    lightgbm_upstream
+    GIT_REPOSITORY https://github.com/microsoft/LightGBM.git
+    GIT_TAG        v3.2.1
+    GIT_SHALLOW    TRUE
+)
+FetchContent_Populate(lightgbm_upstream)
+
+# Overlay FairGBM's modified src/ and include/ files on top of the upstream
+# tree so that downstream GLOBs and explicit source references pick up the
+# fairgbm versions instead of the originals.
+file(COPY "${CMAKE_SOURCE_DIR}/src/"
+     DESTINATION "${lightgbm_upstream_SOURCE_DIR}/src/")
+file(COPY "${CMAKE_SOURCE_DIR}/include/"
+     DESTINATION "${lightgbm_upstream_SOURCE_DIR}/include/")
+
+# Point all subsequent source/include references at the merged tree.
+set(LGBM_SRC "${lightgbm_upstream_SOURCE_DIR}/src")
+set(LGBM_INCLUDE "${lightgbm_upstream_SOURCE_DIR}/include")
+# ---------------------------------------------------------------------------
 
 PROJECT(lightgbm LANGUAGES C CXX)
 
@@ -36,7 +77,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 
 #-- Sanitizer
 if (USE_SANITIZER)
-  include(cmake/Sanitizer.cmake)
+  include(${PROJECT_SOURCE_DIR}/cmake/Sanitizer.cmake)
   enable_sanitizers("${ENABLED_SANITIZERS}")
 endif (USE_SANITIZER)
 
@@ -93,7 +134,7 @@ if(USE_SWIG)
   endif()
 endif(USE_SWIG)
 
-SET(EIGEN_DIR "${PROJECT_SOURCE_DIR}/external_libs/eigen")
+SET(EIGEN_DIR "${lightgbm_upstream_SOURCE_DIR}/external_libs/eigen")
 include_directories(${EIGEN_DIR})
 
 # See https://gitlab.com/libeigen/eigen/-/blob/master/COPYING.README
@@ -137,7 +178,7 @@ if(USE_OPENMP)
 endif(USE_OPENMP)
 
 if(USE_GPU)
-    SET(BOOST_COMPUTE_HEADER_DIR ${PROJECT_SOURCE_DIR}/external_libs/compute/include)
+    SET(BOOST_COMPUTE_HEADER_DIR ${lightgbm_upstream_SOURCE_DIR}/external_libs/compute/include)
     include_directories(${BOOST_COMPUTE_HEADER_DIR})
     find_package(OpenCL REQUIRED)
     include_directories(${OpenCL_INCLUDE_DIRS})
@@ -156,7 +197,7 @@ endif(USE_GPU)
 
 if(__INTEGRATE_OPENCL)
     if(WIN32)
-        include(cmake/IntegratedOpenCL.cmake)
+        include(${PROJECT_SOURCE_DIR}/cmake/IntegratedOpenCL.cmake)
         ADD_DEFINITIONS(-DUSE_GPU)
     else()
         message(FATAL_ERROR "Integrated OpenCL build is available only for Windows")
@@ -312,7 +353,7 @@ else()
     endif()
 endif(MSVC)
 
-SET(LightGBM_HEADER_DIR ${PROJECT_SOURCE_DIR}/include)
+SET(LightGBM_HEADER_DIR ${LGBM_INCLUDE})
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
@@ -332,26 +373,26 @@ if(USE_MPI)
 endif(USE_MPI)
 
 file(GLOB SOURCES
-    src/boosting/*.cpp
-    src/io/*.cpp
-    src/metric/*.cpp
-    src/objective/*.cpp
-    src/network/*.cpp
-    src/treelearner/*.cpp
-    src/proxy_losses/*.cpp
+    ${LGBM_SRC}/boosting/*.cpp
+    ${LGBM_SRC}/io/*.cpp
+    ${LGBM_SRC}/metric/*.cpp
+    ${LGBM_SRC}/objective/*.cpp
+    ${LGBM_SRC}/network/*.cpp
+    ${LGBM_SRC}/treelearner/*.cpp
+    ${LGBM_SRC}/proxy_losses/*.cpp
 if(USE_CUDA)
-    src/treelearner/*.cu
+    ${LGBM_SRC}/treelearner/*.cu
 endif(USE_CUDA)
 )
 
-add_executable(lightgbm src/main.cpp src/application/application.cpp ${SOURCES})
-#add_executable(fairgbm_multiple_runs src/main.multiple_runs.cpp src/application/application.cpp ${SOURCES})
-list(APPEND SOURCES "src/c_api.cpp")
+add_executable(lightgbm ${LGBM_SRC}/main.cpp ${LGBM_SRC}/application/application.cpp ${SOURCES})
+#add_executable(fairgbm_multiple_runs ${LGBM_SRC}/main.multiple_runs.cpp ${LGBM_SRC}/application/application.cpp ${SOURCES})
+list(APPEND SOURCES "${LGBM_SRC}/c_api.cpp")
 
 # Only build the R part of the library if building for
 # use with the R package
 if(__BUILD_FOR_R)
-  list(APPEND SOURCES "src/lightgbm_R.cpp")
+  list(APPEND SOURCES "${LGBM_SRC}/lightgbm_R.cpp")
 endif(__BUILD_FOR_R)
 
 if (BUILD_STATIC_LIB)
@@ -480,7 +521,7 @@ if(BUILD_CPP_TEST)
     FetchContent_MakeAvailable(googletest)
     add_library(GTest::GTest ALIAS gtest)
   endif()
-  file(GLOB CPP_TEST_SOURCES tests/cpp_tests/*.cpp)
+  file(GLOB CPP_TEST_SOURCES ${PROJECT_SOURCE_DIR}/tests/cpp_tests/*.cpp)
   if(MSVC)
     set(
       CompilerFlags

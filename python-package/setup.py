@@ -15,6 +15,58 @@ from setuptools.command.install_lib import install_lib
 from setuptools.command.sdist import sdist
 from wheel.bdist_wheel import bdist_wheel
 
+# ---------------------------------------------------------------------------
+# Overlay unaltered upstream LightGBM python modules at build time.
+# These files are byte-identical (engine.py: docstrings only) to upstream
+# LightGBM v3.2.1 and use only relative imports, so they work verbatim inside
+# the ``fairgbm`` package. They are removed from git and restored here at
+# build/install time (mirrors PR #58's FetchContent overlay for the C++ sources).
+# ---------------------------------------------------------------------------
+UPSTREAM_LIGHTGBM_TAG = "v3.2.1"   # keep in sync with the C++ FetchContent pin (PR #58)
+UPSTREAM_PYTHON_FILES = ["callback.py", "libpath.py", "plotting.py", "engine.py"]
+
+
+def _patch_numpy2_compat(file_path):
+    """Make upstream v3.2.1 code compatible with NumPy >= 2.0.
+
+    NumPy 2.0 changed ``np.array(obj, copy=False)`` to raise instead of copying
+    when a copy is unavoidable; ``np.asarray(obj)`` restores the old
+    copy-if-needed behaviour with no change on NumPy 1.x.
+    """
+    import re
+    with open(file_path, encoding="utf-8") as fh:
+        content = fh.read()
+    patched = re.sub(r"np\.array\((.*), copy=False\)", r"np.asarray(\1)", content)
+    if patched != content:
+        with open(file_path, "w", encoding="utf-8") as fh:
+            fh.write(patched)
+
+
+def overlay_upstream_python_files():
+    """Fetch unaltered modules from upstream LightGBM and drop them into fairgbm/."""
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+    pkg_dir = os.path.join(current_dir, "fairgbm")
+    missing = [f for f in UPSTREAM_PYTHON_FILES
+               if not os.path.isfile(os.path.join(pkg_dir, f))]
+    if not missing:
+        return  # already present (e.g. building from an sdist that bundled them) -> offline-safe
+
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.check_call([
+            "git", "clone", "--depth", "1", "--branch", UPSTREAM_LIGHTGBM_TAG,
+            "--filter=blob:none", "--sparse",
+            "https://github.com/microsoft/LightGBM.git", tmp,
+        ])
+        subprocess.check_call(["git", "-C", tmp, "sparse-checkout", "set",
+                               "python-package/lightgbm"])
+        src_dir = os.path.join(tmp, "python-package", "lightgbm")
+        for f in missing:
+            dst = os.path.join(pkg_dir, f)
+            copy_file(os.path.join(src_dir, f), dst, verbose=0)
+            _patch_numpy2_compat(dst)
+
+
 FAIRGBM_OPTIONS = [
     ('mingw', 'm', 'Compile with MinGW'),
     ('integrated-opencl', None, 'Compile integrated OpenCL version'),
@@ -318,6 +370,7 @@ class CustomSdist(sdist):
 
 if __name__ == "__main__":
     CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
+    overlay_upstream_python_files()
     LOG_PATH = os.path.join(os.path.expanduser('~'), 'FairGBM_compilation.log')
     LOG_NOTICE = f"The full version of error log was saved into {LOG_PATH}"
     if os.path.isfile(os.path.join(CURRENT_DIR, os.path.pardir, 'VERSION.txt')):

@@ -459,3 +459,9 @@ dask-worker-space/
 
 # Others
 src/main.*.cpp
+
+# Unaltered LightGBM python modules fetched at build time (see python-package/setup.py)
+python-package/fairgbm/callback.py
+python-package/fairgbm/libpath.py
+python-package/fairgbm/plotting.py
+python-package/fairgbm/engine.py

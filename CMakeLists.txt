@@ -20,24 +20,6 @@ OPTION(__INTEGRATE_OPENCL "Set to ON if building LightGBM with the OpenCL ICD Lo
 # FetchContent (used to fetch upstream LightGBM) requires >= 3.14.
 cmake_minimum_required(VERSION 3.14)
 
-OPTION(USE_MPI "Enable MPI-based distributed learning" OFF)
-OPTION(USE_OPENMP "Enable OpenMP" ON)
-OPTION(USE_GPU "Enable GPU-accelerated training" OFF)
-OPTION(USE_SWIG "Enable SWIG to generate Java API" OFF)
-OPTION(USE_HDFS "Enable HDFS support (EXPERIMENTAL)" OFF)
-OPTION(USE_TIMETAG "Set to ON to output time costs" OFF)
-OPTION(USE_CUDA "Enable CUDA-accelerated training (EXPERIMENTAL)" OFF)
-OPTION(USE_DEBUG "Set to ON for Debug mode" OFF)
-OPTION(USE_SANITIZER "Use santizer flags" OFF)
-SET(SANITIZER_PATH "" CACHE STRING "Path to sanitizer libs")
-SET(ENABLED_SANITIZERS "address" "leak" "undefined" CACHE STRING
-  "Semicolon separated list of sanitizer names. E.g 'address;leak'. Supported sanitizers are
-address, leak, undefined and thread.")
-OPTION(BUILD_CPP_TEST "Build C++ tests with Google Test" OFF)
-OPTION(BUILD_STATIC_LIB "Build static library" OFF)
-OPTION(__BUILD_FOR_R "Set to ON if building lib_lightgbm for use with the R package" OFF)
-OPTION(__INTEGRATE_OPENCL "Set to ON if building LightGBM with the OpenCL ICD Loader and its dependencies included" OFF)
-
 if(APPLE)
   OPTION(APPLE_OUTPUT_DYLIB "Output dylib shared library" OFF)
 endif(APPLE)
@@ -47,20 +29,43 @@ endif(APPLE)
 # ---------------------------------------------------------------------------
 include(FetchContent)
 
-# Pin to v3.2.1 – the upstream release this fork is based on
-# (identified by the 4-arg Parser::CreateParser signature in dataset.h).
-# GIT_SHALLOW avoids downloading full history.
+# Pin to the actual upstream commit this fork was branched from (2021-05-04),
+# ~3 weeks after the v3.2.1 tag. Pinning the tag instead would roll back 27
+# files to their pre-e79716e state, silently reverting upstream #4185 (a real
+# distributed-training bug: histograms for empty local leaves weren't cleared
+# before synchronization, corrupting the global histogram).
+# Pinned by commit hash, not tag, since tags can be moved to point elsewhere.
 FetchContent_Declare(
     lightgbm_upstream
     GIT_REPOSITORY https://github.com/microsoft/LightGBM.git
-    GIT_TAG        v3.2.1
-    GIT_SHALLOW    TRUE
+    GIT_TAG        e79716e0b69b27c8e6e2c39f59d0db7c63242f9a
 )
 FetchContent_Populate(lightgbm_upstream)
 
 # Overlay FairGBM's modified src/ and include/ files on top of the upstream
 # tree so that downstream GLOBs and explicit source references pick up the
 # fairgbm versions instead of the originals.
+#
+# The copy itself must stay at configure time: the file(GLOB SOURCES ...)
+# further down (which decides what gets compiled) also runs at configure
+# time, and FairGBM adds whole new files/directories (e.g. proxy_losses/)
+# that don't exist upstream -- if the copy ran later, a from-scratch
+# configure would glob an incomplete tree and silently skip them.
+#
+# What was missing is a *dependency*: nothing told CMake that this copy
+# result depends on the contents of src/ and include/, so once configured,
+# editing a file there had no effect on later `cmake --build` runs -- the
+# stale copy kept getting compiled until someone reran `cmake ..` by hand.
+# CMAKE_CONFIGURE_DEPENDS makes the generated build system check these
+# paths' timestamps before every build and automatically rerun configure
+# (which reruns the copy below) if any changed, so edits are picked up
+# without a manual reconfigure. The CONFIGURE_DEPENDS glob option covers
+# added/removed files; the directory property covers edits to existing ones.
+file(GLOB_RECURSE FAIRGBM_OVERLAY_SOURCES CONFIGURE_DEPENDS
+     "${CMAKE_SOURCE_DIR}/src/*"
+     "${CMAKE_SOURCE_DIR}/include/*")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${FAIRGBM_OVERLAY_SOURCES})
+
 file(COPY "${CMAKE_SOURCE_DIR}/src/"
      DESTINATION "${lightgbm_upstream_SOURCE_DIR}/src/")
 file(COPY "${CMAKE_SOURCE_DIR}/include/"

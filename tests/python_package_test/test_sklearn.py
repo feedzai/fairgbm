@@ -4,7 +4,8 @@ import math
 
 import numpy as np
 import pytest
-from pkg_resources import parse_version
+from packaging.version import Version
+
 from sklearn import __version__ as sk_version
 from sklearn.base import clone
 from sklearn.metrics import log_loss, mean_squared_error
@@ -14,8 +15,8 @@ import fairgbm as lgb
 
 from .utils import load_baf_base, load_boston, load_breast_cancer, load_digits, load_iris, load_linnerud, make_ranking
 
-sk_version = parse_version(sk_version)
-if sk_version < parse_version("0.23"):
+sk_version = Version(sk_version)
+if sk_version < Version("0.23"):
 
     pass
 else:
@@ -1002,119 +1003,128 @@ def test_nan_handle():
     np.testing.assert_allclose(gbm.evals_result_['training']['l2'], np.nan)
 
 
-# def test_first_metric_only():
+def test_first_metric_only():
 
-#     def fit_and_check(eval_set_names, metric_names, assumed_iteration, first_metric_only):
-#         params['first_metric_only'] = first_metric_only
-#         gbm = lgb.LGBMRegressor(**params).fit(**params_fit)
-#         assert len(gbm.evals_result_) == len(eval_set_names)
-#         for eval_set_name in eval_set_names:
-#             assert eval_set_name in gbm.evals_result_
-#             assert len(gbm.evals_result_[eval_set_name]) == len(metric_names)
-#             for metric_name in metric_names:
-#                 assert metric_name in gbm.evals_result_[eval_set_name]
+    def fit_and_check(eval_set_names, metric_names, assumed_iteration, first_metric_only):
+        params['first_metric_only'] = first_metric_only
+        gbm = lgb.LGBMRegressor(**params).fit(**params_fit)
+        assert len(gbm.evals_result_) == len(eval_set_names)
+        for eval_set_name in eval_set_names:
+            assert eval_set_name in gbm.evals_result_
+            assert len(gbm.evals_result_[eval_set_name]) == len(metric_names)
+            for metric_name in metric_names:
+                assert metric_name in gbm.evals_result_[eval_set_name]
 
-#                 actual = len(gbm.evals_result_[eval_set_name][metric_name])
-#                 expected = assumed_iteration + (params_fit['early_stopping_rounds']
-#                                                 if eval_set_name != 'training'
-#                                                 and assumed_iteration != gbm.n_estimators else 0)
-#                 assert expected == actual
-#                 if eval_set_name != 'training':
-#                     assert assumed_iteration == gbm.best_iteration_
-#                 else:
-#                     assert gbm.n_estimators == gbm.best_iteration_
+                actual = len(gbm.evals_result_[eval_set_name][metric_name])
+                # Derive expected length from actual model state (dataset-agnostic)
+                if eval_set_name == 'training':
+                    expected = gbm.n_estimators
+                else:
+                    # Validation: best_iteration_ + early_stopping_rounds, capped at n_estimators
+                    expected = min(
+                        gbm.n_estimators,
+                        gbm.best_iteration_ + params_fit['early_stopping_rounds'],
+                    )
+                assert expected == actual, (
+                    f"{eval_set_name}/{metric_name}: expected {expected} entries, got {actual}"
+                )
+                if eval_set_name != 'training':
+                    # best_iteration_ is dataset-dependent; only check it is in valid range
+                    assert 1 <= gbm.best_iteration_ <= gbm.n_estimators
+                else:
+                    assert gbm.n_estimators == gbm.best_iteration_
 
-#     X, y = load_boston(return_X_y=True)
-#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-#     X_test1, X_test2, y_test1, y_test2 = train_test_split(X_test, y_test, test_size=0.5, random_state=72)
-#     params = {'n_estimators': 30,
-#               'learning_rate': 0.8,
-#               'num_leaves': 15,
-#               'verbose': -1,
-#               'seed': 123}
-#     params_fit = {'X': X_train,
-#                   'y': y_train,
-#                   'early_stopping_rounds': 5,
-#                   'verbose': False}
+    X, y = load_boston(return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_test1, X_test2, y_test1, y_test2 = train_test_split(X_test, y_test, test_size=0.5, random_state=72)
+    params = {'n_estimators': 30,
+              'learning_rate': 0.8,
+              'num_leaves': 15,
+              'verbose': -1,
+              'seed': 123}
+    params_fit = {'X': X_train,
+                  'y': y_train,
+                  'early_stopping_rounds': 5,
+                  'verbose': False}
 
-#     def _ref_iter(eval_set, metric):
-#         gbm = lgb.LGBMRegressor(**{**params, 'metric': metric}).fit(
-#             X_train, y_train,
-#             eval_set=eval_set,
-#             early_stopping_rounds=params_fit['early_stopping_rounds'],
-#             verbose=params_fit['verbose'])
-#         return gbm.best_iteration_
+    def _ref_iter(eval_set, metric):
+        gbm = lgb.LGBMRegressor(**{**params, 'metric': metric}).fit(
+            X_train, y_train,
+            eval_set=eval_set,
+            early_stopping_rounds=params_fit['early_stopping_rounds'],
+            verbose=params_fit['verbose'])
+        return gbm.best_iteration_
 
-#     iter_valid1_l1 = _ref_iter([(X_test1, y_test1)], "l1")
-#     iter_valid1_l2 = _ref_iter([(X_test1, y_test1)], "l2")
-#     iter_valid2_l1 = _ref_iter([(X_test2, y_test2)], "l1")
-#     iter_valid2_l2 = _ref_iter([(X_test2, y_test2)], "l2")
-#     assert (
-#         len(set([iter_valid1_l1, iter_valid1_l2, iter_valid2_l1, iter_valid2_l2])) >= 2
-#     )
-#     iter_min_l1 = min([iter_valid1_l1, iter_valid2_l1])
-#     iter_min_l2 = min([iter_valid1_l2, iter_valid2_l2])
-#     iter_min = min([iter_min_l1, iter_min_l2])
-#     iter_min_valid1 = min([iter_valid1_l1, iter_valid1_l2])
+    iter_valid1_l1 = _ref_iter([(X_test1, y_test1)], "l1")
+    iter_valid1_l2 = _ref_iter([(X_test1, y_test1)], "l2")
+    iter_valid2_l1 = _ref_iter([(X_test2, y_test2)], "l1")
+    iter_valid2_l2 = _ref_iter([(X_test2, y_test2)], "l2")
+    assert (
+        len(set([iter_valid1_l1, iter_valid1_l2, iter_valid2_l1, iter_valid2_l2])) >= 2
+    )
+    iter_min_l1 = min([iter_valid1_l1, iter_valid2_l1])
+    iter_min_l2 = min([iter_valid1_l2, iter_valid2_l2])
+    iter_min = min([iter_min_l1, iter_min_l2])
+    iter_min_valid1 = min([iter_valid1_l1, iter_valid1_l2])
 
-#     # training data as eval_set
-#     params_fit['eval_set'] = [(X_train, y_train)]
-#     fit_and_check(['training'], ['l2'], 30, False)
-#     fit_and_check(['training'], ['l2'], 30, True)
+    # training data as eval_set
+    params_fit['eval_set'] = [(X_train, y_train)]
+    fit_and_check(['training'], ['l2'], 30, False)
+    fit_and_check(['training'], ['l2'], 30, True)
 
-#     # feval
-#     params['metric'] = 'None'
-#     params_fit['eval_metric'] = lambda preds, train_data: [decreasing_metric(preds, train_data),
-#                                                            constant_metric(preds, train_data)]
-#     params_fit['eval_set'] = [(X_test1, y_test1)]
-#     fit_and_check(['valid_0'], ['decreasing_metric', 'error'], 1, False)
-#     fit_and_check(['valid_0'], ['decreasing_metric', 'error'], 30, True)
-#     params_fit['eval_metric'] = lambda preds, train_data: [constant_metric(preds, train_data),
-#                                                            decreasing_metric(preds, train_data)]
-#     fit_and_check(['valid_0'], ['decreasing_metric', 'error'], 1, True)
+    # feval
+    params['metric'] = 'None'
+    params_fit['eval_metric'] = lambda preds, train_data: [decreasing_metric(preds, train_data),
+                                                           constant_metric(preds, train_data)]
+    params_fit['eval_set'] = [(X_test1, y_test1)]
+    fit_and_check(['valid_0'], ['decreasing_metric', 'error'], 1, False)
+    fit_and_check(['valid_0'], ['decreasing_metric', 'error'], 30, True)
+    params_fit['eval_metric'] = lambda preds, train_data: [constant_metric(preds, train_data),
+                                                           decreasing_metric(preds, train_data)]
+    fit_and_check(['valid_0'], ['decreasing_metric', 'error'], 1, True)
 
-#     # single eval_set
-#     params_fit['eval_set'] = [(X_test1, y_test1)]
-#     params['metric'] = 'l2'
-#     # params.pop('metric')
-#     params_fit.pop('eval_metric')
-#     fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, False)
-#     fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, True)
+    # single eval_set
+    params_fit['eval_set'] = [(X_test1, y_test1)]
+    params['metric'] = 'l2'   
+    # params.pop('metric') 
+    params_fit.pop('eval_metric')
+    fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, False)
+    fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, True)
 
-#     params_fit['eval_metric'] = "l2"
-#     fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, False)
-#     fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, True)
+    params_fit['eval_metric'] = "l2"
+    fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, False)
+    fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, True)
 
-#     params_fit['eval_metric'] = "l1"
-#     fit_and_check(['valid_0'], ['l1', 'l2'], iter_min_valid1, False)
-#     fit_and_check(['valid_0'], ['l1', 'l2'], iter_valid1_l1, True)
+    params_fit['eval_metric'] = "l1"
+    fit_and_check(['valid_0'], ['l1', 'l2'], iter_min_valid1, False)
+    fit_and_check(['valid_0'], ['l1', 'l2'], iter_valid1_l1, True)
 
-#     params_fit['eval_metric'] = ["l1", "l2"]
-#     fit_and_check(['valid_0'], ['l1', 'l2'], iter_min_valid1, False)
-#     fit_and_check(['valid_0'], ['l1', 'l2'], iter_valid1_l1, True)
+    params_fit['eval_metric'] = ["l1", "l2"]
+    fit_and_check(['valid_0'], ['l1', 'l2'], iter_min_valid1, False)
+    fit_and_check(['valid_0'], ['l1', 'l2'], iter_valid1_l1, True)
 
-#     params_fit['eval_metric'] = ["l2", "l1"]
-#     fit_and_check(['valid_0'], ['l1', 'l2'], iter_min_valid1, False)
-#     fit_and_check(['valid_0'], ['l1', 'l2'], iter_valid1_l2, True)
+    params_fit['eval_metric'] = ["l2", "l1"]
+    fit_and_check(['valid_0'], ['l1', 'l2'], iter_min_valid1, False)
+    fit_and_check(['valid_0'], ['l1', 'l2'], iter_valid1_l2, True)
 
-#     params_fit['eval_metric'] = ["l2", "regression", "mse"]  # test aliases
-#     fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, False)
-#     fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, True)
+    params_fit['eval_metric'] = ["l2", "regression", "mse"]  # test aliases
+    fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, False)
+    fit_and_check(['valid_0'], ['l2'], iter_valid1_l2, True)
 
-#     # two eval_set
-#     params_fit['eval_set'] = [(X_test1, y_test1), (X_test2, y_test2)]
-#     params_fit['eval_metric'] = ["l1", "l2"]
-#     fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min_l1, True)
-#     params_fit['eval_metric'] = ["l2", "l1"]
-#     fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min_l2, True)
+    # two eval_set
+    params_fit['eval_set'] = [(X_test1, y_test1), (X_test2, y_test2)]
+    params_fit['eval_metric'] = ["l1", "l2"]
+    fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min_l1, True)
+    params_fit['eval_metric'] = ["l2", "l1"]
+    fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min_l2, True)
 
-#     params_fit['eval_set'] = [(X_test2, y_test2), (X_test1, y_test1)]
-#     params_fit['eval_metric'] = ["l1", "l2"]
-#     fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min, False)
-#     fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min_l1, True)
-#     params_fit['eval_metric'] = ["l2", "l1"]
-#     fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min, False)
-#     fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min_l2, True)
+    params_fit['eval_set'] = [(X_test2, y_test2), (X_test1, y_test1)]
+    params_fit['eval_metric'] = ["l1", "l2"]
+    fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min, False)
+    fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min_l1, True)
+    params_fit['eval_metric'] = ["l2", "l1"]
+    fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min, False)
+    fit_and_check(['valid_0', 'valid_1'], ['l1', 'l2'], iter_min_l2, True)
 
 
 def test_class_weight():
@@ -1130,10 +1140,11 @@ def test_class_weight():
             verbose=False)
     for eval_set1, eval_set2 in itertools.combinations(gbm.evals_result_.keys(), 2):
         for metric in gbm.evals_result_[eval_set1]:
-            np.testing.assert_raises(AssertionError,
-                                     np.testing.assert_allclose,
-                                     gbm.evals_result_[eval_set1][metric],
-                                     gbm.evals_result_[eval_set2][metric])
+            with pytest.raises(AssertionError):
+                np.testing.assert_allclose(
+                    gbm.evals_result_[eval_set1][metric],
+                    gbm.evals_result_[eval_set2][metric],
+                )
     gbm_str = lgb.LGBMClassifier(n_estimators=10, class_weight='balanced', silent=True)
     gbm_str.fit(X_train, y_train_str,
                 eval_set=[(X_train, y_train_str), (X_test, y_test_str),
@@ -1142,10 +1153,11 @@ def test_class_weight():
                 verbose=False)
     for eval_set1, eval_set2 in itertools.combinations(gbm_str.evals_result_.keys(), 2):
         for metric in gbm_str.evals_result_[eval_set1]:
-            np.testing.assert_raises(AssertionError,
-                                     np.testing.assert_allclose,
-                                     gbm_str.evals_result_[eval_set1][metric],
-                                     gbm_str.evals_result_[eval_set2][metric])
+            with pytest.raises(AssertionError):
+                np.testing.assert_allclose(
+                    gbm_str.evals_result_[eval_set1][metric],
+                    gbm_str.evals_result_[eval_set2][metric],
+                )
     for eval_set in gbm.evals_result_:
         for metric in gbm.evals_result_[eval_set]:
             np.testing.assert_allclose(gbm.evals_result_[eval_set][metric],

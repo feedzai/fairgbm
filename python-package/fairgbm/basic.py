@@ -155,11 +155,11 @@ def list_to_1d_numpy(data, dtype=np.float32, name='list'):
         array = data.ravel()
         return cast_numpy_1d_array_to_dtype(array, dtype)
     elif is_1d_list(data):
-        return np.array(data, dtype=dtype, copy=False)
+        return np.asarray(data, dtype=dtype)
     elif isinstance(data, pd_Series):
         if _get_bad_pandas_dtypes([data.dtypes]):
             raise ValueError('Series.dtypes must be int, float or bool')
-        return np.array(data, dtype=dtype, copy=False)  # SparseArray should be supported as well
+        return np.asarray(data, dtype=dtype)  # SparseArray should be supported as well
     else:
         raise TypeError("Wrong type({0}) for {1}.\n"
                         "It should be list, numpy 1-D array or pandas Series".format(type(data).__name__, name))
@@ -456,7 +456,7 @@ def convert_from_sliced_object(data):
 def c_float_array(data):
     """Get pointer of float numpy array / list."""
     if is_1d_list(data):
-        data = np.array(data, copy=False)
+        data = np.asarray(data)
     if is_numpy_1d_array(data):
         data = convert_from_sliced_object(data)
         assert data.flags.c_contiguous
@@ -477,7 +477,7 @@ def c_float_array(data):
 def c_int_array(data):
     """Get pointer of int numpy array / list."""
     if is_1d_list(data):
-        data = np.array(data, copy=False)
+        data = np.asarray(data)
     if is_numpy_1d_array(data):
         data = convert_from_sliced_object(data)
         assert data.flags.c_contiguous
@@ -721,7 +721,7 @@ class _InnerPredictor:
                 lines = f.readlines()
                 nrow = len(lines)
                 preds = [float(token) for line in lines for token in line.split('\t')]
-                preds = np.array(preds, dtype=np.float64, copy=False)
+                preds = np.asarray(preds, dtype=np.float64)
         elif isinstance(data, scipy.sparse.csr_matrix):
             preds, nrow = self.__pred_for_csr(data, start_iteration, num_iteration, predict_type)
         elif isinstance(data, scipy.sparse.csc_matrix):
@@ -778,7 +778,7 @@ class _InnerPredictor:
 
         def inner_predict(mat, start_iteration, num_iteration, predict_type, preds=None):
             if mat.dtype == np.float32 or mat.dtype == np.float64:
-                data = np.array(mat.reshape(mat.size), dtype=mat.dtype, copy=False)
+                data = np.asarray(mat.reshape(mat.size), dtype=mat.dtype)
             else:  # change non-float data to float data, need to copy
                 data = np.array(mat.reshape(mat.size), dtype=np.float32)
             ptr_data, type_ptr_data, _ = c_float_array(data)
@@ -1312,7 +1312,7 @@ class Dataset:
 
         self.handle = ctypes.c_void_p()
         if mat.dtype == np.float32 or mat.dtype == np.float64:
-            data = np.array(mat.reshape(mat.size), dtype=mat.dtype, copy=False)
+            data = np.asarray(mat.reshape(mat.size), dtype=mat.dtype)
         else:  # change non-float data to float data, need to copy
             data = np.array(mat.reshape(mat.size), dtype=np.float32)
 
@@ -1350,7 +1350,7 @@ class Dataset:
             nrow[i] = mat.shape[0]
 
             if mat.dtype == np.float32 or mat.dtype == np.float64:
-                mats[i] = np.array(mat.reshape(mat.size), dtype=mat.dtype, copy=False)
+                mats[i] = np.asarray(mat.reshape(mat.size), dtype=mat.dtype)
             else:  # change non-float data to float data, need to copy
                 mats[i] = np.array(mat.reshape(mat.size), dtype=np.float32)
 
@@ -1452,7 +1452,7 @@ class Dataset:
                     used_indices = list_to_1d_numpy(self.used_indices, np.int32, name='used_indices')
                     assert used_indices.flags.c_contiguous
                     if self.reference.group is not None:
-                        group_info = np.array(self.reference.group).astype(np.int32, copy=False)
+                        group_info = np.asarray(self.reference.group, dtype=np.int32)
                         _, self.group = np.unique(np.repeat(range(len(group_info)), repeats=group_info)[self.used_indices],
                                                   return_counts=True)
                     self.handle = ctypes.c_void_p()

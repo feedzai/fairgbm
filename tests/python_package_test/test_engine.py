@@ -7,20 +7,15 @@ import pickle
 import platform
 import random
 
-import fairgbm as lgb
 import numpy as np
 import psutil
 import pytest
 from scipy.sparse import csr_matrix, isspmatrix_csc, isspmatrix_csr
 from sklearn.datasets import load_svmlight_file, make_multilabel_classification
-from sklearn.metrics import (
-    average_precision_score,
-    log_loss,
-    mean_absolute_error,
-    mean_squared_error,
-    roc_auc_score,
-)
+from sklearn.metrics import average_precision_score, log_loss, mean_absolute_error, mean_squared_error, roc_auc_score
 from sklearn.model_selection import GroupKFold, TimeSeriesSplit, train_test_split
+
+import fairgbm as lgb
 
 from .utils import load_boston, load_breast_cancer, load_digits, load_iris
 
@@ -2171,7 +2166,7 @@ def test_get_split_value_histogram():
 #             lgb_train, num_boost_round=25, valid_sets=valid_sets,
 #             early_stopping_rounds=5, verbose_eval=False)
 #         return gbm.best_iteration
-   
+
 #     def _ref_iter_multi(valid_sets, metric_list, first_metric_only):
 #         gbm = lgb.train(
 #             {'objective': 'regression', 'learning_rate': 1.1, 'num_leaves': 10,

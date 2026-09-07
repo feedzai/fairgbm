@@ -37,11 +37,23 @@ sys.path.insert(0, LIB_PATH)
 
 INTERNAL_REF_REGEX = compile(r"(?P<url>\.\/.+)(?P<extension>\.rst)(?P<anchor>$|#)")
 
-# -- mock out modules
+# -- mock out modules (only mock if not already importable)
 MOCK_MODULES = ['numpy', 'scipy', 'scipy.sparse',
                 'sklearn', 'matplotlib', 'pandas', 'graphviz', 'dask', 'dask.distributed']
+
 for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = Mock()
+    if mod_name not in sys.modules:
+        try:
+            __import__(mod_name)
+        except ImportError:
+            sys.modules[mod_name] = Mock()
+
+# Use autodoc_mock_imports for lightgbm (Sphinx's proper mechanism)
+autodoc_mock_imports = ['lightgbm']
+
+# Suppress warnings about mocked objects (expected when lightgbm isn't installed)
+# Different Sphinx versions use different warning types
+suppress_warnings = ['autodoc', 'autodoc.mocked_object']
 
 
 class InternalRefTransform(Transform):
@@ -141,7 +153,7 @@ with open(os.path.join(CURR_PATH, os.path.pardir, 'VERSION.txt'), 'r') as f:
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

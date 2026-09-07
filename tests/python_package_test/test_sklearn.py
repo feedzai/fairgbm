@@ -2,7 +2,6 @@
 import itertools
 import math
 
-import fairgbm as lgb
 import numpy as np
 import pytest
 from packaging.version import Version
@@ -12,13 +11,9 @@ from sklearn.base import clone
 from sklearn.metrics import log_loss, mean_squared_error
 from sklearn.model_selection import train_test_split
 
-from .utils import (
-    load_baf_base,
-    load_boston,
-    load_breast_cancer,
-    load_digits,
-    load_iris,
-)
+import fairgbm as lgb
+
+from .utils import load_baf_base, load_boston, load_breast_cancer, load_digits, load_iris, load_linnerud, make_ranking
 
 sk_version = Version(sk_version)
 if sk_version < Version("0.23"):

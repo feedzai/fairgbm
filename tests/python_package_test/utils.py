@@ -1,4 +1,5 @@
 # coding: utf-8
+import logging
 from functools import lru_cache
 from pathlib import Path
 from typing import Tuple
@@ -210,10 +211,10 @@ def make_ranking(
 
 
 def threshold_at_target(
-    y_true: np.ndarray,
-    y_pred: np.ndarray,
-    target_tpr: float = None,
-    target_fpr: float = None,
+        y_true: np.ndarray,
+        y_pred: np.ndarray,
+        target_tpr: float = None,
+        target_fpr: float = None,
 ) -> float:
     """Computes the threshold at the given target.
     Does not untie rows, may miss target in the presence of ties.

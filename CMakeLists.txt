@@ -16,19 +16,65 @@ OPTION(BUILD_STATIC_LIB "Build static library" OFF)
 OPTION(__BUILD_FOR_R "Set to ON if building lib_lightgbm for use with the R package" OFF)
 OPTION(__INTEGRATE_OPENCL "Set to ON if building LightGBM with the OpenCL ICD Loader and its dependencies included" OFF)
 
+# cmake_minimum_required must be the very first command.
+# FetchContent (used to fetch upstream LightGBM) requires >= 3.14.
+cmake_minimum_required(VERSION 3.14)
+
 if(APPLE)
   OPTION(APPLE_OUTPUT_DYLIB "Output dylib shared library" OFF)
 endif(APPLE)
 
-if(__INTEGRATE_OPENCL)
-  cmake_minimum_required(VERSION 3.11)
-elseif(USE_GPU OR APPLE)
-  cmake_minimum_required(VERSION 3.2)
-elseif(USE_CUDA)
-  cmake_minimum_required(VERSION 3.16)
-else()
-  cmake_minimum_required(VERSION 3.5)
-endif()
+# ---------------------------------------------------------------------------
+# Fetch upstream LightGBM sources and overlay FairGBM's modified files on top
+# ---------------------------------------------------------------------------
+include(FetchContent)
+
+# Pin to the actual upstream commit this fork was branched from (2021-05-04),
+# ~3 weeks after the v3.2.1 tag. Pinning the tag instead would roll back 27
+# files to their pre-e79716e state, silently reverting upstream #4185 (a real
+# distributed-training bug: histograms for empty local leaves weren't cleared
+# before synchronization, corrupting the global histogram).
+# Pinned by commit hash, not tag, since tags can be moved to point elsewhere.
+FetchContent_Declare(
+    lightgbm_upstream
+    GIT_REPOSITORY https://github.com/microsoft/LightGBM.git
+    GIT_TAG        e79716e0b69b27c8e6e2c39f59d0db7c63242f9a
+)
+FetchContent_Populate(lightgbm_upstream)
+
+# Overlay FairGBM's modified src/ and include/ files on top of the upstream
+# tree so that downstream GLOBs and explicit source references pick up the
+# fairgbm versions instead of the originals.
+#
+# The copy itself must stay at configure time: the file(GLOB SOURCES ...)
+# further down (which decides what gets compiled) also runs at configure
+# time, and FairGBM adds whole new files/directories (e.g. proxy_losses/)
+# that don't exist upstream -- if the copy ran later, a from-scratch
+# configure would glob an incomplete tree and silently skip them.
+#
+# What was missing is a *dependency*: nothing told CMake that this copy
+# result depends on the contents of src/ and include/, so once configured,
+# editing a file there had no effect on later `cmake --build` runs -- the
+# stale copy kept getting compiled until someone reran `cmake ..` by hand.
+# CMAKE_CONFIGURE_DEPENDS makes the generated build system check these
+# paths' timestamps before every build and automatically rerun configure
+# (which reruns the copy below) if any changed, so edits are picked up
+# without a manual reconfigure. The CONFIGURE_DEPENDS glob option covers
+# added/removed files; the directory property covers edits to existing ones.
+file(GLOB_RECURSE FAIRGBM_OVERLAY_SOURCES CONFIGURE_DEPENDS
+     "${CMAKE_SOURCE_DIR}/src/*"
+     "${CMAKE_SOURCE_DIR}/include/*")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${FAIRGBM_OVERLAY_SOURCES})
+
+file(COPY "${CMAKE_SOURCE_DIR}/src/"
+     DESTINATION "${lightgbm_upstream_SOURCE_DIR}/src/")
+file(COPY "${CMAKE_SOURCE_DIR}/include/"
+     DESTINATION "${lightgbm_upstream_SOURCE_DIR}/include/")
+
+# Point all subsequent source/include references at the merged tree.
+set(LGBM_SRC "${lightgbm_upstream_SOURCE_DIR}/src")
+set(LGBM_INCLUDE "${lightgbm_upstream_SOURCE_DIR}/include")
+# ---------------------------------------------------------------------------
 
 PROJECT(lightgbm LANGUAGES C CXX)
 
@@ -36,7 +82,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 
 #-- Sanitizer
 if (USE_SANITIZER)
-  include(cmake/Sanitizer.cmake)
+  include(${PROJECT_SOURCE_DIR}/cmake/Sanitizer.cmake)
   enable_sanitizers("${ENABLED_SANITIZERS}")
 endif (USE_SANITIZER)
 
@@ -93,7 +139,7 @@ if(USE_SWIG)
   endif()
 endif(USE_SWIG)
 
-SET(EIGEN_DIR "${PROJECT_SOURCE_DIR}/external_libs/eigen")
+SET(EIGEN_DIR "${lightgbm_upstream_SOURCE_DIR}/external_libs/eigen")
 include_directories(${EIGEN_DIR})
 
 # See https://gitlab.com/libeigen/eigen/-/blob/master/COPYING.README
@@ -137,7 +183,7 @@ if(USE_OPENMP)
 endif(USE_OPENMP)
 
 if(USE_GPU)
-    SET(BOOST_COMPUTE_HEADER_DIR ${PROJECT_SOURCE_DIR}/external_libs/compute/include)
+    SET(BOOST_COMPUTE_HEADER_DIR ${lightgbm_upstream_SOURCE_DIR}/external_libs/compute/include)
     include_directories(${BOOST_COMPUTE_HEADER_DIR})
     find_package(OpenCL REQUIRED)
     include_directories(${OpenCL_INCLUDE_DIRS})
@@ -156,7 +202,7 @@ endif(USE_GPU)
 
 if(__INTEGRATE_OPENCL)
     if(WIN32)
-        include(cmake/IntegratedOpenCL.cmake)
+        include(${PROJECT_SOURCE_DIR}/cmake/IntegratedOpenCL.cmake)
         ADD_DEFINITIONS(-DUSE_GPU)
     else()
         message(FATAL_ERROR "Integrated OpenCL build is available only for Windows")
@@ -312,7 +358,7 @@ else()
     endif()
 endif(MSVC)
 
-SET(LightGBM_HEADER_DIR ${PROJECT_SOURCE_DIR}/include)
+SET(LightGBM_HEADER_DIR ${LGBM_INCLUDE})
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
@@ -332,26 +378,26 @@ if(USE_MPI)
 endif(USE_MPI)
 
 file(GLOB SOURCES
-    src/boosting/*.cpp
-    src/io/*.cpp
-    src/metric/*.cpp
-    src/objective/*.cpp
-    src/network/*.cpp
-    src/treelearner/*.cpp
-    src/proxy_losses/*.cpp
+    ${LGBM_SRC}/boosting/*.cpp
+    ${LGBM_SRC}/io/*.cpp
+    ${LGBM_SRC}/metric/*.cpp
+    ${LGBM_SRC}/objective/*.cpp
+    ${LGBM_SRC}/network/*.cpp
+    ${LGBM_SRC}/treelearner/*.cpp
+    ${LGBM_SRC}/proxy_losses/*.cpp
 if(USE_CUDA)
-    src/treelearner/*.cu
+    ${LGBM_SRC}/treelearner/*.cu
 endif(USE_CUDA)
 )
 
-add_executable(lightgbm src/main.cpp src/application/application.cpp ${SOURCES})
-#add_executable(fairgbm_multiple_runs src/main.multiple_runs.cpp src/application/application.cpp ${SOURCES})
-list(APPEND SOURCES "src/c_api.cpp")
+add_executable(lightgbm ${LGBM_SRC}/main.cpp ${LGBM_SRC}/application/application.cpp ${SOURCES})
+#add_executable(fairgbm_multiple_runs ${LGBM_SRC}/main.multiple_runs.cpp ${LGBM_SRC}/application/application.cpp ${SOURCES})
+list(APPEND SOURCES "${LGBM_SRC}/c_api.cpp")
 
 # Only build the R part of the library if building for
 # use with the R package
 if(__BUILD_FOR_R)
-  list(APPEND SOURCES "src/lightgbm_R.cpp")
+  list(APPEND SOURCES "${LGBM_SRC}/lightgbm_R.cpp")
 endif(__BUILD_FOR_R)
 
 if (BUILD_STATIC_LIB)
@@ -480,7 +526,7 @@ if(BUILD_CPP_TEST)
     FetchContent_MakeAvailable(googletest)
     add_library(GTest::GTest ALIAS gtest)
   endif()
-  file(GLOB CPP_TEST_SOURCES tests/cpp_tests/*.cpp)
+  file(GLOB CPP_TEST_SOURCES ${PROJECT_SOURCE_DIR}/tests/cpp_tests/*.cpp)
   if(MSVC)
     set(
       CompilerFlags

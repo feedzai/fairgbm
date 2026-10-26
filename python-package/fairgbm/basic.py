@@ -1452,7 +1452,7 @@ class Dataset:
                     used_indices = list_to_1d_numpy(self.used_indices, np.int32, name='used_indices')
                     assert used_indices.flags.c_contiguous
                     if self.reference.group is not None:
-                        group_info = np.array(self.reference.group).astype(np.int32, copy=False)
+                        group_info = np.asarray(self.reference.group, dtype=np.int32)
                         _, self.group = np.unique(np.repeat(range(len(group_info)), repeats=group_info)[self.used_indices],
                                                   return_counts=True)
                     self.handle = ctypes.c_void_p()

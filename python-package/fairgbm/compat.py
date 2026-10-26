@@ -86,8 +86,30 @@ try:
     LGBMNotFittedError = NotFittedError
     _LGBMStratifiedKFold = StratifiedKFold
     _LGBMGroupKFold = GroupKFold
-    _LGBMCheckXY = check_X_y
-    _LGBMCheckArray = check_array
+
+    # scikit-learn >= 1.6 deprecated the ``force_all_finite`` parameter of the
+    # validation helpers in favour of ``ensure_all_finite`` (removed entirely in
+    # 1.8). Wrap the validators so FairGBM's ``force_all_finite=...`` call sites
+    # keep working across scikit-learn versions.
+    import inspect as _inspect
+
+    def _finite_kwarg_compat(_func):
+        _params = _inspect.signature(_func).parameters
+        if 'force_all_finite' in _params:
+            return _func  # old scikit-learn: pass through unchanged
+
+        def _wrapped(*args, **kwargs):
+            if 'force_all_finite' in kwargs:
+                value = kwargs.pop('force_all_finite')
+                if 'ensure_all_finite' in _params:
+                    kwargs['ensure_all_finite'] = value
+                # else: neither kwarg supported -> drop it silently
+            return _func(*args, **kwargs)
+
+        return _wrapped
+
+    _LGBMCheckXY = _finite_kwarg_compat(check_X_y)
+    _LGBMCheckArray = _finite_kwarg_compat(check_array)
     _LGBMCheckSampleWeight = _check_sample_weight
     _LGBMAssertAllFinite = assert_all_finite
     _LGBMCheckClassificationTargets = check_classification_targets

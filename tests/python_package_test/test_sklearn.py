@@ -1103,21 +1103,18 @@ def test_first_metric_only():
                 assert metric_name in gbm.evals_result_[eval_set_name]
 
                 actual = len(gbm.evals_result_[eval_set_name][metric_name])
-                # Derive expected length from actual model state (dataset-agnostic)
-                if eval_set_name == "training":
-                    expected = gbm.n_estimators
-                else:
-                    # Validation: best_iteration_ + early_stopping_rounds, capped at n_estimators
-                    expected = min(
-                        gbm.n_estimators,
-                        gbm.best_iteration_ + params_fit["early_stopping_rounds"],
-                    )
+                expected = assumed_iteration + (
+                    params_fit["early_stopping_rounds"]
+                    if eval_set_name != "training"
+                    else 0
+                )
+                # early stopping can't go past n_estimators
+                expected = min(expected, gbm.n_estimators)
                 assert expected == actual, (
                     f"{eval_set_name}/{metric_name}: expected {expected} entries, got {actual}"
                 )
                 if eval_set_name != "training":
-                    # best_iteration_ is dataset-dependent; only check it is in valid range
-                    assert 1 <= gbm.best_iteration_ <= gbm.n_estimators
+                    assert assumed_iteration == gbm.best_iteration_
                 else:
                     assert gbm.n_estimators == gbm.best_iteration_
 

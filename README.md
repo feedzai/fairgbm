@@ -41,7 +41,7 @@ FairGBM can be installed from [PyPI](https://pypi.org/project/fairgbm/):
 Or directly from GitHub:
 
 ```
-git clone --recurse-submodules https://github.com/feedzai/fairgbm.git
+git clone https://github.com/feedzai/fairgbm.git
 pip install fairgbm/python-package/
 ```
 

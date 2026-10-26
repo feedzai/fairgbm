@@ -30,7 +30,7 @@ The repository contains the tracked, functional Python package under `python-pac
 
 ### 1.3 Tools common to all platforms
 
-- [Git](https://git-scm.com) with submodule support (v2.13+)
+- [Git](https://git-scm.com) (used by CMake to fetch upstream LightGBM)
 - A C++11-capable compiler (Section 2 lists the compiler per platform)
 - **CMake 3.x** (version 3.5 to 3.31). Do not use CMake 4.x directly; see the CMake-4 note in Section 3.1.
 - Python 3.8 or higher. The repository targets Python 3.8-3.9 (the CI versions). Newer Python works for the package if you pin `scikit-learn` as shown in Section 3.
@@ -45,7 +45,7 @@ The repository contains the tracked, functional Python package under `python-pac
 | Python package build | `setuptools` calling `cmake` as a subprocess | `python-package/setup.py` |
 | Python virtual environment | Standard library `venv` | You create it |
 | C++ build | `CMake` + a native compiler + `make` | `CMakeLists.txt` |
-| C++ third-party libraries | Git submodules (Eigen, fmt, Boost.Compute, fast_double_parser) | `.gitmodules` |
+| C++ third-party libraries | CMake `FetchContent` (Eigen, fmt, Boost.Compute, fast_double_parser come with the pinned upstream LightGBM checkout) | `CMakeLists.txt` |
 | Runtime Python dependencies | `pip` | `python-package/setup.py` `install_requires` (`numpy`, `scipy`, `scikit-learn!=0.22.0`) |
 | CI environment provisioning (optional) | `conda`/`miniforge`, via a shell script | `.ci/setup.sh` |
 
@@ -123,20 +123,14 @@ Use this platform only for the C++ core; use WSL2 (x86-64 Ubuntu) for the Python
 
 On Apple Silicon, complete Section 2.1 and run every command below inside the Rosetta shell. On x86-64 Linux and Intel macOS, run the commands directly.
 
-### 3.1 Clone with submodules
-
-The C++ build needs vendored libraries (Eigen, fmt, Boost.Compute, fast_double_parser) that live in Git submodules. A plain clone leaves those directories empty.
+### 3.1 Clone the repository
 
 ```bash
-git clone --recurse-submodules https://github.com/feedzai/fairgbm.git
+git clone https://github.com/feedzai/fairgbm.git
 cd fairgbm
 ```
 
-If you already cloned without submodules:
-
-```bash
-git submodule update --init --recursive
-```
+No submodules are needed. At configure time CMake fetches the pinned upstream LightGBM commit together with its third-party libraries (Eigen, fmt, Boost.Compute, fast_double_parser), so the first build needs network access.
 
 > **CMake 4 incompatibility.** The tracked `CMakeLists.txt` declares `cmake_minimum_required(VERSION 3.2)` on its `APPLE` branch. CMake 4.x removed support for minimums below 3.5 and refuses to configure, and `setup.py` provides no way to pass a policy override. The reliable fix is to put a **CMake 3.x** first on `PATH`. Section 3.3 installs one into the virtual environment with `pip install "cmake<4"`.
 
@@ -257,5 +251,5 @@ export TASK="bdist"        # or: sdist, if-else, mpi
 | `arch: posix_spawnp: Bad CPU type in executable` | Rosetta 2 not installed | `softwareupdate --install-rosetta --agree-to-license` |
 | `Cannot install under Rosetta 2 in ARM default prefix (/opt/homebrew)` | You used the native ARM Homebrew under emulation | Install the separate x86-64 Homebrew under `/usr/local` (Section 2.1 step 3) |
 | `pip` installs latest `scikit-learn` and a fit then fails | `install_requires` has no scikit-learn upper bound | Pin `scikit-learn<1.6` (Section 3.4) |
-| Empty `external_libs/*` directories | Submodules not initialized | `git submodule update --init --recursive` |
+| CMake configure fails while fetching `lightgbm_upstream` | No network access to GitHub, or a proxy blocks `git clone` | Check connectivity, or pre-populate the source with `-DFETCHCONTENT_SOURCE_DIR_LIGHTGBM_UPSTREAM=<path>` |
 | Test suite will not install on Python 3.12 | `tests/python_test_requirements.txt` pins old, wheel-less versions | Use Python 3.8/3.9 for the pinned suite (Section 3.6) |

@@ -25,29 +25,12 @@ Windows
 
 On Windows LightGBM can be built using
 
-- **Visual Studio**;
-
 - **CMake** and **VS Build Tools**;
 
 - **CMake** and **MinGW**.
 
 Visual Studio (or VS Build Tools)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-With GUI
-********
-
-1. Install `Visual Studio`_ (2015 or newer).
-
-2. Download `zip archive`_ and unzip it.
-
-3. Go to ``LightGBM-master/windows`` folder.
-
-4. Open ``LightGBM.sln`` file with **Visual Studio**, choose ``Release`` configuration and click ``BUILD`` -> ``Build Solution (Ctrl+Shift+B)``.
-
-   If you have errors about **Platform Toolset**, go to ``PROJECT`` -> ``Properties`` -> ``Configuration Properties`` -> ``General`` and select the toolset installed on your machine.
-
-The ``.exe`` file will be in ``LightGBM-master/windows/x64/Release`` folder.
 
 From Command Line
 *****************
@@ -202,33 +185,12 @@ Windows
 
 On Windows a version of LightGBM without OpenMP support can be built using
 
-- **Visual Studio**;
-
 - **CMake** and **VS Build Tools**;
 
 - **CMake** and **MinGW**.
 
 Visual Studio (or VS Build Tools)
 *********************************
-
-With GUI
---------
-
-1. Install `Visual Studio`_ (2015 or newer).
-
-2. Download `zip archive`_ and unzip it.
-
-3. Go to ``LightGBM-master/windows`` folder.
-
-4. Open ``LightGBM.sln`` file with **Visual Studio**.
-
-5. Go to ``PROJECT`` -> ``Properties`` -> ``Configuration Properties`` -> ``C/C++`` -> ``Language`` and change the ``OpenMP Support`` property to ``No (/openmp-)``.
-
-6. Get back to the project's main screen, then choose ``Release`` configuration and click ``BUILD`` -> ``Build Solution (Ctrl+Shift+B)``.
-
-   If you have errors about **Platform Toolset**, go to ``PROJECT`` -> ``Properties`` -> ``Configuration Properties`` -> ``General`` and select the toolset installed on your machine.
-
-The ``.exe`` file will be in ``LightGBM-master/windows/x64/Release`` folder.
 
 From Command Line
 -----------------
@@ -355,26 +317,7 @@ Windows
 
 On Windows an MPI version of LightGBM can be built using
 
-- **MS MPI** and **Visual Studio**;
-
 - **MS MPI**, **CMake** and **VS Build Tools**.
-
-With GUI
-********
-
-1. You need to install `MS MPI`_ first. Both ``msmpisdk.msi`` and ``msmpisetup.exe`` are needed.
-
-2. Install `Visual Studio`_ (2015 or newer).
-
-3. Download `zip archive`_ and unzip it.
-
-4. Go to ``LightGBM-master/windows`` folder.
-
-5. Open ``LightGBM.sln`` file with **Visual Studio**, choose ``Release_mpi`` configuration and click ``BUILD`` -> ``Build Solution (Ctrl+Shift+B)``.
-
-   If you have errors about **Platform Toolset**, go to ``PROJECT`` -> ``Properties`` -> ``Configuration Properties`` -> ``General`` and select the toolset installed on your machine.
-
-The ``.exe`` file will be in ``LightGBM-master/windows/x64/Release_mpi`` folder.
 
 From Command Line
 *****************

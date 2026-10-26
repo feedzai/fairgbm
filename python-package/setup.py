@@ -116,18 +116,8 @@ def copy_files(integrated_opencl=False, use_gpu=False):
     if not os.path.isfile(os.path.join(CURRENT_DIR, '_IS_SOURCE_PACKAGE.txt')):
         copy_files_helper('include')
         copy_files_helper('src')
-        for submodule in os.listdir(os.path.join(CURRENT_DIR, os.path.pardir, 'external_libs')):
-            if submodule == 'compute' and not use_gpu:
-                continue
-            copy_files_helper(os.path.join('external_libs', submodule))
-        if not os.path.exists(os.path.join(CURRENT_DIR, "compile", "windows")):
-            os.makedirs(os.path.join(CURRENT_DIR, "compile", "windows"))
-        copy_file(os.path.join(CURRENT_DIR, os.path.pardir, "windows", "LightGBM.sln"),
-                  os.path.join(CURRENT_DIR, "compile", "windows", "LightGBM.sln"),
-                  verbose=0)
-        copy_file(os.path.join(CURRENT_DIR, os.path.pardir, "windows", "LightGBM.vcxproj"),
-                  os.path.join(CURRENT_DIR, "compile", "windows", "LightGBM.vcxproj"),
-                  verbose=0)
+        # Third-party libs (Eigen, fmt, Boost.Compute, fast_double_parser) are no
+        # longer vendored; CMake fetches them along with upstream LightGBM.
         copy_file(os.path.join(CURRENT_DIR, os.path.pardir, "LICENSE"),
                   os.path.join(CURRENT_DIR, "LICENSE"),
                   verbose=0)
@@ -214,38 +204,23 @@ def compile_cpp(use_mingw=False, use_gpu=False, use_cuda=False, use_mpi=False,
             silent_call(["mingw32-make.exe", "_lightgbm"], raise_error=True,
                         error_msg='Please install MinGW first')
         else:
+            # The static Visual Studio solution was removed: sources only exist
+            # after CMake's configure step fetches upstream and overlays FairGBM.
             status = 1
-            lib_path = os.path.join(CURRENT_DIR, "compile", "windows", "x64", "DLL", "lib_lightgbm.dll")
-            if not any((use_gpu, use_cuda, use_mpi, use_hdfs, nomp, bit32, integrated_opencl)):
-                logger.info("Starting to compile with MSBuild from existing solution file.")
-                platform_toolsets = ("v142", "v141", "v140")
-                for pt in platform_toolsets:
-                    status = silent_call(["MSBuild",
-                                          os.path.join(CURRENT_DIR, "compile", "windows", "LightGBM.sln"),
-                                          "/p:Configuration=DLL",
-                                          "/p:Platform=x64",
-                                          f"/p:PlatformToolset={pt}"])
-                    if status == 0 and os.path.exists(lib_path):
-                        break
-                    else:
-                        clear_path(os.path.join(CURRENT_DIR, "compile", "windows", "x64"))
-                if status != 0 or not os.path.exists(lib_path):
-                    logger.warning("Compilation with MSBuild from existing solution file failed.")
-            if status != 0 or not os.path.exists(lib_path):
-                arch = "Win32" if bit32 else "x64"
-                vs_versions = ("Visual Studio 16 2019", "Visual Studio 15 2017", "Visual Studio 14 2015")
-                for vs in vs_versions:
-                    logger.info(f"Starting to compile with {vs} ({arch}).")
-                    status = silent_call(cmake_cmd + ["-G", vs, "-A", arch])
-                    if status == 0:
-                        break
-                    else:
-                        clear_path(os.path.join(CURRENT_DIR, "build_cpp"))
-                if status != 0:
-                    raise Exception("\n".join(('Please install Visual Studio or MS Build and all required dependencies first',
-                                    LOG_NOTICE)))
-                silent_call(["cmake", "--build", ".", "--target", "_lightgbm", "--config", "Release"], raise_error=True,
-                            error_msg='Please install CMake first')
+            arch = "Win32" if bit32 else "x64"
+            vs_versions = ("Visual Studio 16 2019", "Visual Studio 15 2017", "Visual Studio 14 2015")
+            for vs in vs_versions:
+                logger.info(f"Starting to compile with {vs} ({arch}).")
+                status = silent_call(cmake_cmd + ["-G", vs, "-A", arch])
+                if status == 0:
+                    break
+                else:
+                    clear_path(os.path.join(CURRENT_DIR, "build_cpp"))
+            if status != 0:
+                raise Exception("\n".join(('Please install Visual Studio or MS Build and all required dependencies first',
+                                LOG_NOTICE)))
+            silent_call(["cmake", "--build", ".", "--target", "_lightgbm", "--config", "Release"], raise_error=True,
+                        error_msg='Please install CMake first')
     else:  # Linux, Darwin (macOS), etc.
         logger.info("Starting to compile with CMake.")
         silent_call(cmake_cmd, raise_error=True, error_msg='Please install CMake and all required dependencies first')

@@ -61,7 +61,7 @@ Set environment variables:
 This workflow's steps are the following:
 
 ### 1. Checkout repository
-Checkout the actions repository, while only fetching the last 5 commits. In this instance however, the submodules are also fetched.
+Checkout the actions repository, while only fetching the last 5 commits. Submodules are not fetched; third-party libraries come with the upstream LightGBM checkout that CMake fetches at configure time.
 
 ### 2. Setup and run tests
 The relevant environment variables are set. Subsequently, the [`.ci/setup.sh`](/.github/ci_scripts_docs.md#fairgbmcisetupsh) and the [`.ci/test.sh`](/.github/ci_scripts_docs.md#fairgbmcitestsh) tasks are executed.
@@ -106,7 +106,7 @@ The following step runs the [`.ci/setup.sh`](/.github/ci_scripts_docs.md#fairgbm
 The next task is geared towards documentation and its steps are explained below.
 
 ### 1. Checkout repository
-As explained above, this step checks out the relevant actions repository, its 5 latest commits and its submodules.
+As explained above, this step checks out the relevant actions repository and its 5 latest commits.
 
 ### 2. Install packages
 This step installs the relevant R packages

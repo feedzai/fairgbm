@@ -59,7 +59,7 @@ y_test_pred = fairgbm_clf.predict(X_test)
 
 To run FairGBM from the command line, you'll need to compile the project locally
 ```
-git clone --recurse-submodules https://github.com/feedzai/fairgbm.git
+git clone https://github.com/feedzai/fairgbm.git
 cd fairgbm
 cmake .
 make -j4

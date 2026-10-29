@@ -46,7 +46,9 @@ pip install fairgbm/python-package/
 ```
 
 > **Note**
-> Compatibility is only maintained with **Linux OS**.
+> Wheels are provided for **Linux** (x86-64 and aarch64) and **macOS** (arm64). On macOS, install OpenMP first with
+> `brew install libomp`, as for LightGBM. On other platforms, pip builds FairGBM from source, which requires CMake,
+> a C++ compiler and OpenMP.
 > 
 > If you don't have access to a Linux machine we advise using the free Google 
 > Colab service ([example Colab notebook here](https://colab.research.google.com/github/AndreFCruz/fairgbm-fork/blob/add-colab-example/examples/FairGBM-python-notebooks/FairGBM_example_for_equalized_odds_%5Bgoogle_colab%5D.ipynb)).

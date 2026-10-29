@@ -13,6 +13,7 @@ from setuptools import find_packages, setup
 from setuptools.command.install import install
 from setuptools.command.install_lib import install_lib
 from setuptools.command.sdist import sdist
+from setuptools.dist import Distribution
 from wheel.bdist_wheel import bdist_wheel
 
 FAIRGBM_OPTIONS = [
@@ -299,6 +300,22 @@ class CustomBdistWheel(bdist_wheel):
         install.nomp = self.nomp
         install.bit32 = self.bit32
 
+    def get_tag(self):
+        # lib_lightgbm is loaded with ctypes, not as a Python extension, so one wheel per platform works with
+        # every Python 3 version.
+        _, _, plat_name = bdist_wheel.get_tag(self)
+        return 'py3', 'none', plat_name
+
+
+class BinaryDistribution(Distribution):
+    """Mark the package as platform-specific, since it ships the compiled lib_lightgbm.
+
+    Without this, the wheel is tagged "py3-none-any" and pip installs it on every platform.
+    """
+
+    def has_ext_modules(self):
+        return True
+
 
 class CustomSdist(sdist):
 
@@ -358,6 +375,7 @@ if __name__ == "__main__":
           },
           maintainer='Feedzai',
           zip_safe=False,
+          distclass=BinaryDistribution,
           cmdclass={
               'install': CustomInstall,
               'install_lib': CustomInstallLib,

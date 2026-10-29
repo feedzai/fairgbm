@@ -67,21 +67,18 @@ Checkout the actions repository, while only fetching the last 5 commits. In this
 The relevant environment variables are set. Subsequently, the [`.ci/setup.sh`](/.github/ci_scripts_docs.md#fairgbmcisetupsh) and the [`.ci/test.sh`](/.github/ci_scripts_docs.md#fairgbmcitestsh) tasks are executed.
 
 ## .github/workflows/python_publish.yml
-This workflow is meant to publish a python package into pypi. It is triggered on push with tags that match the `v*` expression.
+This workflow is meant to publish a python package into pypi. It is triggered on push with tags that match the `v*` expression. The wheels and the source distribution are also built (but not published) on pull requests that change the workflow, `CMakeLists.txt` or `python-package/setup.py`, and when the workflow is run manually.
 
-The steps are explained below.
+The jobs are explained below.
 
-### 2. Set up Python
-This step sets up python 3.7.
+### build-wheels
+Builds one wheel per platform (Linux x86_64, Linux aarch64 and macOS arm64) with [cibuildwheel](https://cibuildwheel.pypa.io). `lib_lightgbm` is compiled, so each wheel is tagged for the platform it was built for (`py3-none-<platform>`). The Linux wheels are built in manylinux containers. The macOS wheel uses Homebrew's `libomp` (`brew install libomp`), like LightGBM. Each wheel is installed and used to train a small model.
 
-### 3. Install dependencies
-As the name implies, this step install all the necesary dependencies.
+### build-sdist
+Builds the source distribution, used by pip on other platforms.
 
-### 4. Build package
-This step [builds](https://pypi.org/project/build/) the designated python package.
-
-### 5. Publish package
-This step publishes the built package.
+### publish
+Only runs for `v*` tags. Publishes the wheels and the source distribution.
 
 ## .github/workflows/static_analysis.yml
 This workflow performs static code analysis. It is triggered by pushing or creating pull requests to master.
